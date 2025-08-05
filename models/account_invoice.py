@@ -677,9 +677,20 @@ class AccountMove(models.Model):
     def action_cfdi_generate(self):
         # after validate, send invoice data to external system via http post
         for invoice in self:
+            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar
+            if hasattr(invoice, 'desglosar_iva') and not invoice.desglosar_iva:
+                raise UserError(_(
+                    'ADVERTENCIA: El desglose de IVA no está activo\n\n'
+                    '⚠️  Para generar un CFDI válido, es necesario activar el campo '
+                    '"¿Desglosar IVA?" en la factura antes de continuar.\n\n'
+                    '📋 Esto asegura que la factura muestre correctamente los impuestos '
+                    'desglosados como requiere el SAT para la facturación electrónica.\n\n'
+                    '✅ Active el campo "¿Desglosar IVA?" e intente nuevamente.'
+                ))
+            
             if invoice.proceso_timbrado:
                 raise UserError(_('El intento de timbrado previo terminó con un error, revise que todo esté correcto o envíe el código de error para su revisión. \
-Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de timbrado" de la pestaña CFDI.'))
+    Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de timbrado" de la pestaña CFDI.'))
             else:
                 invoice.write({'proceso_timbrado': True})
                 self.env.cr.commit()
@@ -716,8 +727,8 @@ Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de
 
             try:
                 response = requests.post(url,
-                                         auth=None, verify=False, data=json.dumps(values),
-                                         headers={"Content-type": "application/json"})
+                                        auth=None, verify=False, data=json.dumps(values),
+                                        headers={"Content-type": "application/json"})
             except Exception as e:
                 error = str(e)
                 invoice.write({'proceso_timbrado': False})
@@ -754,8 +765,8 @@ Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de
                     })
 
             invoice.write({'estado_factura': estado_factura,
-                           'factura_cfdi': True,
-                           'proceso_timbrado': False})
+                        'factura_cfdi': True,
+                        'proceso_timbrado': False})
             invoice.message_post(body="CFDI emitido")
         return True
 
@@ -976,6 +987,9 @@ Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de
                 'target': 'new'
             }
 
+
+    
+
 class MailTemplate(models.Model):
     "Templates for sending email"
     _inherit = 'mail.template'
@@ -1014,6 +1028,7 @@ class MailTemplate(models.Model):
                                 ('CFDI_CANCEL_' + invoice.name.replace('/', '_') + '.xml', xml_file.datas))
                     results[res_id]['attachments'] = attachments
         return multi_mode and results or results[res_ids[0]]
+
 
 
 class AccountMoveLine(models.Model):

@@ -349,7 +349,7 @@
             </p>
         </xpath>
 
-        <!-- AGREGAR TABLA DE DATOS DEL VEHÍCULO AL FINAL -->
+        <!-- AGREGAR DATOS DEL VEHÍCULO AL FINAL -->
         <xpath expr="//div[@name='comment']" position="before">
             <!-- Solo mostrar si la factura tiene una orden de venta asociada -->
             <t t-if="o.invoice_origin">
@@ -357,44 +357,22 @@
                 <t t-if="sale_order">
                     <div style="border:2px solid #888; border-radius:8px; padding:12px; margin-top:24px; clear:both;">
                         <h4 style="margin-bottom:8px; color:#444;">Datos del Vehículo</h4>
-                        <table style="width:100%; font-size:10px;">
-                            <tr>
-                                <td><strong>Marca:</strong></td>
-                                <td><t t-esc="dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') if sale_order else ''"/></td>
-                                <td><strong>Modelo:</strong></td>
-                                <td><t t-esc="sale_order.nombre_auto.name if sale_order.nombre_auto else ''"/></td>
-                                <td><strong>Año:</strong></td>
-                                <td><t t-esc="sale_order.anio_auto or ''"/></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Color:</strong></td>
-                                <td><t t-esc="sale_order.color_auto or ''"/></td>
-                                <td><strong>VIN:</strong></td>
-                                <td><t t-esc="sale_order.serie_auto or ''"/></td>
-                                <td><strong>Placas:</strong></td>
-                                <td><t t-esc="sale_order.placas_auto or ''"/></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Kilometraje:</strong></td>
-                                <td><t t-esc="sale_order.kilometraje_auto or ''"/></td>
-                                <td><strong>Tipo de combustible:</strong></td>
-                                <td><t t-esc="sale_order.tipo_combustible or ''"/></td>
-                                <td><strong>Nivel de Combustible</strong></td>
-                                <td><t t-esc="sale_order.tanque_gasolina or ''"/></td>              
-                            </tr>
-                            <tr>
-                                <td><strong>Operador</strong></td>
-                                <td><t t-esc="sale_order.nombre_operador or ''"/></td>
-                                <td><strong>Número de Unidad</strong></td>
-                                <td><t t-esc="sale_order.num_unidad or ''"/></td>
-                            </tr>
-                            <tr>
-                                <td><strong>Observaciones:</strong></td>
-                                <td colspan="5" style="white-space:pre-wrap;">
-                                    <t t-esc="sale_order.observations or ''"/>
-                                </td>
-                            </tr>
-                        </table>
+                        <p style="font-size:10px; line-height:1.4; margin:0;">
+                            <strong>Marca:</strong> <t t-esc="dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') if sale_order else ''"/>, 
+                            <strong>Modelo:</strong> <t t-esc="sale_order.nombre_auto.name if sale_order.nombre_auto else ''"/>, 
+                            <strong>Año:</strong> <t t-esc="sale_order.anio_auto or ''"/>, 
+                            <strong>Color:</strong> <t t-esc="sale_order.color_auto or ''"/>, 
+                            <strong>VIN:</strong> <t t-esc="sale_order.serie_auto or ''"/>, 
+                            <strong>Placas:</strong> <t t-esc="sale_order.placas_auto or ''"/>, 
+                            <strong>Kilometraje:</strong> <t t-esc="sale_order.kilometraje_auto or ''"/>, 
+                            <strong>Tipo de combustible:</strong> <t t-esc="sale_order.tipo_combustible or ''"/>, 
+                            <strong>Nivel de Combustible:</strong> <t t-esc="sale_order.tanque_gasolina or ''"/>, 
+                            <strong>Operador:</strong> <t t-esc="sale_order.nombre_operador or ''"/>, 
+                            <strong>Número de Unidad:</strong> <t t-esc="sale_order.num_unidad or ''"/>
+                            <t t-if="sale_order.observations">
+                                <br/><strong>Observaciones:</strong> <t t-esc="sale_order.observations"/>
+                            </t>
+                        </p>
                     </div>
                 </t>
             </t>

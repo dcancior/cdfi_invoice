@@ -20,6 +20,9 @@
         'data/catalogo.forma.pago.csv',
         'data/catalogo.uso.cfdi.csv',
         'data/catalogo.regimen.fiscal.csv',
+      
+
+
         'security/ir.model.access.csv',
         'wizard/import_account_payment_view.xml',
         'wizard/reason_cancelation_sat_view.xml',
