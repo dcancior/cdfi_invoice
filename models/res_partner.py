@@ -25,3 +25,17 @@ class ResPartner(models.Model):
                 partner_label = _("partner [%s]", partner.name)
                 msg = partner._build_vat_error_message(country and country.code.lower() or None, partner.vat, partner_label)
                 raise ValidationError(msg)
+
+class PartnerVatLine(models.Model):
+    _name = 'res.partner.vat.line'
+    _description = 'RFC adicional para partner'
+
+    partner_id = fields.Many2one('res.partner', string='Partner', required=True, ondelete='cascade')
+    vat = fields.Char(string='RFC')
+    name = fields.Char(string='Nombre')
+    # Puedes agregar más campos si lo necesitas
+
+class Partner(models.Model):
+    _inherit = 'res.partner'
+    # se agrega la relación One2many para los RFC adicionales
+    vat_line_ids = fields.One2many('res.partner.vat.line', 'partner_id', string='RFCs adicionales')
