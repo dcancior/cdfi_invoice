@@ -998,7 +998,14 @@ class AccountMove(models.Model):
                 raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
         return super().action_post()
 
-    
+    #PARE EVITAR TIMBRAR SI CANTIDAD ES MENOR O IGUAL A 0
+    def action_post(self):
+        for move in self:
+            bad = move.invoice_line_ids.filtered(lambda l: not l.display_type and (l.quantity or 0.0) <= 0.0)
+            if bad:
+                details = '\n'.join(f"- {l.name or l.product_id.display_name} (qty={l.quantity})" for l in bad)
+                raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
+        return super().action_post() 
 
 class MailTemplate(models.Model):
     "Templates for sending email"
