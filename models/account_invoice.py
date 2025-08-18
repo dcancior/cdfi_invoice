@@ -674,26 +674,33 @@ class AccountMove(models.Model):
         ret_val = createBarcodeDrawing('QR', value=qr_value, **options)
         self.qrcode_image = base64.encodebytes(ret_val.asString('jpg'))
 
+    from datetime import datetime
+
     def action_cfdi_generate(self):
+        fecha_limite = datetime(2025, 8, 15)
+
         # after validate, send invoice data to external system via http post
         for invoice in self:
-            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar
-            if hasattr(invoice, 'desglosar_iva') and not invoice.desglosar_iva:
-                raise UserError(_(
-                    'ADVERTENCIA: El desglose de IVA no está activo\n\n'
-                    '⚠️  Para generar un CFDI válido, es necesario activar el campo '
-                    '"¿Desglosar IVA?" en la factura antes de continuar.\n\n'
-                    '📋 Esto asegura que la factura muestre correctamente los impuestos '
-                    'desglosados como requiere el SAT para la facturación electrónica.\n\n'
-                    '✅ Active el campo "¿Desglosar IVA?" e intente nuevamente.'
-                ))
-            
+            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar,
+            # excepto si la factura es anterior al 15/08/2025
+            if invoice.invoice_date and invoice.invoice_date >= fecha_limite.date():
+                if hasattr(invoice, 'desglosar_iva') and not invoice.desglosar_iva:
+                    raise UserError(_(
+                        'ADVERTENCIA: El desglose de IVA no está activo\n\n'
+                        '⚠️  Para generar un CFDI válido, es necesario activar el campo '
+                        '"¿Desglosar IVA?" en la factura antes de continuar.\n\n'
+                        '📋 Esto asegura que la factura muestre correctamente los impuestos '
+                        'desglosados como requiere el SAT para la facturación electrónica.\n\n'
+                        '✅ Active el campo "¿Desglosar IVA?" e intente nuevamente.'
+                    ))
+
             if invoice.proceso_timbrado:
                 raise UserError(_('El intento de timbrado previo terminó con un error, revise que todo esté correcto o envíe el código de error para su revisión. \
-    Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de timbrado" de la pestaña CFDI.'))
+        Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de timbrado" de la pestaña CFDI.'))
             else:
                 invoice.write({'proceso_timbrado': True})
                 self.env.cr.commit()
+            
             if invoice.estado_factura == 'factura_correcta':
                 if invoice.folio_fiscal:
                     invoice.write({'factura_cfdi': True})
@@ -702,6 +709,7 @@ class AccountMove(models.Model):
                     invoice.write({'proceso_timbrado': False})
                     self.env.cr.commit()
                     raise UserError(_('Error para timbrar factura, Factura ya generada.'))
+            
             if invoice.estado_factura == 'factura_cancelada':
                 invoice.write({'proceso_timbrado': False})
                 self.env.cr.commit()
@@ -745,12 +753,14 @@ class AccountMove(models.Model):
                     "Error en el proceso de timbrado, espere un minuto y vuelva a intentar timbrar nuevamente. \nSi el error aparece varias veces reportarlo con la persona de sistemas."))
             else:
                 json_response = response.json()
+            
             estado_factura = json_response['estado_factura']
             if estado_factura == 'problemas_factura':
                 invoice.write({'proceso_timbrado': False})
                 self.env.cr.commit()
                 raise UserError(_(json_response['problemas_message']))
-            # Receive and stroe XML invoice
+            
+            # Receive and store XML invoice
             if json_response.get('factura_xml'):
                 invoice._set_data_from_xml(base64.b64decode(json_response['factura_xml']))
                 file_name = invoice.name.replace('/', '_') + '.xml'
@@ -758,17 +768,19 @@ class AccountMove(models.Model):
                     {
                         'name': file_name,
                         'datas': json_response['factura_xml'],
-                        # 'datas_fname': file_name,
                         'res_model': self._name,
                         'res_id': invoice.id,
                         'type': 'binary'
                     })
 
-            invoice.write({'estado_factura': estado_factura,
-                        'factura_cfdi': True,
-                        'proceso_timbrado': False})
+            invoice.write({
+                'estado_factura': estado_factura,
+                'factura_cfdi': True,
+                'proceso_timbrado': False
+            })
             invoice.message_post(body="CFDI emitido")
         return True
+
 
     def action_cfdi_cancel(self):
         for invoice in self:
