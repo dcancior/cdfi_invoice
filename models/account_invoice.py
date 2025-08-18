@@ -678,7 +678,7 @@ class AccountMove(models.Model):
 
     def action_cfdi_generate(self):
         # Definir fecha límite como date
-        fecha_limite = datetime.date(2025, 8, 15)
+        fecha_limite = datetime.date(2025, 8, 1)
 
         # after validate, send invoice data to external system via http post
         for invoice in self:
