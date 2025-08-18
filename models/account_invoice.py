@@ -674,7 +674,7 @@ class AccountMove(models.Model):
         ret_val = createBarcodeDrawing('QR', value=qr_value, **options)
         self.qrcode_image = base64.encodebytes(ret_val.asString('jpg'))
 
-    from datetime import datetime
+
 
     def action_cfdi_generate(self):
         fecha_limite = datetime(2025, 8, 15)
