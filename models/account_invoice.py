@@ -677,13 +677,18 @@ class AccountMove(models.Model):
 
 
     def action_cfdi_generate(self):
-        fecha_limite = datetime(2025, 8, 15)
+        # Definir fecha límite como date
+        fecha_limite = datetime.date(2025, 8, 15)
 
         # after validate, send invoice data to external system via http post
         for invoice in self:
-            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar,
-            # excepto si la factura es anterior al 15/08/2025
-            if invoice.invoice_date and invoice.invoice_date >= fecha_limite.date():
+            inv_date = invoice.invoice_date
+            # Si por alguna razón viene como datetime, lo convertimos a date
+            if isinstance(inv_date, datetime.datetime):
+                inv_date = inv_date.date()
+
+            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo después de la fecha límite
+            if inv_date and inv_date >= fecha_limite:
                 if hasattr(invoice, 'desglosar_iva') and not invoice.desglosar_iva:
                     raise UserError(_(
                         'ADVERTENCIA: El desglose de IVA no está activo\n\n'
@@ -717,16 +722,16 @@ class AccountMove(models.Model):
 
             values = invoice.to_json()
             if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/invoice')
+                url = 'http://facturacion.itadmin.com.mx/api/invoice'
             elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/invoice')
+                url = 'http://facturacion2.itadmin.com.mx/api/invoice'
             elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/invoice')
+                url = 'http://facturacion3.itadmin.com.mx/api/invoice'
             elif invoice.company_id.proveedor_timbrado == 'gecoerp':
                 if self.company_id.modo_prueba:
-                    url = '%s' % ('https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33')
+                    url = 'https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33'
                 else:
-                    url = '%s' % ('https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33')
+                    url = 'https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33'
             else:
                 invoice.write({'proceso_timbrado': False})
                 self.env.cr.commit()
