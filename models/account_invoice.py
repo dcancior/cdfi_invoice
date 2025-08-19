@@ -31,12 +31,23 @@ class AccountMove(models.Model):
                    ],
         string=_('Tipo de comprobante'),
     )
-    forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
+    
     methodo_pago = fields.Selection(
         selection=[('PUE', _('Pago en una sola exhibición')),
                    ('PPD', _('Pago en parcialidades o diferido')), ],
         string=_('Método de pago'),
     )
+
+    forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
+
+    ##
+    ## SE SELECCIONA AUTOMÁTICAMENTE FORMA DE PAGO POR DEFINIR CUANDO EL METODO DE PAGO ES PPD
+    @api.onchange('metodo_pago')
+    def _onchange_metodo_pago(self):
+        if self.metodo_pago == 'PPD':
+            forma_pago = self.env['catalogo.forma.pago'].search([('id', '=', 'forma_pago022')], limit=1)
+            self.forma_pago_id = forma_pago.id
+
     uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
     estado_factura = fields.Selection(
         selection=[('factura_no_generada', 'Factura no generada'), ('factura_correcta', 'Factura correcta'),
@@ -1006,6 +1017,7 @@ class AccountMove(models.Model):
                 details = '\n'.join(f"- {l.name or l.product_id.display_name} (qty={l.quantity})" for l in bad)
                 raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
         return super().action_post() 
+        
 
 class MailTemplate(models.Model):
     "Templates for sending email"
