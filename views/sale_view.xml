@@ -9,8 +9,9 @@
                 <page name="info_cdfi" string="CFDI">
                         <group cols="4">
                             <group string="Detalles de Pago">
-                            	<field name="forma_pago_id"/>
                             	<field name="methodo_pago"/>
+								<field name="forma_pago_id"/>
+                            	
                             	<field name="uso_cfdi_id"/>
                             </group>
                         </group>

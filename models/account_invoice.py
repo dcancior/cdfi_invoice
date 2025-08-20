@@ -39,6 +39,57 @@ class AccountMove(models.Model):
     )
 
     forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
+    # --- Helper para localizar "Por definir" ---
+    def _get_forma_pago_por_definir(self):
+        Forma = self.env['catalogo.forma.pago']
+        rec = Forma.search([('code', '=', '99')], limit=1)     # <-- ajusta 'code' si tu campo se llama distinto
+        if not rec:
+            rec = Forma.search([('name', 'ilike', 'por definir')], limit=1)
+        return rec
+
+    # --- UI: al elegir PPD, auto-setear "Por definir" y restringir dominio ---
+    @api.onchange('methodo_pago')
+    def _onchange_methodo_pago(self):
+        domain = {}
+        if self.methodo_pago == 'PPD':
+            por_def = self._get_forma_pago_por_definir()
+            if por_def:
+                self.forma_pago_id = por_def
+            # opcional: restringe la lista a "99" cuando sea PPD (ajusta 'code' si procede)
+            domain['forma_pago_id'] = [('code', '=', '99')]
+        else:
+            # Si vuelven a PUE y estaba "Por definir", limpiamos para obligar a elegir una forma real
+            if self.forma_pago_id and (
+                getattr(self.forma_pago_id, 'code', '') == '99' or
+                (self.forma_pago_id.name or '').strip().lower() == 'por definir'
+            ):
+                self.forma_pago_id = False
+            domain['forma_pago_id'] = []  # sin restricción
+        return {'domain': domain}
+
+    # --- Backend: cubrir creación/edición por API/importaciones ---
+    @api.model
+    def create(self, vals):
+        if vals.get('methodo_pago') == 'PPD' and not vals.get('forma_pago_id'):
+            por_def = self._get_forma_pago_por_definir()
+            if por_def:
+                vals['forma_pago_id'] = por_def.id
+        return super().create(vals)
+
+    def write(self, vals):
+        res = super().write(vals)
+        for rec in self:
+            # Si cambiaron a PPD y no mandaron forma_pago_id, forzar "Por definir"
+            if 'methodo_pago' in vals and rec.methodo_pago == 'PPD' and 'forma_pago_id' not in vals:
+                por_def = rec._get_forma_pago_por_definir()
+                if por_def:
+                    rec.forma_pago_id = por_def.id
+            # Si cambiaron a PUE y quedó "Por definir", limpiar para que el usuario elija una real
+            if 'methodo_pago' in vals and rec.methodo_pago == 'PUE' and rec.forma_pago_id:
+                if getattr(rec.forma_pago_id, 'code', '') == '99' or (rec.forma_pago_id.name or '').strip().lower() == 'por definir':
+                    rec.forma_pago_id = False
+        return res
+
 
     ##
     ## SE SELECCIONA AUTOMÁTICAMENTE FORMA DE PAGO POR DEFINIR CUANDO EL METODO DE PAGO ES PPD
@@ -48,7 +99,7 @@ class AccountMove(models.Model):
             forma_pago = self.env['catalogo.forma.pago'].search([('id', '=', 'forma_pago022')], limit=1)
             self.forma_pago_id = forma_pago.id
 
-    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
+    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI')
     estado_factura = fields.Selection(
         selection=[('factura_no_generada', 'Factura no generada'), ('factura_correcta', 'Factura correcta'),
                    ('solicitud_cancelar', 'Cancelación en proceso'), ('factura_cancelada', 'Factura cancelada'),

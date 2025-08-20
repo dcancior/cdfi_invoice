@@ -37,6 +37,7 @@
                 <field name="arch" type="xml">
                     <xpath expr="//page[@name='contact_addresses']" position="replace">
                         <page string="Contactos y Facturación" name="contact_addresses" autofocus="autofocus">
+                            <!--<field name="child_ids" mode="kanban" context="{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang, 'default_user_id': user_id, 'default_type': 'contact'}">-->
                             <field name="child_ids" mode="kanban" context="{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang, 'default_user_id': user_id, 'default_type': 'contact'}">
                                 <kanban>
                                     <field name="id"/>
@@ -64,27 +65,37 @@
                                     <!-- fields in form x2many view to diminish requests -->
                                     <field name="comment"/>
                                     <field name="display_name"/>
+                                    <!-- 👉 Cargar el RFC -->
+                                    <field name="vat"/>
                                     <templates>
                                         <t t-name="kanban-box">
                                             <t t-set="color" t-value="kanban_color(record.color.raw_value)"/>
-                                            <div t-att-class="color + (record.title.raw_value == 1 ? ' oe_kanban_color_alert' : '') + ' oe_kanban_global_click'">
+                                            <div t-att-class="color + (record.title ? (record.title.raw_value == 1 ? ' oe_kanban_color_alert' : '') : '') + ' oe_kanban_global_click'">
                                                 <div class="o_kanban_image">
                                                     <img alt="Contact image" t-att-src="kanban_image('res.partner', 'avatar_128', record.id.raw_value)"/>
                                                 </div>
                                                 <div class="oe_kanban_details">
                                                     <field name="name"/>
-                                                    <div t-if="record.function.raw_value"><field name="function"/></div>
-                                                    <div t-if="record.email.raw_value"><field name="email" widget="email"/></div>
-                                                    <div t-if="record.type.raw_value != 'contact'">
+
+                                                    <!-- RFC con doble guardia por si no está cargado -->
+                                                    <div t-if="record.vat and record.vat.raw_value" class="text-muted">
+                                                        RFC: <t t-esc="record.vat.value"/>
+                                                    </div>
+
+                                                    <div t-if="record.function and record.function.raw_value"><field name="function"/></div>
+                                                    <div t-if="record.email and record.email.raw_value"><field name="email" widget="email"/></div>
+
+                                                    <div t-if="record.type and record.type.raw_value != 'contact'">
                                                         <div>
                                                             <field name="zip"/><t t-if="record.city"> </t>
                                                             <field name="city"/>
                                                         </div>
-                                                        <field t-if="record.state_id.raw_value" name="state_id"/><t t-if="record.country_id"> </t>
+                                                        <field t-if="record.state_id and record.state_id.raw_value" name="state_id"/><t t-if="record.country_id"> </t>
                                                         <field name="country_id"/>
                                                     </div>
-                                                    <div t-if="record.phone.raw_value">Phone: <t t-esc="record.phone.value"/></div>
-                                                    <div t-if="record.mobile.raw_value">Mobile: <t t-esc="record.mobile.value"/></div>
+
+                                                    <div t-if="record.phone and record.phone.raw_value">Phone: <t t-esc="record.phone.value"/></div>
+                                                    <div t-if="record.mobile and record.mobile.raw_value">Mobile: <t t-esc="record.mobile.value"/></div>
                                                 </div>
                                             </div>
                                         </t>

@@ -48,14 +48,15 @@
                     <strong>Uso:</strong>
                     <p class="m-0" t-field="o.uso_cfdi_id.code"/>
                 </div>
-                <div class="col-auto mw-100 mb-1" t-if="o.forma_pago_id" name="customer_code" style="line-height: 1.1;">
-                    <strong>Forma de pago:</strong>
-                    <p class="m-0" t-field="o.forma_pago_id.code"/>
-                </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.methodo_pago" name="reference" style="line-height: 1.1;">
                     <strong>Método de pago:</strong>
                     <p class="m-0" t-field="o.methodo_pago"/>
                 </div>
+                <div class="col-auto mw-100 mb-1" t-if="o.forma_pago_id" name="customer_code" style="line-height: 1.1;">
+                    <strong>Forma de pago:</strong>
+                    <p class="m-0" t-field="o.forma_pago_id.code"/>
+                </div>
+                
             </div>
         </xpath>
 
