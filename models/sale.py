@@ -82,3 +82,34 @@ class SaleOrder(models.Model):
               local_dt_from = naive_from.replace(tzinfo=pytz.UTC).astimezone(local)
               sale.fecha_corregida = local_dt_from.strftime ("%Y-%m-%d %H:%M:%S")
               #_logger.info('fecha ... %s', sale.fecha_corregida)
+
+
+
+    #Forzar que el pedido use el partner maestro como “Invoice Address”
+    #Sobrescribe el onchange de partner_id en sale.order para que, después del super(), siempre deje partner_invoice_id = commercial_partner_id.
+    @api.onchange('partner_id', 'company_id')
+    def _onchange_partner_id(self):
+        # Llama al método correcto de la base
+        res = super()._onchange_partner_id()
+        # Forzar que la dirección de facturación sea SIEMPRE el partner comercial (maestro)
+        for order in self:
+            if order.partner_id:
+                order.partner_invoice_id = order.partner_id.commercial_partner_id
+        return res
+
+    #   2) Red de seguridad al crear la factura
+    #   Aunque el punto 1 suele ser suficiente, por si otro módulo reescribe partner_invoice_id o el usuario lo cambia manualmente,
+    #   fuerza el partner en la factura en _prepare_invoice().
+    def _prepare_invoice(self):
+        vals = super()._prepare_invoice()
+        # Red de seguridad: la factura se crea contra el partner maestro
+        if self.partner_id:
+            vals['partner_id'] = self.partner_id.commercial_partner_id.id
+        return vals
+
+    def _create_invoices(self, grouped=False, final=False, date=None):
+        moves = super()._create_invoices(grouped=grouped, final=final, date=date)
+        # Extra por si algún módulo vuelve a cambiarlo
+        for move in moves:
+            move.partner_id = move.partner_id.commercial_partner_id
+        return moves
