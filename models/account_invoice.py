@@ -3,8 +3,9 @@
 import base64
 import json
 import requests
-import datetime
+
 from lxml import etree
+from datetime import datetime, date
 
 from odoo import fields, models, api, _
 import odoo.addons.decimal_precision as dp
