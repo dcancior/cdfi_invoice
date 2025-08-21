@@ -229,13 +229,13 @@ class AccountMove(models.Model):
 
         local = pytz.timezone(timezone)
         if not self.fecha_factura:
-            naive_from = datetime.datetime.now()
+            naive_from = datetime.now()
         else:
             naive_from = self.fecha_factura
         local_dt_from = naive_from.replace(tzinfo=pytz.UTC).astimezone(local)
         date_from = local_dt_from.strftime("%Y-%m-%dT%H:%M:%S")
         if not self.fecha_factura:
-            self.fecha_factura = datetime.datetime.now()
+            self.fecha_factura = datetime.now()
 
         if self.currency_id.name == 'MXN':
             tipocambio = 1
@@ -678,13 +678,17 @@ class AccountMove(models.Model):
     from datetime import datetime
 
     def action_cfdi_generate(self):
-        fecha_limite = datetime(2025, 8, 15)
+        # 🔹 Usa date directamente para evitar mezclar datetime vs date
+        fecha_limite = date(2025, 8, 15)
 
-        # after validate, send invoice data to external system via http post
         for invoice in self:
-            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar,
-            # excepto si la factura es anterior al 15/08/2025
-            if invoice.invoice_date and invoice.invoice_date >= fecha_limite.date():
+            # 🔹 Normalizar invoice_date (a veces viene como datetime)
+            inv_date = invoice.invoice_date
+            if isinstance(inv_date, datetime):
+                inv_date = inv_date.date()
+
+            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar
+            if inv_date and inv_date >= fecha_limite:
                 if hasattr(invoice, 'desglosar_iva') and not invoice.desglosar_iva:
                     raise UserError(_(
                         'ADVERTENCIA: El desglose de IVA no está activo\n\n'
