@@ -1,32 +1,45 @@
 <?xml version="1.0"?>
 <odoo>
     <data>
-
-
-        <record id="view_partner_form_cfdi_after_vat" model="ir.ui.view">
-            <field name="name">res.partner.form.inherit.cfdi.after.vat</field>
+       <record id="view_partner_form_cfdi_before_notebook" model="ir.ui.view">
+            <field name="name">res.partner.form.inherit.cfdi.before.notebook</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="priority" eval="30"/>
             <field name="arch" type="xml">
-                <!-- Insertar contenido justo después de VAT -->
-                <xpath expr="//sheet//field[@name='vat']" position="after">
-              
-               
-                    <!-- Columna izquierda -->
-                    <group class="o_col-6 o_inner_group" string="Preferencias de factura" col="2">
-                    <field name="uso_cfdi_id" options="{'no_quick_create': True, 'no_create_edit': True}"/>
-                    <field name="regimen_fiscal_id" options="{'no_quick_create': True, 'no_create_edit': True}"/>
+
+                <!-- Inserta ANTES del notebook del formulario principal -->
+                <xpath expr="//sheet//notebook" position="before">
+                <separator string="Datos CFDI"/>
+
+                <group>
+                    <!-- Columna izquierda: Preferencias de factura -->
+                    <group string="Preferencias de factura" col="2">
+                    <label for="uso_cfdi_id" class="o_form_label" style="font-weight:400;">Uso CFDI (cliente)</label>
+                    <field name="uso_cfdi_id" nolabel="1"
+                            options="{'no_quick_create': True, 'no_create_edit': True}"/>
+
+                    <label for="regimen_fiscal_id" class="o_form_label" style="font-weight:400;">Régimen Fiscal</label>
+                    <field name="regimen_fiscal_id" nolabel="1"
+                            options="{'no_quick_create': True, 'no_create_edit': True}"/>
                     </group>
 
-                    <!-- Columna derecha -->
-                    <group class="o_col-6 o_inner_group" string="Detalles extranjero" col="2">
-                    <field name="residencia_fiscal"/>
-                    <field name="registro_tributario"/>
+                    <!-- Columna derecha: Detalles extranjero -->
+                    <group string="Detalles extranjero" col="2">
+                    <label for="residencia_fiscal" class="o_form_label" style="font-weight:400;">Residencia Fiscal</label>
+                    <field name="residencia_fiscal" nolabel="1"/>
+
+                    <label for="registro_tributario" class="o_form_label" style="font-weight:400;">Registro Tributario</label>
+                    <field name="registro_tributario" nolabel="1"/>
                     </group>
-                
+                </group>
                 </xpath>
+
             </field>
             </record>
+
+
+
 
 
 
@@ -37,7 +50,6 @@
                 <field name="arch" type="xml">
                     <xpath expr="//page[@name='contact_addresses']" position="replace">
                         <page string="Contactos y Facturación" name="contact_addresses" autofocus="autofocus">
-                            <!--<field name="child_ids" mode="kanban" context="{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang, 'default_user_id': user_id, 'default_type': 'contact'}">-->
                             <field name="child_ids" mode="kanban" context="{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang, 'default_user_id': user_id, 'default_type': 'contact'}">
                                 <kanban>
                                     <field name="id"/>

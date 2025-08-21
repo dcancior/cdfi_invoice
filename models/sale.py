@@ -17,7 +17,7 @@ class SaleOrder(models.Model):
                    ('PPD', _('Pago en parcialidades o diferido')),],
         string=_('Método de pago'), 
     )
-    uso_cfdi_id  =  fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
+    uso_cfdi_id  =  fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI')
     fecha_corregida = fields.Datetime(string=_('Fecha Cotizacion'), compute='_get_fecha_corregida')
 
     @api.onchange('partner_id')

@@ -8,7 +8,7 @@ class ResPartner(models.Model):
     # Campos CFDI adicionales
     residencia_fiscal = fields.Char(string=_('Residencia Fiscal'))
     registro_tributario = fields.Char(string=_('Registro tributario'))
-    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
+    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI')
     regimen_fiscal_id = fields.Many2one('catalogo.regimen.fiscal', string='Régimen Fiscal')
 
     # RFCs adicionales (no tocan automáticamente el VAT maestro)
