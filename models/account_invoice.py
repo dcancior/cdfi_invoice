@@ -679,7 +679,7 @@ class AccountMove(models.Model):
 
     def action_cfdi_generate(self):
         # 🔹 Usa date directamente para evitar mezclar datetime vs date
-        fecha_limite = date(2025, 8, 12)
+        fecha_limite = date(2025, 8, 15)
 
         for invoice in self:
             # 🔹 Normalizar invoice_date (a veces viene como datetime)
@@ -1004,17 +1004,6 @@ class AccountMove(models.Model):
                 'target': 'new'
             }
 
-
-
-    #PARE EVITAR TIMBRAR SI CANTIDAD ES MENOR O IGUAL A 0
-    def action_post(self):
-        for move in self:
-            bad = move.invoice_line_ids.filtered(lambda l: not l.display_type and (l.quantity or 0.0) <= 0.0)
-            if bad:
-                details = '\n'.join(f"- {l.name or l.product_id.display_name} (qty={l.quantity})" for l in bad)
-                raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
-        return super().action_post()
-
     #PARE EVITAR TIMBRAR SI CANTIDAD ES MENOR O IGUAL A 0
     def action_post(self):
         for move in self:
@@ -1081,4 +1070,38 @@ class MyModuleMessageWizard(models.TransientModel):
     #    @api.multi
     def action_close(self):
         return {'type': 'ir.actions.act_window_close'}
+
+
+class AccountMoveSanitizeDesglosarIVA(models.Model):
+    _inherit = 'account.move'
+
+    @staticmethod
+    def _to_bool(val):
+        if isinstance(val, bool) or val is None:
+            return val
+        if isinstance(val, (int, float)):
+            return bool(val)
+        if isinstance(val, str):
+            return val.strip().lower() in ('true', 't', '1', 'yes', 'y', 'si', 'sí')
+        return False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'desglosar_iva' in vals:
+                vals['desglosar_iva'] = self._to_bool(vals['desglosar_iva'])
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'desglosar_iva' in vals:
+            vals['desglosar_iva'] = self._to_bool(vals['desglosar_iva'])
+        return super().write(vals)
+    
+    @api.returns('self', lambda r: r.id)
+    def copy(self, default=None):
+        default = dict(default or {})
+        # …tus defaults actuales…
+        if 'desglosar_iva' in default:
+            default['desglosar_iva'] = self._to_bool(default['desglosar_iva'])
+        return super().copy(default=default)
 
