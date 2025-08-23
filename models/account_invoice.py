@@ -679,7 +679,7 @@ class AccountMove(models.Model):
 
     def action_cfdi_generate(self):
         # 🔹 Usa date directamente para evitar mezclar datetime vs date
-        fecha_limite = date(2025, 8, 15)
+        fecha_limite = date(2025, 8, 12)
 
         for invoice in self:
             # 🔹 Normalizar invoice_date (a veces viene como datetime)
