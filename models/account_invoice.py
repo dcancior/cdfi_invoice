@@ -145,6 +145,40 @@ class AccountMove(models.Model):
 #            values['edi_document_ids'] = None
 #        return values
 
+
+    # Si quieres, fija un default explícito y evitas nulos:
+    # desglosar_iva = fields.Selection([...], default='si')
+
+    @staticmethod
+    def _normalize_desglosar_iva(v):
+        # Aceptar ya válidos
+        if v in ('si', 'no', False, None):
+            return v
+        # Booleans → claves de selección
+        if isinstance(v, bool):
+            return 'si' if v else 'no'
+        # Strings comunes → claves
+        if isinstance(v, str):
+            low = v.strip().lower()
+            if low in ('true', '1', 'yes', 'y', 'si', 'sí'):
+                return 'si'
+            if low in ('false', '0', 'no', ''):
+                return 'no'  # o False si prefieres dejarlo vacío
+        # Cualquier otro caso: dejar vacío para no romper
+        return False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if 'desglosar_iva' in vals:
+                vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'desglosar_iva' in vals:
+            vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
+        return super().write(vals)
+
     @api.returns('self', lambda value: value.id)
     def copy(self, default=None):
         default = dict(default or {})
