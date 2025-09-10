@@ -1,87 +1,107 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-	
+
+    <!-- Vista tree de Facturación -->
     <record id="view_invoice_inherit_tree" model="ir.ui.view">
         <field name="name">account.move.inherit.tree</field>
         <field name="model">account.move</field>
-        <field name="inherit_id" ref="account.view_invoice_tree" />
+        <field name="inherit_id" ref="account.view_invoice_tree"/>
         <field name="arch" type="xml">
+
+            <!-- Colores en la fila completa -->
+            <tree position="attributes">
+                <attribute name="decoration-success">estado_factura == 'factura_correcta'</attribute>
+                <attribute name="decoration-danger">estado_factura == 'factura_cancelada'</attribute>
+                <attribute name="decoration-warning">estado_factura == 'factura_no_generada'</attribute>
+            </tree>
+
+            <!-- Campo Estado CFDI mostrado como badge -->
             <field name="state" position="before">
-            	<field name="estado_factura" string="Estado CFDI"/>
+                <field name="estado_factura" string="Estado CFDI" widget="badge"
+                       decoration-success="estado_factura == 'factura_correcta'"
+                       decoration-danger="estado_factura == 'factura_cancelada'"
+                       decoration-warning="estado_factura == 'factura_no_generada'"/>
             </field>
         </field>
     </record>
 
+    <!-- Vista form de Facturación -->
     <record id="view_invoice_inherit_form" model="ir.ui.view">
-            <field name="name">account.move.inherit.form</field>
-            <field name="model">account.move</field>
-            <field name="inherit_id" ref="account.view_move_form" />
-            <field name="arch" type="xml">
-                <xpath expr="//notebook" position="inside">
-                    <page name="info_cdfi" string="CFDI">
-                            <group cols="4">
-                                <group string="Detalles de Pago">
-                                    <field name="methodo_pago" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    <field name="forma_pago_id" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    
-                                    <field name="uso_cfdi_id" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    <field name="exportacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                </group>
-                                <group  string="Detalles de Factura">
-                                    <field name="tipo_comprobante" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    <field name="folio_fiscal"/>
-                                    <field name="confirmacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    <field name="estado_factura"/>
-                                    <field name="fecha_factura" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    <field name="proceso_timbrado"/>
-                                </group>
-                                <group  string="CFDI Relacionados">
-                                    <field name="tipo_relacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                    <field name="uuid_relacionado" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                                </group>
-                                <group  string="Complementos" name="complementos">
-                                    <field name="factura_global" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
-                                </group>
-                            </group>
-                    </page>
-                    <page name="info_global" string="Factura global"  attrs="{'invisible': [('factura_global','=',False)]}">
-                        <group cols="4">
-                            <group>
-                                <field name="fg_periodicidad" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
-                                <field name="fg_meses" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
-                                <field name="fg_ano" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
-                            </group>
+        <field name="name">account.move.inherit.form</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page name="info_cdfi" string="CFDI">
+                    <group cols="4">
+                        <group string="Detalles de Pago">
+                            <field name="methodo_pago" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="forma_pago_id" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="uso_cfdi_id" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="exportacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
                         </group>
-                    </page>
-                </xpath>
-                <field name="ref" position="after">
-                    <field name="factura_cfdi" invisible="1"/>
-                </field>
-                <button name="action_invoice_sent" position="before">
-                	<button name="action_invoice_sent" type="object" string="Enviar por correo-e" attrs="{'invisible':[('state', 'not in', ('cancel'))]}" groups="base.group_user"/>
-                </button>
-                <button name="button_draft" position="before">
-                    <button name="action_cfdi_generate" type="object" string="Generar CFDI"
-                            attrs="{'invisible':['|','|',('state','in',('draft','cancel')), ('estado_factura','in',('factura_correcta','factura_cancelada','solicitud_rechazada')),
-                                   ('move_type','not in',('out_invoice', 'out_refund'))]}" 
-                            class="oe_highlight" groups="base.group_user"/>
-                    <button name="%(cdfi_invoice.reason_cancelation_sat_wizard)d"
-                            type="action" 
-                            string="Cancelar CFDI" 
-                            attrs="{'invisible':['|',('factura_cfdi','=',False), ('estado_factura','in',('solicitud_cancelar', 'factura_cancelada', 'solicitud_rechazada'))]}" 
-                            class="oe_highlight" 
-                            groups="base.group_user"/>
-                    <button name="action_cfdi_rechazada"
-                            type="object" 
-                            string="Cambiar estado CFDI a factura correcta" 
-                            attrs="{'invisible':['|',('factura_cfdi','=',False), ('estado_factura','not in',('solicitud_cancelar', 'solicitud_rechazada'))]}" 
-                            class="oe_highlight" 
-                            groups="base.group_user"
-                            confirm="La factura va pasar a estado correcto y puede intentar cancelar nuevamente."/>
-                </button>
-            </field>
-        </record>
+                        <group string="Detalles de Factura">
+                            <field name="tipo_comprobante" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="folio_fiscal"/>
+                            <field name="confirmacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <!-- Badge de estado -->
+                            <field name="estado_factura" widget="badge"/>
+                            <field name="fecha_factura" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="proceso_timbrado"/>
+                        </group>
+                        <group string="CFDI Relacionados">
+                            <field name="tipo_relacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="uuid_relacionado" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                        </group>
+                        <group string="Complementos" name="complementos">
+                            <field name="factura_global" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
+                        </group>
+                    </group>
+                </page>
 
+                <page name="info_global" string="Factura global" attrs="{'invisible': [('factura_global','=',False)]}">
+                    <group cols="4">
+                        <group>
+                            <field name="fg_periodicidad" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="fg_meses" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="fg_ano" attrs="{'readonly':[('estado_factura','!=','factura_no_generada')]}"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+            <field name="ref" position="after">
+                <field name="factura_cfdi" invisible="1"/>
+            </field>
+
+            <button name="action_invoice_sent" position="before">
+                <button name="action_invoice_sent" type="object" string="Enviar por correo-e"
+                        attrs="{'invisible':[('state', 'not in', ('cancel'))]}" groups="base.group_user"/>
+            </button>
+
+            <button name="button_draft" position="before">
+                <button name="action_cfdi_generate" type="object" string="Generar CFDI"
+                        attrs="{'invisible':['|','|',('state','in',('draft','cancel')),
+                                             ('estado_factura','in',('factura_correcta','factura_cancelada','solicitud_rechazada')),
+                                             ('move_type','not in',('out_invoice', 'out_refund'))]}"
+                        class="oe_highlight" groups="base.group_user"/>
+
+                <button name="%(cdfi_invoice.reason_cancelation_sat_wizard)d" 
+                        type="action" string="Cancelar CFDI"
+                        attrs="{'invisible':['|',('factura_cfdi','=',False),
+                                                  ('estado_factura','in',('solicitud_cancelar', 'factura_cancelada', 'solicitud_rechazada'))]}"
+                        class="oe_highlight" groups="base.group_user"/>
+
+                <button name="action_cfdi_rechazada" type="object" string="Cambiar estado CFDI a factura correcta"
+                        attrs="{'invisible':['|',('factura_cfdi','=',False),
+                                                  ('estado_factura','not in',('solicitud_cancelar', 'solicitud_rechazada'))]}"
+                        class="oe_highlight" groups="base.group_user"
+                        confirm="La factura va pasar a estado correcto y puede intentar cancelar nuevamente."/>
+            </button>
+        </field>
+    </record>
+
+    <!-- Acción servidor desbloquear CFDI -->
     <record id="model_action_liberar_cfdi" model="ir.actions.server">
         <field name="name">Desbloquear CFDI</field>
         <field name="model_id" ref="account.model_account_move"/>
@@ -90,6 +110,7 @@
         <field name="code">action = records.liberar_cfdi()</field>
     </record>
 
+    <!-- Wizard mensaje -->
     <record id="mymodule_message_wizard_form" model="ir.ui.view">
         <field name="name">mymodule.message.wizard.form</field>
         <field name="model">mymodule.message.wizard</field>
@@ -104,4 +125,3 @@
     </record>
 
 </odoo>
-

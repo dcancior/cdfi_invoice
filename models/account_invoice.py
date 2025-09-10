@@ -40,8 +40,8 @@ class AccountMove(models.Model):
     )
     uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
     estado_factura = fields.Selection(
-        selection=[('factura_no_generada', 'Factura no generada'), ('factura_correcta', 'Factura correcta'),
-                   ('solicitud_cancelar', 'Cancelación en proceso'), ('factura_cancelada', 'Factura cancelada'),
+        selection=[('factura_no_generada', 'CFDI no generado'), ('factura_correcta', 'CFDI Emitido'),
+                   ('solicitud_cancelar', 'Cancelación en proceso'), ('factura_cancelada', 'CFDI Cancelado'),
                    ('solicitud_rechazada', 'Cancelación rechazada'), ],
         string=_('Estado de factura'),
         default='factura_no_generada',
