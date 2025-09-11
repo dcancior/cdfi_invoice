@@ -11,7 +11,6 @@
                             <group string="Detalles de Pago">
                             	<field name="methodo_pago"/>
 								<field name="forma_pago_id"/>
-                            	
                             	<field name="uso_cfdi_id"/>
                             </group>
                         </group>
@@ -19,4 +18,25 @@
             </xpath>
 		</field>
 	</record>
+
+   
+    <record id="view_order_tree_inherit_add_cfdi_emitido" model="ir.ui.view">
+    <field name="name">sale.order.tree.inherit.add.cfdi.emitido</field>
+    <field name="model">sale.order</field>
+    <field name="inherit_id" ref="sale.view_order_tree"/>
+    <field name="arch" type="xml">
+      <!-- Añadir verde si es 'invoiced' o 'cfdi_emitido' -->
+      <xpath expr="//tree" position="attributes">
+        <attribute name="decoration-success">invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'</attribute>
+      </xpath>
+
+      <!-- Mantener el MISMO campo: invoice_status -->
+      <xpath expr="//field[@name='invoice_status']" position="replace">
+        <field name="invoice_status" widget="badge" optional="show"
+               decoration-success="invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'"
+               decoration-info="invoice_status == 'to invoice'"
+               decoration-warning="invoice_status == 'upselling'"/>
+      </xpath>
+    </field>
+  </record>
 </odoo>
