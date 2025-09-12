@@ -124,3 +124,89 @@ class SaleOrder(models.Model):
         for move in moves:
             move.partner_id = move.partner_id.commercial_partner_id
         return moves
+
+
+    # -------------------------------------------------------------------------
+    # Campo espejo del estado CFDI tomando en cuenta TODAS las facturas del pedido
+    # -------------------------------------------------------------------------
+    estado_cfdi = fields.Selection(
+        selection=[
+            ('factura_no_generada', 'CFDI no generado'),
+            ('factura_correcta',    'CFDI Emitido'),
+            ('solicitud_cancelar',  'Cancelación en proceso'),
+            ('factura_cancelada',   'CFDI Cancelado'),
+            ('solicitud_rechazada', 'Cancelación rechazada'),
+        ],
+        string='Estado CFDI (facturas)',
+        compute='_compute_estado_cfdi',  # se calcula en función de las facturas
+        store=True,                      # se almacena en BD (útil para decoraciones/filtros rápidos)
+        readonly=True,
+        help="Resumen del estado CFDI según las facturas relacionadas al pedido."
+    )
+
+    # Mapa de prioridades para resolver mezclas de estados en múltiples facturas
+    # (valor mayor => mayor prioridad visual/funcional)
+    _ESTADO_CFDI_PRIORITY = {
+        'solicitud_cancelar': 4,
+        'factura_correcta':   3,
+        'solicitud_rechazada':2,
+        'factura_cancelada':  1,
+        'factura_no_generada':0,
+        None:                 -1,  # por si algún valor viene vacío
+    }
+
+    @api.depends(
+        # Disparo fino: cambia cuando el estado de cualquier factura ligada cambia
+        'order_line.invoice_lines.move_id.estado_factura',
+        'order_line.invoice_lines.move_id.move_type',
+    )
+    def _compute_estado_cfdi(self):
+        """
+        Lógica de agregación:
+        - Si no hay facturas: 'factura_no_generada'
+        - Si hay mezcla de estados, gana el de mayor prioridad:
+            solicitud_cancelar > factura_correcta > solicitud_rechazada > factura_cancelada > factura_no_generada
+        - Caso particular: si TODAS están canceladas, queda 'factura_cancelada'.
+        """
+        for order in self:
+            # Trae las account.move (facturas/NC) ligadas a este pedido
+            # usando la relación real: sale.order -> sale.order.line -> account.move.line -> account.move
+            moves = order.order_line.invoice_lines.mapped('move_id') \
+                .filtered(lambda m: m.move_type in ('out_invoice', 'out_refund'))
+
+            # Sin facturas: estado inicial
+            if not moves:
+                order.estado_cfdi = 'factura_no_generada'
+                continue
+
+            # Conjunto de estados presentes en las facturas
+            estados = set(moves.mapped('estado_factura'))
+
+            # Si todas están canceladas, lo mostramos explícito
+            if estados and estados == {'factura_cancelada'}:
+                order.estado_cfdi = 'factura_cancelada'
+                continue
+
+            # Selección por prioridad (el estado con mayor prioridad "gana")
+            # Ej.: si hay una en 'solicitud_cancelar' y otra en 'factura_correcta', ganará 'solicitud_cancelar'
+            mejor_estado = max(estados, key=lambda e: self._ESTADO_CFDI_PRIORITY.get(e, -1))
+
+            # Si por alguna razón el mejor_estado no está mapeado, cae a 'factura_no_generada'
+            order.estado_cfdi = mejor_estado if mejor_estado in self._ESTADO_CFDI_PRIORITY else 'factura_no_generada'
+
+    # -------------------------------------------------------------------------
+    # (Opcional) Si quisieras una variante "estricta" (solo 'factura_correcta' cuando TODAS lo están):
+    # Descomenta y usa esta función dentro del compute en vez del bloque de prioridad:
+    # -------------------------------------------------------------------------
+    # def _aggregate_estado_cfdi_estricto(self, estados):
+    #     if not estados:
+    #         return 'factura_no_generada'
+    #     if estados == {'factura_correcta'}:
+    #         return 'factura_correcta'
+    #     if estados == {'factura_cancelada'}:
+    #         return 'factura_cancelada'
+    #     if 'solicitud_cancelar' in estados:
+    #         return 'solicitud_cancelar'
+    #     if 'solicitud_rechazada' in estados:
+    #         return 'solicitud_rechazada'
+    #     return 'factura_no_generada'

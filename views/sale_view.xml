@@ -39,4 +39,60 @@
       </xpath>
     </field>
   </record>
+
+
+  <!-- A) Inherit de la vista de cotizaciones/pedidos más usada en Odoo 16 -->
+<record id="view_order_tree_inherit_estado_cfdi_vqt" model="ir.ui.view">
+    <field name="name">sale.order.tree.inherit.estado_cfdi.vqt</field>
+    <field name="model">sale.order</field>
+    <field name="inherit_id" ref="sale.view_quotation_tree"/>
+    <field name="arch" type="xml">
+
+        <!-- Decoraciones a nivel de fila -->
+        <tree position="attributes">
+            <attribute name="decoration-success">estado_cfdi == 'factura_correcta'</attribute>
+            <attribute name="decoration-danger">estado_cfdi == 'factura_cancelada'</attribute>
+            <attribute name="decoration-warning">estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')</attribute>
+        </tree>
+
+        <!-- 1) Intento preferido: insertar antes de 'state' 
+        <xpath expr="//tree/field[@name='state']" position="before">
+            <field name="estado_cfdi" string="Estado CFDI" widget="badge"
+                   decoration-success="estado_cfdi == 'factura_correcta'"
+                   decoration-danger="estado_cfdi == 'factura_cancelada'"
+                   decoration-warning="estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')"/>
+        </xpath>
+        -->
+
+        <!-- 2) Fallback: si el XPath anterior no engancha, insertamos dentro del <tree> (aparece al final de columnas) -->
+        <xpath expr="//tree" position="inside">
+            <field name="estado_cfdi" string="Estado CFDI" widget="badge"
+                   decoration-success="estado_cfdi == 'factura_correcta'"
+                   decoration-danger="estado_cfdi == 'factura_cancelada'"
+                   decoration-warning="estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')"/>
+        </xpath>
+
+    </field>
+</record>
+
+
+
+<!-- Filtros por Estado CFDI en la búsqueda de pedidos -->
+<record id="view_order_search_inherit_estado_cfdi" model="ir.ui.view">
+    <field name="name">sale.order.search.inherit.estado_cfdi</field>
+    <field name="model">sale.order</field>
+    <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+    <field name="arch" type="xml">
+        <xpath expr="//search" position="inside">
+            <filter name="estado_cfdi_emitido" string="CFDI Emitido"
+                    domain="[('estado_cfdi','=','factura_correcta')]"/>
+            <filter name="estado_cfdi_cancelado" string="CFDI Cancelado"
+                    domain="[('estado_cfdi','=','factura_cancelada')]"/>
+            <filter name="estado_cfdi_en_proceso" string="Cancelación en proceso"
+                    domain="[('estado_cfdi','=','solicitud_cancelar')]"/>
+            <filter name="estado_cfdi_no_generado" string="CFDI no generado"
+                    domain="[('estado_cfdi','=','factura_no_generada')]"/>
+        </xpath>
+    </field>
+</record>
 </odoo>
