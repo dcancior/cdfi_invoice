@@ -215,20 +215,57 @@ class SaleOrder(models.Model):
 
     @api.onchange('methodo_pago')
     def _onchange_methodo_pago_set_forma_pago(self):
-        """Si el método es PPD, setear automáticamente 'Por definir' (99)."""
+        """
+        Si el método de pago indica PPD, poner 'Por definir (99)'.
+        En cualquier otro caso (incluye vacío), limpiar la forma de pago.
+        """
         for order in self:
-            if not order.methodo_pago:
-                continue
+            val = (order.methodo_pago or '').strip().lower()
+            es_ppd = (
+                val in ('ppd', 'pago en parcialidades o diferido', 'parcialidades o diferido')
+                or 'ppd' in val
+                or 'parcial' in val
+                or 'diferid' in val
+            )
 
-            # Normalizamos por si guardas 'PPD' o la etiqueta completa
-            val = str(order.methodo_pago or '').lower()
-            es_ppd = val == 'ppd' or 'parcialidades' in val or 'diferido' in val
+            # --- Many2one: forma_pago_id ---
+            if 'forma_pago_id' in order._fields:
+                if es_ppd:
+                    comodel = order._fields['forma_pago_id'].comodel_name
+                    Forma = self.env[comodel]  # evita KeyError del modelo
+                    code_field = next((c for c in (
+                        'code', 'codigo', 'clave', 'key', 'codigo_sat', 'code_sat'
+                    ) if c in Forma._fields), None)
 
-            if es_ppd and order._fields.get('forma_pago_id'):
-                # ⚠️ Sustituye 'catalogo.forma.pago' por el modelo real de tu catálogo.
-                forma_por_definir = self.env['catalogo.forma.pago'].search([
-                    ('code', '=', '99')  # campo código del SAT
-                ], limit=1)
+                    rec = False
+                    if code_field:
+                        rec = Forma.search([(code_field, '=', '99')], limit=1)
+                    if not rec:
+                        rec = Forma.search(['|', ('name', 'ilike', 'por definir'),
+                                                  ('name', 'ilike', '99')], limit=1)
+                    order.forma_pago_id = rec.id if rec else False
+                else:
+                    # Limpiar cuando no es PPD
+                    order.forma_pago_id = False
 
-                if forma_por_definir:
-                    order.forma_pago_id = forma_por_definir.id
+            # --- Selection: forma_pago (por si tu campo no es Many2one) ---
+            elif 'forma_pago' in order._fields and order._fields['forma_pago']._type == 'selection':
+                if es_ppd:
+                    sel = order._fields['forma_pago'].selection
+                    if callable(sel):
+                        sel = sel(self.env)
+                    claves = [k for k, _ in (sel or [])]
+                    if '99' in claves:
+                        order.forma_pago = '99'
+                    else:
+                        asignado = False
+                        for key, label in (sel or []):
+                            if (label or '').strip().lower().find('por definir') >= 0:
+                                order.forma_pago = key
+                                asignado = True
+                                break
+                        if not asignado:
+                            order.forma_pago = False
+                else:
+                    # Limpiar cuando no es PPD
+                    order.forma_pago = False
