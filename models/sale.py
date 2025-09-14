@@ -283,7 +283,6 @@ class SaleOrder(models.Model):
 
     def write(self, vals):
         res = super().write(vals)
-        # Si cambiaron la forma de pago, registramos uso
         if 'forma_pago_id' in vals:
             Usage = self.env['catalogo.forma.pago.usage'].sudo()
             for order in self:
