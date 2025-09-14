@@ -269,3 +269,24 @@ class SaleOrder(models.Model):
                 else:
                     # Limpiar cuando no es PPD
                     order.forma_pago = False
+
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        Usage = self.env['catalogo.forma.pago.usage'].sudo()
+        for order, vals in zip(orders, vals_list):
+            fid = vals.get('forma_pago_id')
+            if fid:
+                Usage.bump(fid, user_id=self.env.uid)
+        return orders
+
+    def write(self, vals):
+        res = super().write(vals)
+        # Si cambiaron la forma de pago, registramos uso
+        if 'forma_pago_id' in vals:
+            Usage = self.env['catalogo.forma.pago.usage'].sudo()
+            for order in self:
+                if order.forma_pago_id:
+                    Usage.bump(order.forma_pago_id.id, user_id=self.env.uid)
+        return res

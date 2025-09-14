@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 	<record id="view_sale_order_form_inherit" model="ir.ui.view">
-		<field name="name">sale.order.form.inherit</field>
-		<field name="model">sale.order</field>
-		<field name="inherit_id" ref="sale.view_order_form" />
-		<field name="arch" type="xml">
+        <field name="name">sale.order.form.inherit</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
             <xpath expr="//notebook" position="inside">
-                <page name="info_cdfi" string="CFDI">
-                        <group cols="4">
-                            <group string="Detalles de Pago">
-                            	<field name="methodo_pago"/>
-								<field name="forma_pago_id"/>
-                            	<field name="uso_cfdi_id"/>
-                            </group>
-                        </group>
-                </page>
+            <page name="info_cdfi" string="CFDI">
+                <group cols="4">
+                <group string="Detalles de Pago">
+                    <field name="methodo_pago"/>
+                    <!-- 👇 clave: activar priorización -->
+                    <field name="forma_pago_id" context="{'prioritize_usage': 1}"/>
+                    <field name="uso_cfdi_id"/>
+                </group>
+                </group>
+            </page>
             </xpath>
-		</field>
-	</record>
+        </field>
+        </record>
 
 
    
