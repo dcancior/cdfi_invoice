@@ -8,3 +8,4 @@ class FormaPago(models.Model):
 
     code = fields.Char(string='Clave')
     description = fields.Char(string='Descripción')
+

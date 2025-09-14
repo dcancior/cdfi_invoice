@@ -210,3 +210,25 @@ class SaleOrder(models.Model):
     #     if 'solicitud_rechazada' in estados:
     #         return 'solicitud_rechazada'
     #     return 'factura_no_generada'
+
+    
+
+    @api.onchange('methodo_pago')
+    def _onchange_methodo_pago_set_forma_pago(self):
+        """Si el método es PPD, setear automáticamente 'Por definir' (99)."""
+        for order in self:
+            if not order.methodo_pago:
+                continue
+
+            # Normalizamos por si guardas 'PPD' o la etiqueta completa
+            val = str(order.methodo_pago or '').lower()
+            es_ppd = val == 'ppd' or 'parcialidades' in val or 'diferido' in val
+
+            if es_ppd and order._fields.get('forma_pago_id'):
+                # ⚠️ Sustituye 'catalogo.forma.pago' por el modelo real de tu catálogo.
+                forma_por_definir = self.env['catalogo.forma.pago'].search([
+                    ('code', '=', '99')  # campo código del SAT
+                ], limit=1)
+
+                if forma_por_definir:
+                    order.forma_pago_id = forma_por_definir.id

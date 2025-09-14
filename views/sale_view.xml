@@ -19,6 +19,7 @@
 		</field>
 	</record>
 
+
    
     <record id="view_order_tree_inherit_add_cfdi_emitido" model="ir.ui.view">
     <field name="name">sale.order.tree.inherit.add.cfdi.emitido</field>
