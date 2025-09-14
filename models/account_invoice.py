@@ -171,15 +171,51 @@ class AccountMove(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # normalización existente
         for vals in vals_list:
             if 'desglosar_iva' in vals:
                 vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
-        return super().create(vals_list)
+
+        moves = super().create(vals_list)
+
+        # 👇 priorización por uso: registrar selección elegida
+        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
+        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
+
+        for move, vals in zip(moves, vals_list):
+            # tomar de vals (si vino por create) o del registro (por defaults/onchanges)
+            fid = vals.get('forma_pago_id') or move.forma_pago_id.id
+            if fid:
+                UsageForma.bump(fid, user_id=self.env.uid)
+
+            uid_cfdi = vals.get('uso_cfdi_id') or move.uso_cfdi_id.id
+            if uid_cfdi:
+                UsageUso.bump(uid_cfdi, user_id=self.env.uid)
+
+        return moves
 
     def write(self, vals):
+        # normalización existente
         if 'desglosar_iva' in vals:
             vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
-        return super().write(vals)
+
+        res = super().write(vals)
+
+        # 👇 priorización por uso: registrar cuando cambien
+        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
+        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
+
+        if 'forma_pago_id' in vals:
+            for move in self:
+                if move.forma_pago_id:
+                    UsageForma.bump(move.forma_pago_id.id, user_id=self.env.uid)
+
+        if 'uso_cfdi_id' in vals:
+            for move in self:
+                if move.uso_cfdi_id:
+                    UsageUso.bump(move.uso_cfdi_id.id, user_id=self.env.uid)
+
+        return res
 
     @api.returns('self', lambda value: value.id)
     def copy(self, default=None):
@@ -1113,6 +1149,9 @@ class AccountMove(models.Model):
                         if (label or '').strip().lower().find('por definir') >= 0:
                             order.forma_pago = key
                             break
+
+
+    
                             
 
 class MailTemplate(models.Model):

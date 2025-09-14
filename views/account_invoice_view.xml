@@ -36,8 +36,8 @@
                     <group cols="4">
                         <group string="Detalles de Pago">
                             <field name="methodo_pago" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                            <field name="forma_pago_id" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                            <field name="uso_cfdi_id" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="forma_pago_id" context="{'prioritize_usage': 1}" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
+                            <field name="uso_cfdi_id" context="{'prioritize_usage': 1}" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
                             <field name="exportacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
                         </group>
                         <group string="Detalles de Factura">
