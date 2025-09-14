@@ -31,14 +31,16 @@ class AccountMove(models.Model):
                    ('T', 'Traslado'),
                    ],
         string=_('Tipo de comprobante'),
+        tracking=True,
     )
-    forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
+    forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago', tracking=True)
     methodo_pago = fields.Selection(
         selection=[('PUE', _('Pago en una sola exhibición')),
                    ('PPD', _('Pago en parcialidades o diferido')), ],
         string=_('Método de pago'),
+        tracking=True,
     )
-    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
+    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)', tracking=True)
     estado_factura = fields.Selection(
         selection=[('factura_no_generada', 'CFDI no generado'), ('factura_correcta', 'CFDI Emitido'),
                    ('solicitud_cancelar', 'Cancelación en proceso'), ('factura_cancelada', 'CFDI Cancelado'),
