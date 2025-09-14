@@ -1058,6 +1058,61 @@ class AccountMove(models.Model):
                 raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
         return super().action_post() 
 
+
+    @api.onchange('methodo_pago')
+    def _onchange_methodo_pago_set_forma_pago(self):
+        """
+        Si el método de pago indica PPD, setear automáticamente 'Por definir (99)'
+        en forma_pago_id. No asumimos el nombre del modelo: lo inferimos del campo.
+        """
+        for order in self:
+            val = (order.methodo_pago or '').strip().lower()
+            # Soportar distintas formas de escribirlo: PPD, “Parcialidades o diferido”, etc.
+            es_ppd = (
+                val in ('ppd', 'pago en parcialidades o diferido', 'parcialidades o diferido')
+                or 'ppd' in val
+                or 'parcial' in val
+                or 'diferid' in val
+            )
+            if not es_ppd:
+                continue
+
+            # Caso 1: Many2one 'forma_pago_id'
+            if 'forma_pago_id' in order._fields:
+                comodel = order._fields['forma_pago_id'].comodel_name
+                Forma = self.env[comodel]  # <- evita el KeyError del modelo
+                # Buscar el campo de código más común en catálogos SAT
+                code_field = next((c for c in (
+                    'code', 'codigo', 'clave', 'key', 'codigo_sat', 'code_sat'
+                ) if c in Forma._fields), None)
+
+                rec = False
+                if code_field:
+                    rec = Forma.search([(code_field, '=', '99')], limit=1)
+                if not rec:
+                    # Fallback por nombre si no hay campo código o no se encontró
+                    rec = Forma.search(['|', ('name', 'ilike', 'por definir'),
+                                              ('name', 'ilike', '99')], limit=1)
+                if rec:
+                    order.forma_pago_id = rec.id
+
+            # Caso 2 (por si acaso): si tuvieras un Selection en lugar de Many2one
+            elif 'forma_pago' in order._fields and order._fields['forma_pago']._type == 'selection':
+                sel = order._fields['forma_pago'].selection
+                if callable(sel):
+                    sel = sel(self.env)
+                # ¿Existe la clave '99'?
+                claves = [k for k, _ in (sel or [])]
+                if '99' in claves:
+                    order.forma_pago = '99'
+                else:
+                    # Buscar la etiqueta “Por definir”
+                    for key, label in (sel or []):
+                        if (label or '').strip().lower().find('por definir') >= 0:
+                            order.forma_pago = key
+                            break
+                            
+
 class MailTemplate(models.Model):
     "Templates for sending email"
     _inherit = 'mail.template'
