@@ -12,7 +12,7 @@
                     <field name="methodo_pago"/>
                     <!-- 👇 clave: activar priorización -->
                     <field name="forma_pago_id" context="{'prioritize_usage': 1}"/>
-                    <field name="uso_cfdi_id"/>
+                    <field name="uso_cfdi_id" context="{'prioritize_usage': 1}"/>
                 </group>
                 </group>
             </page>
