@@ -25,20 +25,23 @@ class AccountRegisterPayment(models.TransientModel):
 
     # Abre el payment creado (si es uno), igual que tu versión original
     def validate_complete_payment(self):
-        for rec in self:
-            payments = rec._create_payments()
-            if len(payments) > 1:
-                return
-            else:
-                return {
-                    'name': _('Payments'),
-                    'view_type': 'form',
-                    'view_mode': 'form',
-                    'res_model': 'account.payment',
-                    'view_id': False,
-                    'type': 'ir.actions.act_window',
-                    'res_id': payments.id,
-                }
+        payments = self._create_payments()  # recordset de account.payment
+        action = {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment',
+            'view_mode': 'tree,form',
+            'target': 'current',
+        }
+        if len(payments) == 1:
+            action.update({
+                'view_mode': 'form',
+                'res_id': payments.id,
+            })
+        else:
+            action.update({
+                'domain': [('id', 'in', payments.ids)],
+            })
+        return action
 
     # ---------- Helper: identificar línea RP en v16 ----------
     def _is_rp_line(self, l):
@@ -160,15 +163,21 @@ class AccountPayment(models.Model):
         string=_('Método de pago'),
     )
 
+
+    
+    
+    
+
+
     fecha_pago = fields.Datetime("Fecha de pago")
     date_payment = fields.Datetime("Fecha de CFDI")
     cuenta_emisor = fields.Many2one('res.partner.bank', string=_('Cuenta del emisor'))
     banco_emisor = fields.Char("Banco del emisor", related='cuenta_emisor.bank_name', readonly=True)
     rfc_banco_emisor = fields.Char(_("RFC banco emisor"), related='cuenta_emisor.bank_bic', readonly=True)
     numero_operacion = fields.Char(_("Número de operación"))
-    banco_receptor = fields.Char(_("Banco receptor"), compute='_compute_banco_receptor')
-    cuenta_beneficiario = fields.Char(_("Cuenta beneficiario"), compute='_compute_banco_receptor')
-    rfc_banco_receptor = fields.Char(_("RFC banco receptor"), compute='_compute_banco_receptor')
+    banco_receptor = fields.Char(_("Banco receptor"), compute='_compute_bank_fields')
+    cuenta_beneficiario = fields.Char(_("Cuenta beneficiario"), compute='_compute_bank_fields')
+    rfc_banco_receptor = fields.Char(_("RFC banco receptor"), compute='_compute_bank_fields')
     estado_pago = fields.Selection(
         selection=[('pago_no_enviado', 'REP no generado'), ('pago_correcto', 'REP correcto'),
                    ('problemas_factura', 'Problemas con el pago'), ('solicitud_cancelar', 'Cancelación en proceso'),
@@ -212,6 +221,23 @@ class AccountPayment(models.Model):
     total_pago = fields.Float("Total pagado")
     partials_payment_ids = fields.One2many('facturas.pago', 'doc_id', 'Montos')
     manual_partials = fields.Boolean("Montos manuales")
+
+
+    @api.depends('journal_id', 'journal_id.bank_id', 'journal_id.bank_account_id')
+    def _compute_bank_fields(self):
+        for rec in self:
+            bank = rec.journal_id.bank_id
+            rec.banco_receptor = bank.name if bank else ''
+            rec.rfc_banco_receptor = (bank.bic or '') if bank else ''
+            # En v16 el número de cuenta cuelga de bank_account_id
+            rec.cuenta_beneficiario = (
+                rec.journal_id.bank_account_id.acc_number
+                if rec.journal_id and rec.journal_id.bank_account_id else ''
+            )
+
+    # (Opcional) Mantén un alias para evitar que alguna vista vieja siga llamando al nombre anterior:
+    def _compute_banco_receptor(self):
+        self._compute_bank_fields()
 
     @api.depends('name')
     def _get_number_folio(self):
