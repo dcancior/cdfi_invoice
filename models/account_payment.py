@@ -23,7 +23,7 @@ _logger = logging.getLogger(__name__)
 class AccountRegisterPayment(models.TransientModel):
     _inherit = 'account.payment.register'
 
-    # ----------------- Helpers -----------------
+     # ----------------- Helpers -----------------
     def _get_child_from_active_moves(self):
         """Devuelve el partner hijo (invoice.partner_id) si todas las facturas comparten el mismo."""
         if self.env.context.get('active_model') != 'account.move':
