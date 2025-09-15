@@ -1159,7 +1159,7 @@ class AccountMove(models.Model):
         lines = self.line_ids.filtered(lambda l: (
             (getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable'))
             and not l.reconciled
-            and l.partner_id == contact
+            and l.partner_id == self.partner_id
         ))
 
         if not lines:
