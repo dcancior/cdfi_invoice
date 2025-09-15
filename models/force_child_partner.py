@@ -8,33 +8,55 @@ from odoo import models, api
 class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
-    @api.model
-    def default_get(self, fields_list):
-        vals = super().default_get(fields_list)
-        # Si nos pidieron explícitamente forzar el hijo, respeta el default_partner_id del contexto
+    # -- En algunos parches de Odoo 16 se usa este método:
+    def _create_payment_vals_from_batch(self, batch_result):
+        vals = super()._create_payment_vals_from_batch(batch_result)
+        # Si venimos de tu acción con "force_child_partner", usa el contacto hijo
+        if self.env.context.get('force_child_partner'):
+            # Partners de las líneas del batch (debería ser 1: el hijo)
+            partners = batch_result['lines'].mapped('partner_id')
+            partners = partners or self.env['res.partner'].browse(self.env.context.get('default_partner_id'))
+            partners = partners.exists()
+            if not partners:
+                return vals
+            if len(partners) > 1:
+                raise UserError(_("No se puede forzar el contacto hijo: hay más de un partner en las partidas."))
+            vals['partner_id'] = partners[0].id
+        elif self.env.context.get('default_partner_id'):
+            # Fallback si no vino bandera pero sí default
+            vals['partner_id'] = self.env.context['default_partner_id']
+        # Evita que reagrupe por matriz
+        vals.setdefault('group_payment', False)
+        return vals
+
+    # -- En otras revisiones se invoca este otro; lo incluimos por compatibilidad:
+    def _create_payment_vals_from_wizard(self):
+        vals = super()._create_payment_vals_from_wizard()
         if self.env.context.get('force_child_partner') and self.env.context.get('default_partner_id'):
             vals['partner_id'] = self.env.context['default_partner_id']
-            # Evita agrupaciones que puedan reagrupar por matriz
-            vals.setdefault('group_payment', False)
+        vals.setdefault('group_payment', False)
         return vals
 
     def _create_payments(self):
         """
-        Tras crear los pagos con el super, nos aseguramos
-        de que el partner quede en el hijo y que las líneas RP del asiento de pago
-        también queden con el hijo (crítico para conciliación y para REP).
+        Tras crear, asegura que el payment y sus líneas RP conserven el partner hijo.
+        Así, cuando se abre model=account.payment&view_type=form verás al hijo.
         """
         payments = super()._create_payments()
 
-        if self.env.context.get('force_child_partner') and self.partner_id:
-            # 1) Forzar partner en el payment
-            payments.write({'partner_id': self.partner_id.id})
+        if self.env.context.get('force_child_partner'):
+            child = (self.env['res.partner']
+                     .browse(self.env.context.get('default_partner_id'))).exists() or self.partner_id
+            if child:
+                # 1) Forzar partner en el payment
+                payments.write({'partner_id': child.id})
 
-            # 2) Forzar partner en las líneas RP del asiento contable del pago
-            for pay in payments:
-                rp_lines = pay.move_id.line_ids.filtered(
-                    lambda l: l.account_internal_type in ('receivable', 'payable')
-                )
-                rp_lines.write({'partner_id': self.partner_id.id})
-
+                # 2) Forzar partner en el asiento del pago y sus líneas RP
+                for pay in payments:
+                    if pay.move_id:
+                        pay.move_id.write({'partner_id': child.id})
+                        rp_lines = pay.move_id.line_ids.filtered(
+                            lambda l: l.account_internal_type in ('receivable', 'payable')
+                        )
+                        rp_lines.write({'partner_id': child.id})
         return payments
