@@ -1157,7 +1157,7 @@ class AccountMove(models.Model):
 
         # Filtra PARTIDAS ABIERTAS (no conciliadas) RP del hijo en esta factura
         lines = self.line_ids.filtered(lambda l: (
-            l.account_internal_type in ('receivable', 'payable')
+            (getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable'))
             and not l.reconciled
             and l.partner_id == contact
         ))

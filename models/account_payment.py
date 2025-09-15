@@ -125,7 +125,7 @@ class AccountRegisterPayment(models.TransientModel):
                 if pay.move_id:
                     pay.move_id.write({'partner_id': child.id})
                     rp_lines = pay.move_id.line_ids.filtered(
-                        lambda l: l.account_internal_type in ('receivable', 'payable')
+                        lambda l: getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable')
                     )
                     rp_lines.write({'partner_id': child.id})
         return payments
