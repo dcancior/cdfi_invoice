@@ -1177,17 +1177,13 @@ class AccountMove(models.Model):
             'view_mode': 'form',
             'target': 'new',
             'context': {
-                # 👇 OJO: abrimos el wizard sobre account.move.line y sólo con líneas del hijo
                 'active_model': 'account.move.line',
                 'active_ids': lines.ids,
-
-                # Defaults útiles
-                'default_partner_id': contact.id,       # 👈 dejas prefijado el hijo
+                'default_partner_id': contact.id,        # hijo
                 'default_partner_type': partner_type,
-                'default_group_payment': False,         # evita agrupar por partner y “re-elevar” a la matriz
-
-                # Bandera para nuestros heredados (siguiente sección)
-                'force_child_partner': True,
+                'default_group_payment': False,
+                'force_child_partner': True,             # bandera
+                'child_partner_id': contact.id,          # 🔴 CLAVE: ID del hijo explícito
             },
         }
 
