@@ -1150,6 +1150,46 @@ class AccountMove(models.Model):
                             order.forma_pago = key
                             break
 
+    def action_register_payment_child(self):
+        """Abre el wizard de pagos usando SÓLO las líneas RP del contacto hijo de esta factura."""
+        self.ensure_one()
+        contact = self.partner_id  # 👈 tu contacto hijo (porque tu factura ya es al hijo)
+
+        # Filtra PARTIDAS ABIERTAS (no conciliadas) RP del hijo en esta factura
+        lines = self.line_ids.filtered(lambda l: (
+            l.account_internal_type in ('receivable', 'payable')
+            and not l.reconciled
+            and l.partner_id == contact
+        ))
+
+        if not lines:
+            raise UserError(_("No hay partidas por cobrar/pagar abiertas para el contacto: %s") % contact.display_name)
+
+        # Define tipo de partner (cliente/proveedor) según el tipo de movimiento
+        partner_type = (
+            'customer' if self.move_type in ('out_invoice', 'out_refund', 'out_receipt') else 'supplier'
+        )
+
+        return {
+            'name': _('Registrar pago (contacto hijo)'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment.register',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                # 👇 OJO: abrimos el wizard sobre account.move.line y sólo con líneas del hijo
+                'active_model': 'account.move.line',
+                'active_ids': lines.ids,
+
+                # Defaults útiles
+                'default_partner_id': contact.id,       # 👈 dejas prefijado el hijo
+                'default_partner_type': partner_type,
+                'default_group_payment': False,         # evita agrupar por partner y “re-elevar” a la matriz
+
+                # Bandera para nuestros heredados (siguiente sección)
+                'force_child_partner': True,
+            },
+        }
 
     
                             
@@ -1211,4 +1251,7 @@ class MyModuleMessageWizard(models.TransientModel):
     #    @api.multi
     def action_close(self):
         return {'type': 'ir.actions.act_window_close'}
+
+
+
 
