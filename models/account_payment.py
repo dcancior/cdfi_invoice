@@ -41,7 +41,6 @@ class AccountRegisterPayment(models.TransientModel):
                 }
 
     # ---------- Helper: identificar línea RP en v16 ----------
-    # Blindaje final post-creación (por si otro módulo cambia el partner)
     def _is_rp_line(self, l):
         if getattr(l, 'display_type', False):
             return False
@@ -108,13 +107,23 @@ class AccountRegisterPayment(models.TransientModel):
         return vals
 
     # ---------- Post-create: blindar payment/move/líneas al HIJO ----------
-    ef _create_payments(self):
+    def _create_payments(self):
         payments = super()._create_payments()
-        # Si venimos en modo "forzar hijo", vuelve a escribir en payment/move/líneas
+
+        # 1) Preferir hijo explícito en contexto
+        child = False
         child_id = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
-        child = child_id and self.env['res.partner'].browse(child_id).exists()[:1] or False
-        if child:
-            for pay in payments:
+        if child_id:
+            child = self.env['res.partner'].browse(child_id).exists()[:1]
+
+        for pay in payments:
+            # 2) Si no viene en contexto, detectar hijo de líneas AR/AP del asiento
+            if not child and pay.move_id:
+                rp_partners = pay.move_id.line_ids.filtered(self._is_rp_line).mapped('partner_id').exists()
+                if rp_partners and len(rp_partners) == 1:
+                    child = rp_partners[0]
+
+            if child:
                 if pay.partner_id != child:
                     pay.write({'partner_id': child.id})
                 if pay.move_id and pay.move_id.partner_id != child:
@@ -350,7 +359,7 @@ class AccountPayment(models.Model):
                     pay_rec_lines = payment.move_id.line_ids.filtered(
                         lambda l: (
                             getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable')
-                            and l.partner_id == payment.partner_id   # 🔴 asegura que uses el HIJO del pago
+                            and l.partner_id == payment.partner_id   # usar el HIJO del pago
                         )
                     )
                     if payment.currency_id == mxn_currency:
@@ -491,32 +500,10 @@ class AccountPayment(models.Model):
             rec._onchange_journal()      # evita llamar a un onchange inexistente
         return res
 
-    @api.depends('amount')
-    def _compute_monto_pagar(self):
-        for record in self:
-            record.monto_pagar = record.amount or 0
-
-    @api.depends('journal_id')
-    def _compute_banco_receptor(self):
-        for record in self:
-            if record.journal_id and record.journal_id.bank_id:
-                record.banco_receptor = record.journal_id.bank_id.name
-                record.rfc_banco_receptor = record.journal_id.bank_id.bic
-            else:
-                record.banco_receptor = ''
-                record.rfc_banco_receptor = ''
-                record.cuenta_beneficiario = ''
-            if record.journal_id:
-                record.cuenta_beneficiario = record.journal_id.bank_acc_number
-            else:
-                record.banco_receptor = ''
-                record.rfc_banco_receptor = ''
-                record.cuenta_beneficiario = ''
-
     @api.depends('amount', 'currency_id')
     def _get_amount_to_text(self):
         for record in self:
-            record.amount_to_text = amount_to_text_es_MX.get_amount_to_text(record, record.amount_total, 'es_cheque', record.currency_id.name)
+            record.amount_to_text = amount_to_text_es_MX.get_amount_to_text(record, record.amount, 'es_cheque', record.currency_id.name)
 
     @api.model
     def _get_amount_2_text(self, amount_total):
@@ -670,7 +657,15 @@ class AccountPayment(models.Model):
                     'api_key': self.company_id.proveedor_timbrado,
                     'modo_prueba': self.company_id.modo_prueba,
                 },
-                'conceptos': conceptos,
+                'conceptos': [{
+                    'ClaveProdServ': '84111506',
+                    'ClaveUnidad': 'ACT',
+                    'cantidad': 1,
+                    'descripcion': 'Pago',
+                    'valorunitario': '0',
+                    'importe': '0',
+                    'ObjetoImp': '01',
+                }],
                 'totales': totales,
                 'pagos20': {'Pagos': pagos},
             }
