@@ -20,3 +20,4 @@ class AccountPaymentRegister(models.TransientModel):
             if partners and len(partners) == 1:
                 batch['partner'] = partners[0]  # ✅ clave: partner del batch = HIJO
         return batches
+#modificacion
