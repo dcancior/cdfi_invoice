@@ -1,4 +1,7 @@
-from odoo import models, api
+# models/force_child_partner.py
+# -*- coding: utf-8 -*-
+from odoo import models, api, _
+from odoo.exceptions import UserError
 
 # 2) (Opcional) Heredar el wizard para congelar el partner hijo
 #Algunas instalaciones de Odoo tienden a normalizar al commercial_partner_id durante la 
@@ -8,50 +11,68 @@ from odoo import models, api
 class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
-    # -- En algunos parches de Odoo 16 se usa este método:
-    def _create_payment_vals_from_batch(self, batch_result):
-        vals = super()._create_payment_vals_from_batch(batch_result)
-        # Si venimos de tu acción con "force_child_partner", usa el contacto hijo
+    # --- Ruta usada por tu build de Odoo (según el traceback):
+    def _create_payment_vals_from_wizard(self, batch_result):
+        """Ajusta los vals de account.payment para usar el partner hijo."""
+        vals = super()._create_payment_vals_from_wizard(batch_result)
+
         if self.env.context.get('force_child_partner'):
-            # Partners de las líneas del batch (debería ser 1: el hijo)
-            partners = batch_result['lines'].mapped('partner_id')
-            partners = partners or self.env['res.partner'].browse(self.env.context.get('default_partner_id'))
-            partners = partners.exists()
+            # batch_result es un dict; obtenemos las líneas
+            lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
+            partners = (lines or self.env['account.move.line']).mapped('partner_id').exists()
+            # Fallback al default_partner_id del contexto
+            if not partners and self.env.context.get('default_partner_id'):
+                partners = self.env['res.partner'].browse(self.env.context['default_partner_id']).exists()
             if not partners:
                 return vals
-            if len(partners) > 1:
-                raise UserError(_("No se puede forzar el contacto hijo: hay más de un partner en las partidas."))
-            vals['partner_id'] = partners[0].id
-        elif self.env.context.get('default_partner_id'):
-            # Fallback si no vino bandera pero sí default
-            vals['partner_id'] = self.env.context['default_partner_id']
-        # Evita que reagrupe por matriz
+            if isinstance(partners, models.Model) and partners._name == 'res.partner':
+                # single record fallback
+                vals['partner_id'] = partners.id
+            else:
+                # recordset normal
+                if len(partners) > 1:
+                    raise UserError(_("No se puede forzar el contacto hijo: hay más de un partner en las partidas."))
+                vals['partner_id'] = partners[0].id
+
+        # No es campo de payment, pero por si el core lo mira desde vals:
         vals.setdefault('group_payment', False)
         return vals
 
-    # -- En otras revisiones se invoca este otro; lo incluimos por compatibilidad:
-    def _create_payment_vals_from_wizard(self):
-        vals = super()._create_payment_vals_from_wizard()
-        if self.env.context.get('force_child_partner') and self.env.context.get('default_partner_id'):
-            vals['partner_id'] = self.env.context['default_partner_id']
+    # --- Ruta alternativa presente en otros parches de Odoo 16:
+    def _create_payment_vals_from_batch(self, batch_result):
+        """Mismo ajuste por si tu core usa este otro gancho."""
+        vals = super()._create_payment_vals_from_batch(batch_result)
+
+        if self.env.context.get('force_child_partner'):
+            lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
+            partners = (lines or self.env['account.move.line']).mapped('partner_id').exists()
+            if not partners and self.env.context.get('default_partner_id'):
+                partners = self.env['res.partner'].browse(self.env.context['default_partner_id']).exists()
+            if not partners:
+                return vals
+            if isinstance(partners, models.Model) and partners._name == 'res.partner':
+                vals['partner_id'] = partners.id
+            else:
+                if len(partners) > 1:
+                    raise UserError(_("No se puede forzar el contacto hijo: hay más de un partner en las partidas."))
+                vals['partner_id'] = partners[0].id
+
         vals.setdefault('group_payment', False)
         return vals
 
     def _create_payments(self):
         """
-        Tras crear, asegura que el payment y sus líneas RP conserven el partner hijo.
-        Así, cuando se abre model=account.payment&view_type=form verás al hijo.
+        Después de crear el/los payment(s), asegura que tanto el payment como
+        su asiento y líneas RP queden con el contacto hijo (no la matriz).
         """
         payments = super()._create_payments()
 
         if self.env.context.get('force_child_partner'):
-            child = (self.env['res.partner']
-                     .browse(self.env.context.get('default_partner_id'))).exists() or self.partner_id
+            child = self.env['res.partner'].browse(
+                self.env.context.get('default_partner_id')
+            ).exists() or self.partner_id
             if child:
-                # 1) Forzar partner en el payment
                 payments.write({'partner_id': child.id})
-
-                # 2) Forzar partner en el asiento del pago y sus líneas RP
                 for pay in payments:
                     if pay.move_id:
                         pay.move_id.write({'partner_id': child.id})
