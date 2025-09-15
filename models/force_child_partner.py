@@ -8,7 +8,7 @@ from odoo.exceptions import UserError
 # creación del pago. Para blindarlo, hereda el wizard account.payment.register y fuerza el 
 # partner_id cuando venga la bandera force_child_partner en contexto.
 
-cclass AccountPaymentRegister(models.TransientModel):
+class AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
 
     def _get_batches(self, to_process=None):
