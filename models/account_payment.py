@@ -45,6 +45,98 @@ class AccountRegisterPayment(models.TransientModel):
         res.update({'fecha_pago': datetime(self.payment_date.year, self.payment_date.month, self.payment_date.day, 16,0, tzinfo=local).strftime ("%Y-%m-%d %H:%M:%S")})
         return res
 
+    # ========= CAPA 0: batches “piensan” en el HIJO =========
+    def _get_batches(self, *args, **kwargs):
+        batches = super()._get_batches(*args, **kwargs)
+        for batch in batches:
+            lines = batch.get('lines') or self.env['account.move.line']
+            partners = lines.mapped('partner_id').exists()
+            if partners and len(partners) == 1:
+                batch['partner'] = partners[0]  # clave: partner del batch = hijo
+        return batches
+
+    # Utilidad para obtener el partner hijo de un batch/wizard
+    def _child_partner_from_batch(self, batch_result):
+        lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
+        partners = (lines or self.env['account.move.line']).mapped('partner_id').exists()
+        if not partners and self.env.context.get('default_partner_id'):
+            partners = self.env['res.partner'].browse(self.env.context['default_partner_id']).exists()
+        return partners
+
+    # ========= CAPA 1: vals del payment deben usar HIJO =========
+    def _create_payment_vals_from_wizard(self, batch_result):
+        vals = super()._create_payment_vals_from_wizard(batch_result)
+
+        # NUNCA pasar campos del wizard al modelo account.payment
+        vals.pop('group_payment', None)
+
+        # Forzar partner hijo si es único en las líneas
+        partners = self._child_partner_from_batch(batch_result)
+        if partners:
+            if len(partners) > 1:
+                raise UserError(_("Las partidas seleccionadas pertenecen a más de un contacto."))
+            vals['partner_id'] = partners[0].id
+
+        # Tu lógica original para fecha_pago
+        timezone = self._context.get('tz') or self.env.user.partner_id.tz or 'America/Mexico_City'
+        local = pytz.timezone(timezone)
+        if self.payment_date:
+            vals['fecha_pago'] = datetime(
+                self.payment_date.year, self.payment_date.month, self.payment_date.day, 16, 0, tzinfo=local
+            ).strftime("%Y-%m-%d %H:%M:%S")
+
+        return vals
+
+    # Si tu core usa esta variante, replica lo mismo.
+    def _create_payment_vals_from_batch(self, batch_result):
+        vals = super()._create_payment_vals_from_batch(batch_result)
+        vals.pop('group_payment', None)
+
+        partners = self._child_partner_from_batch(batch_result)
+        if partners:
+            if len(partners) > 1:
+                raise UserError(_("Las partidas seleccionadas pertenecen a más de un contacto."))
+            vals['partner_id'] = partners[0].id
+        return vals
+
+    # ========= CAPA 2: post-create, blindar payment/move/lineas al HIJO =========
+    def _create_payments(self):
+        # detecta el hijo desde el wizard (antes del super)
+        batches = self._get_batches()
+        child = False
+        if batches:
+            # si hay más de un batch, solo forzamos si cada batch tiene un único partner
+            unique_partners = set()
+            for b in batches:
+                ls = (b.get('lines') or self.env['account.move.line']).mapped('partner_id').exists()
+                if not ls or len(ls) != 1:
+                    unique_partners = set(['__mixed__'])
+                    break
+                unique_partners.add(ls[0].id)
+            if len(unique_partners) == 1 and '__mixed__' not in unique_partners:
+                child = self.env['res.partner'].browse(list(unique_partners)[0])
+
+        payments = super()._create_payments()
+
+        # Refuerzo: si detectamos HIJO, reescribimos todo al hijo
+        if child:
+            payments.write({'partner_id': child.id})
+            for pay in payments:
+                if pay.move_id:
+                    pay.move_id.write({'partner_id': child.id})
+                    rp_lines = pay.move_id.line_ids.filtered(
+                        lambda l: l.account_internal_type in ('receivable', 'payable')
+                    )
+                    rp_lines.write({'partner_id': child.id})
+        return payments
+
+    # Opcional: que el wizard no agrupe (no meter ese campo en vals del payment)
+    def default_get(self, fields_list):
+        vals = super().default_get(fields_list)
+        if 'group_payment' in self._fields:
+            vals['group_payment'] = False
+        return vals
+
 
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
