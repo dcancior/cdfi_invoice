@@ -23,74 +23,72 @@ _logger = logging.getLogger(__name__)
 class AccountRegisterPayment(models.TransientModel):
     _inherit = 'account.payment.register'
 
-    # Abre el payment creado (si es uno), igual que tu versión original
-    def validate_complete_payment(self):
-        payments = self._create_payments()  # recordset de account.payment
-        action = {
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.payment',
-            'view_mode': 'tree,form',
-            'target': 'current',
-        }
-        if len(payments) == 1:
-            action.update({
-                'view_mode': 'form',
-                'res_id': payments.id,
-            })
-        else:
-            action.update({
-                'domain': [('id', 'in', payments.ids)],
-            })
-        return action
+    # ----------------- Helpers -----------------
+    def _get_child_from_active_moves(self):
+        """Devuelve el partner hijo (invoice.partner_id) si todas las facturas comparten el mismo."""
+        if self.env.context.get('active_model') != 'account.move':
+            return False
+        moves = self.env['account.move'].browse(self.env.context.get('active_ids', [])).exists()
+        children = moves.mapped('partner_id').exists()
+        return children[0] if len(children) == 1 else False
 
-    # ---------- Helper: identificar línea RP en v16 ----------
-    def _is_rp_line(self, l):
+    @staticmethod
+    def _is_rp_line(l):
+        """Línea de clientes/proveedores (evita secciones/notas)."""
         if getattr(l, 'display_type', False):
             return False
         return getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable')
 
-    # ---------- Hacer que los batches piensen en el HIJO ----------
+    # ----------------- No agrupar por partner y prefijar hijo -----------------
+    def default_get(self, fields_list):
+        vals = super().default_get(fields_list)
+        if 'group_payment' in self._fields:
+            vals['group_payment'] = False
+        child = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
+        if not child:
+            child_rec = self._get_child_from_active_moves()
+            child = child_rec.id if child_rec else False
+        if child and 'partner_id' in self._fields:
+            vals['partner_id'] = child
+        return vals
+
+    # ----------------- Hacer que los batches piensen en el HIJO -----------------
     def _get_batches(self, *args, **kwargs):
         batches = super()._get_batches(*args, **kwargs)
-        # Si viene hijo explícito en contexto, úsalo como partner del batch
-        child = False
+        forced_child = False
+        # Prioridad: contexto → facturas activas
         child_id = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
         if child_id:
-            child = self.env['res.partner'].browse(child_id).exists()[:1]
+            forced_child = self.env['res.partner'].browse(child_id).exists()[:1]
+        if not forced_child:
+            forced_child = self._get_child_from_active_moves()
+
         for batch in batches:
             lines = batch.get('lines') or self.env['account.move.line']
-            # filtra sólo AR/AP no conciliadas (para el wizard)
-            lines = lines.filtered(lambda l: (
-                getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable')
-                and not getattr(l, 'reconciled', False)
-            ))
+            # deja sólo AR/AP (no conciliadas si quieres)
+            lines = lines.filtered(lambda l: self._is_rp_line(l))
             batch['lines'] = lines
-            if child:
-                batch['partner'] = child
+            if forced_child:
+                batch['partner'] = forced_child
             else:
+                # si no hay 'forced', intenta con lo que venga en líneas
                 partners = lines.mapped('partner_id').exists()
                 if partners and len(partners) == 1:
                     batch['partner'] = partners[0]
         return batches
 
-    # Utilidad para obtener partner hijo desde un batch o desde el contexto
-    def _child_partner_from_batch(self, batch_result):
-        child_id = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
-        if child_id:
-            return self.env['res.partner'].browse(child_id).exists()
-        lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
-        return (lines or self.env['account.move.line']).mapped('partner_id').exists()
-
-    # ---------- Vals del payment (desde wizard): poner el HIJO + fecha_pago ----------
+    # ----------------- Vals de creación del payment: poner el HIJO + fecha_pago -----------------
     def _create_payment_vals_from_wizard(self, batch_result):
         vals = super()._create_payment_vals_from_wizard(batch_result)
-        vals.pop('group_payment', None)  # no existe en account.payment
-        child = self._child_partner_from_batch(batch_result)
+        vals.pop('group_payment', None)
+
+        child = (self.env.context.get('child_partner_id') and
+                 self.env['res.partner'].browse(self.env.context['child_partner_id']).exists()[:1]) \
+                or self._get_child_from_active_moves()
         if child:
-            if len(child) > 1:
-                raise UserError(_("Las partidas seleccionadas pertenecen a más de un contacto."))
             vals['partner_id'] = child.id
-        # tu fecha de pago
+
+        # Tu fecha de pago a las 16:00
         tz = self._context.get('tz') or self.env.user.partner_id.tz or 'America/Mexico_City'
         if self.payment_date:
             vals['fecha_pago'] = datetime(
@@ -102,31 +100,26 @@ class AccountRegisterPayment(models.TransientModel):
     def _create_payment_vals_from_batch(self, batch_result):
         vals = super()._create_payment_vals_from_batch(batch_result)
         vals.pop('group_payment', None)
-        child = self._child_partner_from_batch(batch_result)
+        child = (self.env.context.get('child_partner_id') and
+                 self.env['res.partner'].browse(self.env.context['child_partner_id']).exists()[:1]) \
+                or self._get_child_from_active_moves()
         if child:
-            if len(child) > 1:
-                raise UserError(_("Las partidas seleccionadas pertenecen a más de un contacto."))
             vals['partner_id'] = child.id
         return vals
 
-    # ---------- Post-create: blindar payment/move/líneas al HIJO ----------
+    # ----------------- Crear pagos y blindar el HIJO post-create -----------------
     def _create_payments(self):
-        payments = super()._create_payments()
+        # Si hay hijo, lo pasamos en contexto para que todas las capas lo vean
+        child = (self.env.context.get('child_partner_id') and
+                 self.env['res.partner'].browse(self.env.context['child_partner_id']).exists()[:1]) \
+                or self._get_child_from_active_moves()
 
-        # 1) Preferir hijo explícito en contexto
-        child = False
-        child_id = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
-        if child_id:
-            child = self.env['res.partner'].browse(child_id).exists()[:1]
+        wizard = self.with_context(force_child_partner=bool(child), child_partner_id=(child.id if child else False))
+        payments = super(AccountRegisterPayment, wizard)._create_payments()
 
-        for pay in payments:
-            # 2) Si no viene en contexto, detectar hijo de líneas AR/AP del asiento
-            if not child and pay.move_id:
-                rp_partners = pay.move_id.line_ids.filtered(self._is_rp_line).mapped('partner_id').exists()
-                if rp_partners and len(rp_partners) == 1:
-                    child = rp_partners[0]
-
-            if child:
+        # Blindaje final (por si algo reescribió el partner)
+        if child:
+            for pay in payments:
                 if pay.partner_id != child:
                     pay.write({'partner_id': child.id})
                 if pay.move_id and pay.move_id.partner_id != child:
@@ -138,17 +131,19 @@ class AccountRegisterPayment(models.TransientModel):
                              pay.name, child.id, child.display_name)
         return payments
 
-    # Evitar que el wizard agrupe por partner (y poner default del contexto si existe)
-    def default_get(self, fields_list):
-        vals = super().default_get(fields_list)
-        # Nunca agrupar por partner (evita elevar a la matriz)
-        if 'group_payment' in self._fields:
-            vals['group_payment'] = False
-        # Prefijar el hijo si viene en contexto
-        child_id = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
-        if child_id and 'partner_id' in self._fields:
-            vals['partner_id'] = child_id
-        return vals
+    # ----------------- Abrir el/los pagos creados -----------------
+    def validate_complete_payment(self):
+        payments = self._create_payments()
+        action = {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment',
+            'target': 'current',
+        }
+        if len(payments) == 1:
+            action.update({'view_mode': 'form', 'res_id': payments.id})
+        else:
+            action.update({'view_mode': 'tree,form', 'domain': [('id', 'in', payments.ids)]})
+        return action
 
 
 class AccountPayment(models.Model):
