@@ -25,7 +25,6 @@ class AccountRegisterPayment(models.TransientModel):
 
      # ----------------- Helpers -----------------
     def _get_child_from_active_moves(self):
-        """Devuelve el partner hijo (invoice.partner_id) si todas las facturas comparten el mismo."""
         if self.env.context.get('active_model') != 'account.move':
             return False
         moves = self.env['account.move'].browse(self.env.context.get('active_ids', [])).exists()
@@ -34,7 +33,7 @@ class AccountRegisterPayment(models.TransientModel):
 
     @staticmethod
     def _is_rp_line(l):
-        """Línea de clientes/proveedores (evita secciones/notas)."""
+        # Evita secciones/notas y toma sólo cuentas por cobrar/pagar
         if getattr(l, 'display_type', False):
             return False
         return getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable')
@@ -55,26 +54,33 @@ class AccountRegisterPayment(models.TransientModel):
     # ----------------- Hacer que los batches piensen en el HIJO -----------------
     def _get_batches(self, *args, **kwargs):
         batches = super()._get_batches(*args, **kwargs)
-        forced_child = False
-        # Prioridad: contexto → facturas activas
+
+        # Preferir hijo desde contexto; si no, desde la(s) factura(s) activas
+        child = False
         child_id = self.env.context.get('child_partner_id') or self.env.context.get('default_partner_id')
         if child_id:
-            forced_child = self.env['res.partner'].browse(child_id).exists()[:1]
-        if not forced_child:
-            forced_child = self._get_child_from_active_moves()
+            child = self.env['res.partner'].browse(child_id).exists()[:1]
+        if not child:
+            child = self._get_child_from_active_moves()
 
         for batch in batches:
-            lines = batch.get('lines') or self.env['account.move.line']
-            # deja sólo AR/AP (no conciliadas si quieres)
-            lines = lines.filtered(lambda l: self._is_rp_line(l))
-            batch['lines'] = lines
-            if forced_child:
-                batch['partner'] = forced_child
+            original_lines = batch.get('lines') or self.env['account.move.line']
+            # Filtrar a AR/AP pero SIN vaciar el batch: sólo sustituimos si hay resultado
+            filtered = original_lines.filtered(self._is_rp_line)
+            if filtered:
+                batch['lines'] = filtered
             else:
-                # si no hay 'forced', intenta con lo que venga en líneas
-                partners = lines.mapped('partner_id').exists()
-                if partners and len(partners) == 1:
+                # dejamos las líneas originales para que el core no truene con lines[0]
+                batch['lines'] = original_lines
+
+            # Forzar partner si tenemos hijo; si no, intentar deducirlo
+            if child:
+                batch['partner'] = child
+            else:
+                partners = (batch.get('lines') or self.env['account.move.line']).mapped('partner_id').exists()
+                if len(partners) == 1:
                     batch['partner'] = partners[0]
+
         return batches
 
     # ----------------- Vals de creación del payment: poner el HIJO + fecha_pago -----------------
