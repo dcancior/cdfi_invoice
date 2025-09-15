@@ -8,70 +8,67 @@ from odoo.exceptions import UserError
 # creación del pago. Para blindarlo, hereda el wizard account.payment.register y fuerza el 
 # partner_id cuando venga la bandera force_child_partner en contexto.
 
-class AccountPaymentRegister(models.TransientModel):
+cclass AccountPaymentRegister(models.TransientModel):
     _inherit = 'account.payment.register'
+
+    def _get_batches(self, to_process=None):
+        """
+        Forzar que el partner del batch sea el partner EXACTO de las líneas (hijo),
+        no el commercial_partner_id. Así, el resto del pipeline ya “piensa en hijo”.
+        """
+        batches = super()._get_batches(to_process=to_process)
+        for batch in batches:
+            lines = batch.get('lines') or self.env['account.move.line']
+            partners = lines.mapped('partner_id').exists()
+            # Sólo si todas las líneas comparten el mismo partner (hijo):
+            if partners and len(partners) == 1:
+                batch['partner'] = partners[0]  # 👈 clave: partner del batch = hijo
+        return batches
+
+    def _child_partner_from_batch(self, batch_result):
+        lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
+        partners = (lines or self.env['account.move.line']).mapped('partner_id').exists()
+        if not partners and self.env.context.get('default_partner_id'):
+            partners = self.env['res.partner'].browse(self.env.context['default_partner_id']).exists()
+        return partners if partners else self.env['res.partner']
 
     def _create_payment_vals_from_wizard(self, batch_result):
         vals = super()._create_payment_vals_from_wizard(batch_result)
-
-        # ⚠️ Nunca pasar group_payment al modelo account.payment
-        vals.pop('group_payment', None)
-
-        if self.env.context.get('force_child_partner'):
-            lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
-            partners = (lines or self.env['account.move.line']).mapped('partner_id').exists()
-            if not partners and self.env.context.get('default_partner_id'):
-                partners = self.env['res.partner'].browse(self.env.context['default_partner_id']).exists()
-            if not partners:
-                return vals
+        vals.pop('group_payment', None)  # ⚠️ NO es campo de account.payment
+        partners = self._child_partner_from_batch(batch_result)
+        if partners:
             if len(partners) > 1:
-                raise UserError(_("No se puede forzar el contacto hijo: hay más de un partner en las partidas."))
-            vals['partner_id'] = partners[0].id
-        elif self.env.context.get('default_partner_id'):
-            vals['partner_id'] = self.env.context['default_partner_id']
-
+                raise UserError(_("Las partidas del pago tienen más de un partner."))
+            vals['partner_id'] = partners[0].id         # 👈 usa HIJO
         return vals
 
     def _create_payment_vals_from_batch(self, batch_result):
         vals = super()._create_payment_vals_from_batch(batch_result)
-
-        # ⚠️ Nunca pasar group_payment al modelo account.payment
         vals.pop('group_payment', None)
-
-        if self.env.context.get('force_child_partner'):
-            lines = batch_result.get('lines') if isinstance(batch_result, dict) else None
-            partners = (lines or self.env['account.move.line']).mapped('partner_id').exists()
-            if not partners and self.env.context.get('default_partner_id'):
-                partners = self.env['res.partner'].browse(self.env.context['default_partner_id']).exists()
-            if not partners:
-                return vals
+        partners = self._child_partner_from_batch(batch_result)
+        if partners:
             if len(partners) > 1:
-                raise UserError(_("No se puede forzar el contacto hijo: hay más de un partner en las partidas."))
-            vals['partner_id'] = partners[0].id
-        elif self.env.context.get('default_partner_id'):
-            vals['partner_id'] = self.env.context['default_partner_id']
-
+                raise UserError(_("Las partidas del pago tienen más de un partner."))
+            vals['partner_id'] = partners[0].id         # 👈 usa HIJO
         return vals
 
     def _create_payments(self):
         payments = super()._create_payments()
-        if self.env.context.get('force_child_partner'):
-            child = (self.env['res.partner']
-                     .browse(self.env.context.get('default_partner_id'))).exists() or self.partner_id
-            if child:
-                payments.write({'partner_id': child.id})
-                for pay in payments:
-                    if pay.move_id:
-                        pay.move_id.write({'partner_id': child.id})
-                        rp_lines = pay.move_id.line_ids.filtered(
-                            lambda l: l.account_internal_type in ('receivable', 'payable')
-                        )
-                        rp_lines.write({'partner_id': child.id})
-        return payments
 
-    # Opcional: fija el valor del campo del wizard sin tocar vals del payment
-    def default_get(self, fields_list):
-        vals = super().default_get(fields_list)
-        if self.env.context.get('force_child_partner') and 'group_payment' in self._fields:
-            vals['group_payment'] = False
-        return vals
+        # Reafirmar partner hijo en payment, move y líneas RP
+        for pay in payments:
+            child = pay.partner_id  # después del paso 1 y 2 ya debería ser el hijo
+            if not child:
+                continue
+            # Payment
+            pay.write({'partner_id': child.id})
+            # Move del payment
+            if pay.move_id:
+                pay.move_id.write({'partner_id': child.id})
+                rp_lines = pay.move_id.line_ids.filtered(
+                    lambda l: l.account_internal_type in ('receivable', 'payable')
+                )
+                rp_lines.write({'partner_id': child.id})
+
+        payments.invalidate_cache(['partner_id'])
+        return payments
