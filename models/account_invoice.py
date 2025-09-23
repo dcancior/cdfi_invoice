@@ -171,15 +171,51 @@ class AccountMove(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # normalización existente
         for vals in vals_list:
             if 'desglosar_iva' in vals:
                 vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
-        return super().create(vals_list)
+
+        moves = super().create(vals_list)
+
+        # 👇 priorización por uso: registrar selección elegida
+        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
+        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
+
+        for move, vals in zip(moves, vals_list):
+            # tomar de vals (si vino por create) o del registro (por defaults/onchanges)
+            fid = vals.get('forma_pago_id') or move.forma_pago_id.id
+            if fid:
+                UsageForma.bump(fid, user_id=self.env.uid)
+
+            uid_cfdi = vals.get('uso_cfdi_id') or move.uso_cfdi_id.id
+            if uid_cfdi:
+                UsageUso.bump(uid_cfdi, user_id=self.env.uid)
+
+        return moves
 
     def write(self, vals):
+        # normalización existente
         if 'desglosar_iva' in vals:
             vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
-        return super().write(vals)
+
+        res = super().write(vals)
+
+        # 👇 priorización por uso: registrar cuando cambien
+        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
+        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
+
+        if 'forma_pago_id' in vals:
+            for move in self:
+                if move.forma_pago_id:
+                    UsageForma.bump(move.forma_pago_id.id, user_id=self.env.uid)
+
+        if 'uso_cfdi_id' in vals:
+            for move in self:
+                if move.uso_cfdi_id:
+                    UsageUso.bump(move.uso_cfdi_id.id, user_id=self.env.uid)
+
+        return res
 
     @api.returns('self', lambda value: value.id)
     def copy(self, default=None):
@@ -1113,6 +1149,45 @@ class AccountMove(models.Model):
                         if (label or '').strip().lower().find('por definir') >= 0:
                             order.forma_pago = key
                             break
+
+    def action_register_payment_child(self):
+        """Abre el wizard de pagos usando SÓLO las líneas RP del contacto hijo de esta factura."""
+        self.ensure_one()
+        contact = self.partner_id  # 👈 tu contacto hijo (porque tu factura ya es al hijo)
+
+        # Filtra PARTIDAS ABIERTAS (no conciliadas) RP del hijo en esta factura
+        lines = self.line_ids.filtered(lambda l: (
+            (getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable'))
+            and not l.reconciled
+            and l.partner_id == self.partner_id
+        ))
+
+        if not lines:
+            raise UserError(_("No hay partidas por cobrar/pagar abiertas para el contacto: %s") % contact.display_name)
+
+        # Define tipo de partner (cliente/proveedor) según el tipo de movimiento
+        partner_type = (
+            'customer' if self.move_type in ('out_invoice', 'out_refund', 'out_receipt') else 'supplier'
+        )
+
+        return {
+            'name': _('Registrar pago (contacto hijo)'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.payment.register',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {
+                'active_model': 'account.move.line',
+                'active_ids': lines.ids,
+                'default_partner_id': contact.id,        # hijo
+                'default_partner_type': partner_type,
+                'default_group_payment': False,
+                'force_child_partner': True,             # bandera
+                'child_partner_id': contact.id,          # 🔴 CLAVE: ID del hijo explícito
+            },
+        }
+
+    
                             
 
 class MailTemplate(models.Model):
@@ -1172,4 +1247,7 @@ class MyModuleMessageWizard(models.TransientModel):
     #    @api.multi
     def action_close(self):
         return {'type': 'ir.actions.act_window_close'}
+
+
+
 

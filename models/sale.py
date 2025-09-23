@@ -269,3 +269,35 @@ class SaleOrder(models.Model):
                 else:
                     # Limpiar cuando no es PPD
                     order.forma_pago = False
+
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
+        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
+        for order, vals in zip(orders, vals_list):
+            fid = vals.get('forma_pago_id') or order.forma_pago_id.id
+            if fid:
+                UsageForma.bump(fid, user_id=self.env.uid)
+            uid_cfdi = vals.get('uso_cfdi_id') or order.uso_cfdi_id.id
+            if uid_cfdi:
+                UsageUso.bump(uid_cfdi, user_id=self.env.uid)
+        return orders
+
+    def write(self, vals):
+        res = super().write(vals)
+        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
+        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
+
+        if 'forma_pago_id' in vals:
+            for order in self:
+                if order.forma_pago_id:
+                    UsageForma.bump(order.forma_pago_id.id, user_id=self.env.uid)
+
+        if 'uso_cfdi_id' in vals:
+            for order in self:
+                if order.uso_cfdi_id:
+                    UsageUso.bump(order.uso_cfdi_id.id, user_id=self.env.uid)
+
+        return res
