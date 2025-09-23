@@ -1,120 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+	<!-- ===========================================================
+	     1) HERENCIA DEL FORMULARIO DE PEDIDO (sale.order)
+	     - Agrega una pestaña "CFDI" dentro del notebook del pedido
+	     - Muestra campos de configuración CFDI/uso/forma de pago
+	   =========================================================== -->
+	<record id="view_sale_order_form_inherit" model="ir.ui.view">
+        <!-- Nombre legible de la vista -->
+        <field name="name">sale.order.form.inherit</field>
+        <!-- Modelo objetivo -->
+        <field name="model">sale.order</field>
+        <!-- Vista base que heredamos -->
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <!-- Cambios XML -->
+        <field name="arch" type="xml">
+            <!-- Insertamos dentro del notebook del formulario -->
+            <xpath expr="//notebook" position="inside">
+	            <!-- Nueva pestaña para datos CFDI -->
+	            <page name="info_cdfi" string="CFDI">
+	                <!-- Grid con 4 columnas "abstractas" para alinear subgrupos -->
+	                <group cols="4">
+		                <!-- Subgrupo con campos de pago CFDI -->
+		                <group string="Detalles de Pago">
+		                    <!-- Campo método de pago (debe existir en sale.order) -->
+		                    <field name="methodo_pago"/>
+		                    <!-- "forma_pago_id" con contexto: prioriza valores más usados por el usuario -->
+		                    <field name="forma_pago_id" context="{'prioritize_usage': 1}"/>
+		                    <!-- "uso_cfdi_id" igual: sugiere/ordena por uso frecuente -->
+		                    <field name="uso_cfdi_id" context="{'prioritize_usage': 1}"/>
+		                </group>
+	                </group>
+	            </page>
+            </xpath>
+        </field>
+    </record>
 
-  <!-- ===========================================================
-       1) HERENCIA DEL FORMULARIO DE PEDIDO (sale.order)
-       - Agrega una pestaña "CFDI" dentro del notebook del pedido
-       - Muestra campos de configuración CFDI/uso/forma de pago
-     =========================================================== -->
-  <record id="view_sale_order_form_inherit" model="ir.ui.view">
-    <field name="name">sale.order.form.inherit</field>
-    <field name="model">sale.order</field>
-    <field name="inherit_id" ref="sale.view_order_form"/>
-    <field name="arch" type="xml">
-      <xpath expr="//notebook" position="inside">
-        <page name="info_cdfi" string="CFDI">
-          <group cols="4">
-            <group string="Detalles de Pago">
-              <field name="methodo_pago"/>
-              <!-- Sugerir valores más usados al usuario -->
-              <field name="forma_pago_id" context="{'prioritize_usage': 1}"/>
-              <field name="uso_cfdi_id" context="{'prioritize_usage': 1}"/>
-            </group>
-          </group>
-        </page>
-      </xpath>
-    </field>
-  </record>
+    <!-- ===========================================================
+         2) HERENCIA DE LA VISTA TREE (LISTA) DE PEDIDOS
+         - Pintar filas en verde si el invoice_status es "invoiced"
+           o si lo extendiste con "cfdi_emitido"
+         - Reemplaza la columna invoice_status por un "badge" con decoraciones
+       =========================================================== -->
+    <record id="view_order_tree_inherit_add_cfdi_emitido" model="ir.ui.view">
+	    <field name="name">sale.order.tree.inherit.add.cfdi.emitido</field>
+	    <field name="model">sale.order</field>
+	    <field name="inherit_id" ref="sale.view_order_tree"/>
+	    <field name="arch" type="xml">
+	      <!-- Decoración de fila: éxito si está facturado o cfdi emitido -->
+	      <xpath expr="//tree" position="attributes">
+	        <!-- Odoo evalúa la expresión python-like sobre cada registro -->
+	        <attribute name="decoration-success">invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'</attribute>
+	      </xpath>
 
+	      <!-- Reemplazamos la columna invoice_status para mostrarla como badge
+	           con colores según su estado -->
+	      <xpath expr="//field[@name='invoice_status']" position="replace">
+	        <field name="invoice_status" widget="badge" optional="show"
+	               decoration-success="invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'"
+	               decoration-info="invoice_status == 'to invoice'"
+	               decoration-warning="invoice_status == 'upselling'"/>
+	      </xpath>
+	    </field>
+  	</record>
 
-  <!-- ===========================================================
-       2) HERENCIA DE LA LISTA DE PEDIDOS (sale.view_order_tree)
-       - Decorar fila en verde si invoice_status es 'invoiced' o 'cfdi_emitido'
-       - Mostrar invoice_status como badge con colores
-     =========================================================== -->
-  <record id="view_order_tree_inherit_add_cfdi_emitido" model="ir.ui.view">
-    <field name="name">sale.order.tree.inherit.add.cfdi.emitido</field>
-    <field name="model">sale.order</field>
-    <field name="inherit_id" ref="sale.view_order_tree"/>
-    <field name="arch" type="xml">
+	<!-- ===========================================================
+	     3) HERENCIA DE LA VISTA TREE DE COTIZACIONES/PEDIDOS (quotation_tree)
+	     - Aplica colores por fila según "estado_cfdi"
+	     - Inserta una columna "estado_cfdi" como badge
+	   =========================================================== -->
+	<record id="view_order_tree_inherit_estado_cfdi_vqt" model="ir.ui.view">
+	    <field name="name">sale.order.tree.inherit.estado_cfdi.vqt</field>
+	    <field name="model">sale.order</field>
+	    <field name="inherit_id" ref="sale.view_quotation_tree"/>
+	    <field name="arch" type="xml">
 
-      <!-- Decoración de fila -->
-      <xpath expr="//tree" position="attributes">
-        <attribute name="decoration-success">invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'</attribute>
-      </xpath>
+	        <!-- Decoraciones a nivel de fila del tree:
+	             - verde: factura_correcta
+	             - rojo:  factura_cancelada
+	             - amarillo: estados intermedios/no generada/solicitudes -->
+	        <tree position="attributes">
+	            <attribute name="decoration-success">estado_cfdi == 'factura_correcta'</attribute>
+	            <attribute name="decoration-danger">estado_cfdi == 'factura_cancelada'</attribute>
+	            <attribute name="decoration-warning">estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')</attribute>
+	        </tree>
 
-      <!-- Columna invoice_status como badge -->
-      <xpath expr="//field[@name='invoice_status']" position="replace">
-        <field name="invoice_status" widget="badge" optional="show"
-               decoration-success="invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'"
-               decoration-info="invoice_status == 'to invoice'"
-               decoration-warning="invoice_status == 'upselling'"/>
-      </xpath>
+	        <!-- OPCIÓN PREFERIDA (comentada): insertar antes de la columna 'state'
+	             Si el XPath no engancha (depende de la vista base), usamos el fallback de abajo -->
+	        <!--
+	        <xpath expr="//tree/field[@name='state']" position="before">
+	            <field name="estado_cfdi" string="Estado CFDI" widget="badge"
+	                   decoration-success="estado_cfdi == 'factura_correcta'"
+	                   decoration-danger="estado_cfdi == 'factura_cancelada'"
+	                   decoration-warning="estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')"/>
+	        </xpath>
+	        -->
 
-    </field>
-  </record>
+	        <!-- Fallback robusto: insertar la columna al final del tree si el XPath anterior falla -->
+	        <xpath expr="//tree" position="inside">
+	            <field name="estado_cfdi" string="Estado CFDI" widget="badge"
+	                   decoration-success="estado_cfdi == 'factura_correcta'"
+	                   decoration-danger="estado_cfdi == 'factura_cancelada'"
+	                   decoration-warning="estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')"/>
+	        </xpath>
 
+	    </field>
+	</record>
 
-  <!-- ===========================================================
-       3) HERENCIA DE LA LISTA DE COTIZACIONES/PEDIDOS (sale.view_quotation_tree)
-       - Decoraciones por fila basadas en estado_cfdi
-       - ***Cambio solicitado***:
-         Si state es 'cancel' (o 'cancelado'), NO pintar la celda:
-         mostramos texto plano (fondo blanco) y ocultamos el badge.
-     =========================================================== -->
-  <record id="view_order_tree_inherit_estado_cfdi_vqt" model="ir.ui.view">
-    <field name="name">sale.order.tree.inherit.estado_cfdi.vqt</field>
-    <field name="model">sale.order</field>
-    <field name="inherit_id" ref="sale.view_quotation_tree"/>
-    <field name="arch" type="xml">
-
-      <!-- Decoraciones de fila -->
-      <tree position="attributes">
-        <attribute name="decoration-success">estado_cfdi == 'factura_correcta'</attribute>
-        <attribute name="decoration-danger">estado_cfdi == 'factura_cancelada'</attribute>
-        <attribute name="decoration-warning">estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')</attribute>
-      </tree>
-
-      <!-- Inserción de la columna Estado CFDI con lógica de “doble campo” -->
-      <xpath expr="//tree" position="inside">
-
-        <!-- (A) Versión con badge y colores → visible SOLO cuando NO está cancelado -->
-        <!-- Nota: usamos 'in' para cubrir 'cancel' y 'cancelado' si tu módulo usa ambos -->
-        <field name="estado_cfdi" string="Estado CFDI" widget="badge"
-               attrs="{'invisible': [('state','in',['cancel','cancelado'])]}"
-               decoration-success="estado_cfdi == 'factura_correcta'"
-               decoration-danger="estado_cfdi == 'factura_cancelada'"
-               decoration-warning="estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')"/>
-
-        <!-- (B) Versión en blanco (texto plano, sin badge) → visible SOLO cuando SÍ está cancelado -->
-        <field name="estado_cfdi" string="Estado CFDI"
-               attrs="{'invisible': [('state','not in',['cancel','cancelado'])]}"/>
-      </xpath>
-
-    </field>
-  </record>
-
-
-  <!-- ===========================================================
-       4) HERENCIA DEL SEARCH DE PEDIDOS
-       - Filtros rápidos por estado_cfdi
-     =========================================================== -->
-  <record id="view_order_search_inherit_estado_cfdi" model="ir.ui.view">
-    <field name="name">sale.order.search.inherit.estado_cfdi</field>
-    <field name="model">sale.order</field>
-    <field name="inherit_id" ref="sale.view_sales_order_filter"/>
-    <field name="arch" type="xml">
-      <xpath expr="//search" position="inside">
-        <filter name="estado_cfdi_emitido" string="CFDI Emitido"
-                domain="[('estado_cfdi','=','factura_correcta')]"/>
-        <filter name="estado_cfdi_cancelado" string="CFDI Cancelado"
-                domain="[('estado_cfdi','=','factura_cancelada')]"/>
-        <filter name="estado_cfdi_en_proceso" string="Cancelación en proceso"
-                domain="[('estado_cfdi','=','solicitud_cancelar')]"/>
-        <filter name="estado_cfdi_no_generado" string="CFDI no generado"
-                domain="[('estado_cfdi','=','factura_no_generada')]"/>
-      </xpath>
-    </field>
-  </record>
-
+	<!-- ===========================================================
+	     4) HERENCIA DE LA VISTA DE BÚSQUEDA (SEARCH) DE PEDIDOS
+	     - Agrega filtros rápidos por estado_cfdi
+	     - Cada filtro aplica un dominio sobre sale.order
+	   =========================================================== -->
+	<record id="view_order_search_inherit_estado_cfdi" model="ir.ui.view">
+	    <field name="name">sale.order.search.inherit.estado_cfdi</field>
+	    <field name="model">sale.order</field>
+	    <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+	    <field name="arch" type="xml">
+	        <!-- Insertamos filtros dentro del <search> original -->
+	        <xpath expr="//search" position="inside">
+	            <!-- Muestra solo pedidos con CFDI emitido correctamente -->
+	            <filter name="estado_cfdi_emitido" string="CFDI Emitido"
+	                    domain="[('estado_cfdi','=','factura_correcta')]"/>
+	            <!-- Muestra pedidos con CFDI cancelado -->
+	            <filter name="estado_cfdi_cancelado" string="CFDI Cancelado"
+	                    domain="[('estado_cfdi','=','factura_cancelada')]"/>
+	            <!-- Muestra pedidos con cancelación en proceso -->
+	            <filter name="estado_cfdi_en_proceso" string="Cancelación en proceso"
+	                    domain="[('estado_cfdi','=','solicitud_cancelar')]"/>
+	            <!-- Muestra pedidos donde el CFDI aún no se ha generado -->
+	            <filter name="estado_cfdi_no_generado" string="CFDI no generado"
+	                    domain="[('estado_cfdi','=','factura_no_generada')]"/>
+	        </xpath>
+	    </field>
+	</record>
 </odoo>
