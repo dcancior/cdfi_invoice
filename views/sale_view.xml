@@ -133,4 +133,23 @@
 	        </xpath>
 	    </field>
 	</record>
+
+
+	<!--1.1 Bloquear líneas en Orden de Venta al confirmar (estado sale/done) -->
+	<record id="view_sale_order_form_inherit_lock_lines" model="ir.ui.view">
+		<field name="name">sale.order.form.inherit.lock.lines</field>
+		<field name="model">sale.order</field>
+		<field name="inherit_id" ref="sale.view_order_form"/>
+		<field name="arch" type="xml">
+
+		<!-- order_line sólo lectura cuando el pedido está confirmado/cerrado/cancelado -->
+		<xpath expr="//field[@name='order_line']" position="attributes">
+			<attribute name="attrs">{'readonly': [('state','in',('sale','done','cancel'))]}</attribute>
+			<!-- Quita los botones de agregar/borrar y edición en inline cuando está readonly -->
+			<attribute name="options">{'no_create': True, 'no_delete': True}</attribute>
+		</xpath>
+
+		</field>
+	</record>
+
 </odoo>
