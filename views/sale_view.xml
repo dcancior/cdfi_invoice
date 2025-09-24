@@ -98,9 +98,10 @@
 	        <!-- Fallback robusto: insertar la columna al final del tree si el XPath anterior falla -->
 	        <xpath expr="//tree" position="inside">
 	            <field name="estado_cfdi" string="Estado CFDI" widget="badge"
-	                   decoration-success="estado_cfdi == 'factura_correcta'"
-	                   decoration-danger="estado_cfdi == 'factura_cancelada'"
-	                   decoration-warning="estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')"/>
+                    decoration-success="estado_cfdi == 'factura_correcta'"
+                    decoration-danger="estado_cfdi == 'factura_cancelada'"
+                    <!-- solo pinta amarillo si NO está cancelado -->
+                    decoration-warning="estado_cfdi == 'factura_no_generada' and state != 'cancel'"/>
 	        </xpath>
 
 	    </field>
