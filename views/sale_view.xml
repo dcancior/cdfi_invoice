@@ -100,7 +100,6 @@
 	            <field name="estado_cfdi" string="Estado CFDI" widget="badge"
                     decoration-success="estado_cfdi == 'factura_correcta'"
                     decoration-danger="estado_cfdi == 'factura_cancelada'"
-                    <!-- solo pinta amarillo si NO está cancelado -->
                     decoration-warning="estado_cfdi == 'factura_no_generada' and state != 'cancel'"/>
 	        </xpath>
 
