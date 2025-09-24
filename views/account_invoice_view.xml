@@ -15,12 +15,19 @@
                 <attribute name="decoration-warning">estado_factura == 'factura_no_generada'</attribute>
             </tree>
 
-            <!-- Campo Estado CFDI mostrado como badge -->
+            <!-- Campo Estado CFDI antes de 'state' -->
+            <!-- Cambiado: dos versiones del mismo campo para controlar el color -->
             <field name="state" position="before">
+                <!-- (A) Con badge/colores: visible SOLO si NO está cancelado -->
                 <field name="estado_factura" string="Estado CFDI" widget="badge"
+                       attrs="{'invisible': [('state','in',['cancel'])]}"
                        decoration-success="estado_factura == 'factura_correcta'"
                        decoration-danger="estado_factura == 'factura_cancelada'"
                        decoration-warning="estado_factura == 'factura_no_generada'"/>
+
+                <!-- (B) Texto plano (sin badge): visible SOLO si SÍ está cancelado -->
+                <field name="estado_factura" string="Estado CFDI"
+                       attrs="{'invisible': [('state','not in',['cancel'])]}"/>
             </field>
         </field>
     </record>
@@ -44,7 +51,7 @@
                             <field name="tipo_comprobante" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
                             <field name="folio_fiscal"/>
                             <field name="confirmacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
-                            <!-- Badge de estado -->
+                            <!-- Badge de estado (form) -->
                             <field name="estado_factura" widget="badge"/>
                             <field name="fecha_factura" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
                             <field name="proceso_timbrado"/>
