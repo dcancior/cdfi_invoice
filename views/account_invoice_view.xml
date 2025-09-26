@@ -132,23 +132,28 @@
     </record>
 
 
-    <!--1.2 Bloquear líneas y mostrar “Factura Cerrada” en Factura confirmada (state=posted) -->
-    <record id="view_move_form_inherit_lock_invoice_and_ribbon" model="ir.ui.view">
-    <field name="name">account.move.form.inherit.lock.invoice.and.ribbon</field>
-    <field name="model">account.move</field>
-    <field name="inherit_id" ref="account.view_move_form"/>
-    <field name="arch" type="xml">
+    <record id="view_sale_order_form_inherit_lock_lines" model="ir.ui.view">
+        <field name="name">sale.order.form.inherit.lock.lines</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
 
-     
+        <!-- Quita opciones que bloquean crear/borrar líneas -->
+        <xpath expr="//field[@name='order_line']" position="attributes">
+            <!-- readonly SÓLO si está confirmada/cerrada/cancelada y NO procede el desbloqueo por facturas canceladas -->
+            <attribute name="attrs">
+            {'readonly': [('state','in',('sale','done','cancel')),
+                            ('allow_edit_if_inv_cancelled','=', False)]}
+            </attribute>
+            <!-- limpia los options para permitir crear/borrar cuando no esté readonly -->
+            <attribute name="options"/>
+            <!-- asegúrate de que el tree sea editable -->
+            <attribute name="editable">bottom</attribute>
+            <attribute name="create">true</attribute>
+            <attribute name="edit">true</attribute>
+        </xpath>
 
-      <!-- invoice_line_ids sólo lectura cuando la factura está confirmada (posted) -->
-      <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
-        <attribute name="attrs">{'readonly': [('state','=','posted')]}</attribute>
-        <attribute name="options">{'no_create': True, 'no_delete': True}</attribute>
-      </xpath>
-
-    </field>
-  </record>
-
+        </field>
+    </record>
 
 </odoo>

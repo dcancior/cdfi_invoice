@@ -10,6 +10,23 @@ _logger = logging.getLogger(__name__)
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
+    allow_edit_if_inv_cancelled = fields.Boolean(
+        string='Allow edit if invoices cancelled',
+        compute='_compute_allow_edit_if_inv_cancelled',
+        store=False
+    )
+
+    def _compute_allow_edit_if_inv_cancelled(self):
+        for order in self:
+            # Solo facturas cliente (ventas y devoluciones)
+            invoices = order.invoice_ids.filtered(
+                lambda m: m.move_type in ('out_invoice', 'out_refund')
+            )
+            # Desbloquear solo si hay facturas y TODAS están canceladas
+            order.allow_edit_if_inv_cancelled = bool(invoices) and all(
+                inv.state == 'cancel' for inv in invoices
+            )
+
     forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
     methodo_pago = fields.Selection(
         selection=[
