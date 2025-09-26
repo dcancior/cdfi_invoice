@@ -39,7 +39,7 @@ class AccountMove(models.Model):
                 raise UserError("No se puede restablecer a borrador una factura cancelada.")
         # Si no existe super().action_draft en tu versión, quita la siguiente línea:
         return super().action_draft()
-        
+
 
     factura_cfdi = fields.Boolean('Factura CFDI')
     tipo_comprobante = fields.Selection(
@@ -212,21 +212,62 @@ class AccountMove(models.Model):
         return moves
 
     def write(self, vals):
-        # normalización existente
+        # 🔒 CANDADO: no permitir agregar/editar/eliminar líneas de productos/servicios
+        # (secciones y notas sí) en facturas de venta/NC, sin importar el estado.
+        if 'invoice_line_ids' in vals:
+            for move in self:
+                # Limita a ventas/notas de crédito; agrega in_invoice/in_refund si también quieres proveedores
+                if move.move_type not in ('out_invoice', 'out_refund'):
+                    continue
+
+                cmds = vals.get('invoice_line_ids') or []
+                for cmd in cmds:
+                    # cmd es (op, id, vals) o (op, id) según el caso
+                    if not isinstance(cmd, (list, tuple)) or not cmd:
+                        continue
+                    op = cmd[0]
+
+                    # (0, 0, vals) -> crear línea (bloquear si es product/service)
+                    if op == 0:
+                        line_vals = cmd[2] or {}
+                        if not line_vals.get('display_type'):
+                            raise UserError("No se pueden agregar productos/servicios a la factura.")
+
+                    # (1, id, vals) -> actualizar línea existente (bloquear si es product/service)
+                    elif op == 1:
+                        line_id, line_vals = cmd[1], (cmd[2] or {})
+                        line = self.env['account.move.line'].browse(line_id)
+                        if line.move_id == move and not line.display_type:
+                            raise UserError("No se pueden modificar líneas de productos/servicios en la factura.")
+
+                    # (2, id) -> eliminar línea (bloquear si es product/service)
+                    elif op == 2:
+                        line_id = cmd[1]
+                        line = self.env['account.move.line'].browse(line_id)
+                        if line.move_id == move and not line.display_type:
+                            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura.")
+
+                    # (4, id) -> enlazar línea existente (bloquear)
+                    elif op == 4:
+                        raise UserError("No se pueden agregar productos/servicios a la factura.")
+
+                    # (6, 0, ids) -> reemplazar todo el conjunto (bloquear)
+                    elif op == 6:
+                        raise UserError("No se puede reemplazar la lista de productos/servicios de la factura.")
+
+        # 👇 tu lógica existente (no la toques)
         if 'desglosar_iva' in vals:
             vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
 
         res = super().write(vals)
 
-        # 👇 priorización por uso: registrar cuando cambien
+        # 👇 tu lógica posterior (priorización de uso) tal cual la tienes
         UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
         UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
-
         if 'forma_pago_id' in vals:
             for move in self:
                 if move.forma_pago_id:
                     UsageForma.bump(move.forma_pago_id.id, user_id=self.env.uid)
-
         if 'uso_cfdi_id' in vals:
             for move in self:
                 if move.uso_cfdi_id:
@@ -1253,6 +1294,22 @@ class AccountMoveLine(models.Model):
 
     pedimento = fields.Char('Pedimento')
     predial = fields.Char('No. Predial')
+
+
+
+    # Para impedir que se agreguen/editen/eliminen líneas de productos/servicios en facturas de venta/NC
+    def write(self, vals):
+        # Bloquea edición de líneas product/service de facturas de venta/NC
+        target = self.filtered(lambda l: l.move_id.move_type in ('out_invoice','out_refund') and not l.display_type)
+        if target:
+            raise UserError("No se pueden editar líneas de productos/servicios en la factura.")
+        return super().write(vals)
+
+    def unlink(self):
+        target = self.filtered(lambda l: l.move_id.move_type in ('out_invoice','out_refund') and not l.display_type)
+        if target:
+            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura.")
+        return super().unlink()
 
 
 class MyModuleMessageWizard(models.TransientModel):
