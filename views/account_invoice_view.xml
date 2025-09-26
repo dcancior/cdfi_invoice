@@ -139,11 +139,7 @@
     <field name="inherit_id" ref="account.view_move_form"/>
     <field name="arch" type="xml">
 
-      <!-- Ribbon arriba indicando “Factura Cerrada” cuando state=posted -->
-      <xpath expr="//sheet" position="inside">
-        <widget name="web_ribbon" title="Factura Cerrada"
-                attrs="{'invisible': [('state','!=','posted')]}"/>
-      </xpath>
+     
 
       <!-- invoice_line_ids sólo lectura cuando la factura está confirmada (posted) -->
       <xpath expr="//field[@name='invoice_line_ids']" position="attributes">
