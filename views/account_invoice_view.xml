@@ -138,16 +138,23 @@
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
 
-        <!-- Quita opciones que bloquean crear/borrar líneas -->
+        <!-- Pinta el campo técnico (oculto) en el form -->
+        <xpath expr="//form[@class='o_sale_order']/header" position="inside">
+            <field name="allow_edit_if_inv_cancelled" invisible="1"/>
+        </xpath>
+
+        <!-- Controla readonly del one2many usando el flag -->
         <xpath expr="//field[@name='order_line']" position="attributes">
-            <!-- readonly SÓLO si está confirmada/cerrada/cancelada y NO procede el desbloqueo por facturas canceladas -->
             <attribute name="attrs">
-            {'readonly': [('state','in',('sale','done','cancel')),
-                            ('allow_edit_if_inv_cancelled','=', False)]}
+            {
+                'readonly': [
+                ('state','in',('sale','done','cancel')),
+                ('allow_edit_if_inv_cancelled','=', False)
+                ]
+            }
             </attribute>
-            <!-- limpia los options para permitir crear/borrar cuando no esté readonly -->
+            <!-- limpia options que bloquean agregar/borrar -->
             <attribute name="options"/>
-            <!-- asegúrate de que el tree sea editable -->
             <attribute name="editable">bottom</attribute>
             <attribute name="create">true</attribute>
             <attribute name="edit">true</attribute>
