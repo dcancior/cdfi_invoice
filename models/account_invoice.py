@@ -24,6 +24,23 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
+    #impedir volver a borrador la factura si esta cancelada
+    def button_draft(self):
+        # Odoo llama a este método al pulsar "Restablecer a borrador"
+        for move in self:
+            if move.state == 'cancel':
+                raise UserError("No se puede restablecer a borrador una factura cancelada.")
+        return super().button_draft()
+
+    # En algunas instalaciones el botón llama a action_draft; cubrimos ambos por seguridad.
+    def action_draft(self):
+        for move in self:
+            if move.state == 'cancel':
+                raise UserError("No se puede restablecer a borrador una factura cancelada.")
+        # Si no existe super().action_draft en tu versión, quita la siguiente línea:
+        return super().action_draft()
+        
+
     factura_cfdi = fields.Boolean('Factura CFDI')
     tipo_comprobante = fields.Selection(
         selection=[('I', 'Ingreso'),
