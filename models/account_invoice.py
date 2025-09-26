@@ -1302,13 +1302,13 @@ class AccountMoveLine(models.Model):
         # Bloquea edición de líneas product/service de facturas de venta/NC
         target = self.filtered(lambda l: l.move_id.move_type in ('out_invoice','out_refund') and not l.display_type)
         if target:
-            raise UserError("No se pueden editar líneas de productos/servicios en la factura.")
+            raise UserError("No se pueden editar líneas de productos/servicios en la factura. Realice la modificación en la cotización y orden.")
         return super().write(vals)
 
     def unlink(self):
         target = self.filtered(lambda l: l.move_id.move_type in ('out_invoice','out_refund') and not l.display_type)
         if target:
-            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura.")
+            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura. Realice la modificación en la cotización y orden.")
         return super().unlink()
 
 
