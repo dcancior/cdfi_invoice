@@ -22,8 +22,8 @@ class SaleOrder(models.Model):
             invoices = order.invoice_ids.filtered(
                 lambda m: m.move_type in ('out_invoice', 'out_refund')
             )
-            # Desbloquear solo si hay facturas y TODAS están canceladas
-            order.allow_edit_if_inv_cancelled = bool(invoices) and all(
+            # ✅ Permitir edición si NO hay facturas o si TODAS están canceladas
+            order.allow_edit_if_inv_cancelled = (not invoices) or all(
                 inv.state == 'cancel' for inv in invoices
             )
 
@@ -303,6 +303,14 @@ class SaleOrder(models.Model):
         return orders
 
     def write(self, vals):
+        # 🔒 Si intentan tocar order_line y hay facturas no canceladas, bloquea
+        if 'order_line' in vals:
+            for order in self:
+                if order._must_lock_lines():
+                    raise UserError(_(
+                        "No se pueden modificar las líneas del pedido porque ya existe una factura/NC vigente.\n"
+                        "Cancela todas las facturas relacionadas para permitir la edición."
+                    ))
         res = super().write(vals)
         UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
         UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
@@ -318,3 +326,43 @@ class SaleOrder(models.Model):
                     UsageUso.bump(order.uso_cfdi_id.id, user_id=self.env.uid)
 
         return res
+
+    def _must_lock_lines(self):
+        """Devuelve True si EXISTE alguna factura/NC de cliente y al menos una NO está cancelada."""
+        self.ensure_one()
+        invoices = self.invoice_ids.filtered(lambda m: m.move_type in ('out_invoice', 'out_refund'))
+        return bool(invoices) and not all(inv.state == 'cancel' for inv in invoices)
+
+
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Evita agregar líneas si hay facturas no canceladas
+        for vals in vals_list:
+            order = self.env['sale.order'].browse(vals.get('order_id'))
+            if order and order._must_lock_lines():
+                raise UserError(_(
+                    "No se pueden agregar líneas al pedido porque existe una factura/NC vigente.\n"
+                    "Cancela las facturas relacionadas para permitir la edición."
+                ))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        # Evita editar líneas si hay facturas no canceladas
+        locked = self.filtered(lambda l: l.order_id and l.order_id._must_lock_lines())
+        if locked:
+            raise UserError(_(
+                "No se pueden editar líneas del pedido porque existe una factura/NC vigente."
+            ))
+        return super().write(vals)
+
+    def unlink(self):
+        # Evita borrar líneas si hay facturas no canceladas
+        locked = self.filtered(lambda l: l.order_id and l.order_id._must_lock_lines())
+        if locked:
+            raise UserError(_(
+                "No se pueden eliminar líneas del pedido porque existe una factura/NC vigente."
+            ))
+        return super().unlink()

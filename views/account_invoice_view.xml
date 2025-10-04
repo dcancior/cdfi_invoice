@@ -136,29 +136,31 @@
         <field name="name">sale.order.form.inherit.lock.lines</field>
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="priority">30</field>
         <field name="arch" type="xml">
 
-        <!-- Pinta el campo técnico (oculto) en el form -->
-        <xpath expr="//form[@class='o_sale_order']/header" position="inside">
+            <!-- Campo técnico (invisible) para evaluar attrs -->
+            <xpath expr="//sheet" position="inside">
             <field name="allow_edit_if_inv_cancelled" invisible="1"/>
-        </xpath>
+            </xpath>
 
-        <!-- Controla readonly del one2many usando el flag -->
-        <xpath expr="//field[@name='order_line']" position="attributes">
+            <!-- Controlar readonly del one2many con el flag -->
+            <xpath expr="//field[@name='order_line']" position="attributes">
             <attribute name="attrs">
-            {
+                {
                 'readonly': [
-                ('state','in',('sale','done','cancel')),
-                ('allow_edit_if_inv_cancelled','=', False)
+                    ('state','in',('sale','done','cancel')),
+                    ('allow_edit_if_inv_cancelled','=', False)
                 ]
-            }
+                }
             </attribute>
-            <!-- limpia options que bloquean agregar/borrar -->
-            <attribute name="options"/>
             <attribute name="editable">bottom</attribute>
             <attribute name="create">true</attribute>
             <attribute name="edit">true</attribute>
-        </xpath>
+            <!-- Si de verdad necesitas limpiar las opciones por defecto, descomenta:
+            <attribute name="options"/>
+            -->
+            </xpath>
 
         </field>
     </record>

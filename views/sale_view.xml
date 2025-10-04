@@ -6,25 +6,15 @@
 	     - Muestra campos de configuración CFDI/uso/forma de pago
 	   =========================================================== -->
 	<record id="view_sale_order_form_inherit" model="ir.ui.view">
-        <!-- Nombre legible de la vista -->
         <field name="name">sale.order.form.inherit</field>
-        <!-- Modelo objetivo -->
         <field name="model">sale.order</field>
-        <!-- Vista base que heredamos -->
-        <field name="inherit_id" ref="sale.view_order_form"/>
-        <!-- Cambios XML -->
+        <field name="inherit_id" ref="sale.view_order_form"/> 
         <field name="arch" type="xml">
-            <!-- Insertamos dentro del notebook del formulario -->
-            <xpath expr="//notebook" position="inside">
-	            <!-- Nueva pestaña para datos CFDI -->
-	            <page name="info_cdfi" string="CFDI">
-	                <!-- Grid con 4 columnas "abstractas" para alinear subgrupos -->
-	                <group cols="4">
-		                <!-- Subgrupo con campos de pago CFDI -->
+            <xpath expr="//notebook" position="inside"> 
+	            <page name="info_cdfi" string="CFDI"> 
+	                <group cols="4"> 
 		                <group string="Detalles de Pago">
-		                    <!-- Campo método de pago (debe existir en sale.order) -->
-		                    <field name="methodo_pago"/>
-		                    <!-- "forma_pago_id" con contexto: prioriza valores más usados por el usuario -->
+		                    <field name="methodo_pago"/> 
 		                    <field name="forma_pago_id" context="{'prioritize_usage': 1}"/>
 		                    <!-- "uso_cfdi_id" igual: sugiere/ordena por uso frecuente -->
 		                    <field name="uso_cfdi_id" context="{'prioritize_usage': 1}"/>
