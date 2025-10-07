@@ -2,6 +2,7 @@
 
 from odoo import api, fields, models, _
 from . import amount_to_text_es_MX
+from odoo.exceptions import UserError, ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
