@@ -99,14 +99,25 @@
                     <span t-field="o.partner_id.street"/> <span t-field="o.partner_id.street2"/><br/>
                     <span t-field="o.partner_id.state_id.name"/>, <span t-field="o.partner_id.city"/><br/>
                     <span t-field="o.partner_id.vat"/><br/>
-                    Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> C.P <span t-field="o.partner_id.zip"/> <br/>
+                    Régimen fiscal:
+                    <span t-if="o.partner_id.regimen_fiscal_id">
+                        <t t-esc="o.partner_id.regimen_fiscal_id.description or o.partner_id.regimen_fiscal_id.name or o.partner_id.regimen_fiscal_id.display_name"/>
+                        <t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>
+                    </span>
+                    <span t-if="not o.partner_id.regimen_fiscal_id">—</span>
+                    C.P <span t-field="o.partner_id.zip"/> <br/>
                 </div>
                 <div class="col-6" style="font-size:10px; line-height: 1.1;">
                     <t t-if="o.move_type == 'out_invoice'">
                         <strong>Datos emisor:</strong><br/>
                         Nombre emisor: <span t-field="o.company_id.nombre_fiscal"/><br/>
-                        Rfc Emisor: <span t-field="o.company_id.vat"/><br/>
-                        Regimen fiscal: <span t-field="o.company_id.regimen_fiscal_id.code"/><br/>
+                        RFC Emisor: <span t-field="o.company_id.vat"/><br/>
+                        Régimen fiscal:
+                        <span t-if="o.company_id.regimen_fiscal_id">
+                            <t t-esc="o.company_id.regimen_fiscal_id.description or o.company_id.regimen_fiscal_id.name or o.company_id.regimen_fiscal_id.display_name"/>
+                            <t t-if="o.company_id.regimen_fiscal_id.code"> (<t t-esc="o.company_id.regimen_fiscal_id.code"/>)</t>
+                        </span>
+                        <span t-if="not o.company_id.regimen_fiscal_id">—</span><br/>
                         Lugar de expedición:
                         <t t-if="o.journal_id.codigo_postal">
                             <span t-field="o.journal_id.codigo_postal"/>
