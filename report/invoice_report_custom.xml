@@ -47,8 +47,8 @@
                 <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id" name="origin" style="line-height: 1.1;">
                     <strong>Uso:</strong>
                     <p class="m-0">
-                        <t t-esc="o.uso_cfdi_id.description or o.uso_cfdi_id.display_name or ''"/>
-                        <t t-if="o.uso_cfdi_id.code"> <t t-esc="o.uso_cfdi_id.code"/></t>
+                        <t t-esc="o.uso_cfdi_id.description or o.uso_cfdi_id.name or o.uso_cfdi_id.display_name"/>
+                        <t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>
                     </p>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.methodo_pago" name="reference" style="line-height: 1.1;">
