@@ -97,7 +97,9 @@
                     <span t-if="o.move_type == 'in_invoice'"><strong>Datos emisor:</strong></span><br/>
                     <span t-field="o.partner_id.name"/><br/>
                     <span t-field="o.partner_id.street"/> <span t-field="o.partner_id.street2"/><br/>
-                    <span t-field="o.partner_id.state_id.name"/>, <span t-field="o.partner_id.city"/><br/>
+                    <span t-field="o.partner_id.state_id.name"/>, <span t-field="o.partner_id.city"/>
+                    C.P <span t-field="o.partner_id.zip"/><br/>
+                    RFC Receptop: 
                     <span t-field="o.partner_id.vat"/><br/>
                     Régimen fiscal:
                     <span t-if="o.partner_id.regimen_fiscal_id">
@@ -105,7 +107,7 @@
                         <t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>
                     </span>
                     <span t-if="not o.partner_id.regimen_fiscal_id">—</span>
-                    C.P <span t-field="o.partner_id.zip"/> <br/>
+                     <br/>
                 </div>
                 <div class="col-6" style="font-size:10px; line-height: 1.1;">
                     <t t-if="o.move_type == 'out_invoice'">
