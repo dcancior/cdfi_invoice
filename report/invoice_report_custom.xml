@@ -98,7 +98,7 @@
                     <span t-field="o.partner_id.name"/><br/>
                     <span t-field="o.partner_id.street"/> <span t-field="o.partner_id.street2"/><br/>
                     <span t-field="o.partner_id.state_id.name"/>, <span t-field="o.partner_id.city"/>
-                    C.P <span t-field="o.partner_id.zip"/><br/>
+                    - C.P <span t-field="o.partner_id.zip"/><br/>
                     RFC Receptop: 
                     <span t-field="o.partner_id.vat"/><br/>
                     Régimen fiscal:
