@@ -62,10 +62,7 @@
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2" style="margin-bottom: 8px; font-size: 11px;">
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date" name="invoice_date" style="line-height: 1.1;">
-                    <strong>
-                        <t t-if="o.desglosar_iva == 'no'">Fecha de Nota de Venta:</t>
-                        <t t-else="">Fecha de factura:</t>
-                    </strong>
+                    <strong t-esc="'Fecha de Nota de Venta:' if ((o.move_type == 'out_invoice') and ((o.desglosar_iva or '').strip().lower() == 'no')) else 'Fecha de factura:'"/>
                     <p class="m-0" t-field="o.invoice_date"/>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due" name="due_date" style="line-height: 1.1;">
