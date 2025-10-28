@@ -33,6 +33,31 @@
             </style>
         </xpath>
 
+        <!-- NUEVO: Título dinámico (Nota de Venta si desglosar_iva = 'no') -->
+        <xpath expr="//h2" position="replace">
+            <h2>
+                <!-- Cuando NO se desglosa el IVA (nota de venta) -->
+                <t t-if="o.move_type == 'out_invoice' and o.desglosar_iva == 'no'">
+                    <span t-if="o.state == 'posted'">Nota de Venta</span>
+                    <span t-if="o.state == 'draft'">Borrador de Nota de Venta</span>
+                    <span t-if="o.state == 'cancel'">Nota de Venta Cancelada</span>
+                </t>
+                <!-- Resto de casos (comportamiento normal de factura) -->
+                <t t-else="">
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Factura</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Borrador de Factura</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Factura Cancelada</span>
+
+                    <span t-if="o.move_type == 'out_refund'">Nota de Crédito</span>
+                    <span t-if="o.move_type == 'in_invoice'">Factura del Proveedor</span>
+                    <span t-if="o.move_type == 'in_refund'">Nota de crédito del proveedor</span>
+                </t>
+
+                <!-- Folio / nombre del documento siempre a continuación -->
+                <span t-if="o.name != '/'" t-esc="' — '"/><span t-if="o.name != '/'" t-field="o.name"/>
+            </h2>
+        </xpath>
+
         <!--REPLACE THE INFORMATION DIV WITH THE NEW INFO-->
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2" style="margin-bottom: 8px; font-size: 11px;">
@@ -292,7 +317,7 @@
             </t>
 
             <div t-if="o.folio_fiscal" class="col-12 cfdi-section" style="font-size:8px; margin-top: 15px;">
-                <table class="borderless" cellspacing="0" style="width:100%;border:none;border-collapse:separate;border-spacing: 1px; line-height: 1.0;">
+                <table class="borderless" cellspacing="0" style="width:100%;border:none;border-collapse:separate;border-spacing: 1 px; line-height: 1.0;">
                     <tr>
                         <td style="padding: 1px 2px;">
                             <strong>Método de pago</strong>
