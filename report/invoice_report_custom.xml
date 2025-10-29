@@ -2,7 +2,7 @@
     <!-- Inherit invoice report (from module accounting) -->
     <template id="report_invoice_inherit_cdfi" inherit_id="account.report_invoice_document">
     
-        <!-- Agregar CSS al inicio del template -->
+        <!-- Estilos para margen y secciones CFDI -->
         <xpath expr="." position="inside">
             <style>
                 /* Espaciado adicional en páginas siguientes para evitar conflicto con header */
@@ -33,32 +33,29 @@
             </style>
         </xpath>
 
-        <!-- NUEVO: Título dinámico (Nota de Venta si desglosar_iva = 'no') -->
+        <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') -->
         <xpath expr="//h2" position="replace">
             <h2>
-                <!-- Cuando NO se desglosa el IVA (nota de venta) -->
-                <t t-if="o.move_type == 'out_invoice' and o.desglosar_iva == 'no'">
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
+                <t t-if="is_nota_venta">
                     <span t-if="o.state == 'posted'">Nota de Venta</span>
                     <span t-if="o.state == 'draft'">Borrador de Nota de Venta</span>
                     <span t-if="o.state == 'cancel'">Nota de Venta Cancelada</span>
                 </t>
-                <!-- Resto de casos (comportamiento normal de factura) -->
                 <t t-else="">
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Factura</span>
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Borrador de Factura</span>
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Factura Cancelada</span>
-
                     <span t-if="o.move_type == 'out_refund'">Nota de Crédito</span>
                     <span t-if="o.move_type == 'in_invoice'">Factura del Proveedor</span>
                     <span t-if="o.move_type == 'in_refund'">Nota de crédito del proveedor</span>
                 </t>
 
-                <!-- Folio / nombre del documento siempre a continuación -->
                 <span t-if="o.name != '/'" t-esc="' — '"/><span t-if="o.name != '/'" t-field="o.name"/>
             </h2>
         </xpath>
 
-        <!--REPLACE THE INFORMATION DIV WITH THE NEW INFO-->
+        <!-- Información principal -->
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2" style="margin-bottom: 8px; font-size: 11px;">
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date" name="invoice_date" style="line-height: 1.1;">
@@ -89,11 +86,10 @@
                         <t t-if="o.forma_pago_id.code"> (<t t-esc="o.forma_pago_id.code"/>)</t>
                     </p>
                 </div>
-                
             </div>
         </xpath>
 
-        <!--PUT THE ADDRESS AFTER THE INFORMATION OF THE INVOICE-->
+        <!-- Bloques posteriores a la información -->
         <xpath expr="//div[@id='informations']" position="after">
             <t t-if="o.company_id.modo_prueba == True">
                 <div style="position:absolute;opacity:0.25;z-index:1000;width:100%;">
@@ -119,25 +115,25 @@
             </div>
             
             <div name="general_information" class="row" style="margin-bottom: 4px;">
-                <!-- Modo NOTA DE VENTA: ocultar emisor y mostrar solo nombre + celular del cliente 
-                <t t-if="o.desglosar_iva == 'no' and o.move_type == 'out_invoice'">
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
+                
+                <t t-if="is_nota_venta">
                     <div class="col-12" style="font-size:10px; line-height: 1.1;">
                         <strong>Datos Del Cliente:</strong><br/>
                         <span t-field="o.partner_id.name"/><br/>
                         <t t-if="o.partner_id.mobile">
                             <strong>Celular: </strong><span t-field="o.partner_id.mobile"/>
                         </t>
-                        <t t-elif="o.partner_id.phone">
-                            <strong>Teléfono: </strong><span t-field="o.partner_id.phone"/>
-                        </t>
                         <t t-else="">
-                            <strong>Contacto: </strong>—
+                            <t t-if="o.partner_id.phone">
+                                <strong>Teléfono: </strong><span t-field="o.partner_id.phone"/>
+                            </t>
+                            <t t-else="">
+                                <strong>Contacto: </strong>—
+                            </t>
                         </t>
                     </div>
                 </t>
-                -->
-
-                <!-- Resto de casos: dejar tu bloque original tal cual -->
                 <t t-else="">
                     <div class="col-6" style="font-size:10px; line-height: 1.1;">
                         <span t-if="o.move_type == 'out_invoice'"><strong>Datos receptor:</strong></span>
@@ -146,7 +142,7 @@
                         <span t-field="o.partner_id.street"/> <span t-field="o.partner_id.street2"/><br/>
                         <span t-field="o.partner_id.state_id.name"/>, <span t-field="o.partner_id.city"/>
                         - C.P <span t-field="o.partner_id.zip"/><br/>
-                        RFC Receptop:
+                        RFC Receptor:
                         <span t-field="o.partner_id.vat"/><br/>
                         Régimen fiscal:
                         <span t-if="o.partner_id.regimen_fiscal_id">
@@ -171,7 +167,7 @@
                             <t t-if="o.journal_id.codigo_postal">
                                 <span t-field="o.journal_id.codigo_postal"/>
                             </t>
-                            <t t-if="not o.journal_id.codigo_postal">
+                            <t t-else="">
                                 <span t-field="o.company_id.partner_id.zip"/>
                             </t>
                         </t>
@@ -180,6 +176,7 @@
             </div>
         </xpath>
 
+        <!-- Tabla de líneas -->
         <xpath expr="//table[@name='invoice_line_table']" position="replace">
             <table class="table table-sm o_main_table table-borderless" style="font-size: 9px; margin-bottom: 5px;">
                 <thead>
@@ -202,20 +199,18 @@
                         <t t-if="l.quantity > 0 and l.display_type != 'line_section' and l.display_type != 'line_note'">
                             <t t-set="price" t-value="l.price_unit * (1 - (l.discount or 0.0) / 100.0)"/>
                             <t t-set="amounts" t-value="l.tax_ids.compute_all(price, l.currency_id, l.quantity, product=l.product_id, partner=l.move_id.partner_id)"/>
-                            <t t-set="price_exclude_tax" t-value="amounts['total_excluded']"/>
-                            <t t-set="price_include_tax" t-value="amounts['total_included']"/>
-                            <t t-set="price_exclude_tax" t-value="l.move_id.currency_id.round(price_exclude_tax)"/>
-                            <t t-set="price_include_tax" t-value="l.move_id.currency_id.round(price_include_tax)"/>
+                            <t t-set="price_exclude_tax" t-value="l.move_id.currency_id.round(amounts['total_excluded'])"/>
+                            <t t-set="price_include_tax" t-value="l.move_id.currency_id.round(amounts['total_included'])"/>
                             <t t-set="taxes" t-value="amounts['taxes']"/>
                             
                             <td style="padding: 1px 2px; font-size: 9px;">
-                                <span t-field="l.product_id.clave_producto" />
+                                <span t-field="l.product_id.clave_producto"/>
                             </td>
                             <td class="text-right" style="padding: 1px 2px; font-size: 9px;">
-                                <span t-field="l.quantity" />
+                                <span t-field="l.quantity"/>
                             </td>
                             <td style="padding: 1px 2px; font-size: 8px;">
-                                <span t-field="l.product_id.cat_unidad_medida.clave" /> - <span t-field="l.product_id.cat_unidad_medida.descripcion" />
+                                <span t-field="l.product_id.cat_unidad_medida.clave"/> - <span t-field="l.product_id.cat_unidad_medida.descripcion"/>
                             </td>
                             <td style="padding: 1px 2px; font-size: 9px; max-width: 200px; word-wrap: break-word;">
                                 <span t-field="l.name" t-options="{'widget': 'text'}"/>
@@ -224,7 +219,7 @@
                                 <span t-field="l.price_unit" t-options='{"widget": "monetary", "display_currency": l.move_id.currency_id}'/>
                             </td>
                             <td t-if="display_discount" class="text-right" style="padding: 1px 2px; font-size: 9px;">
-                                <span t-esc="l.price_unit * ((l.discount or 0.0) / 100.0) *l.quantity" t-options='{"widget": "monetary", "display_currency": l.move_id.currency_id}'/>
+                                <span t-esc="l.price_unit * ((l.discount or 0.0) / 100.0) * l.quantity"/>
                             </td>
                             <td class="bordesless" style="padding: 1px 2px;">
                                 <table width="100%">
@@ -232,7 +227,7 @@
                                         <t t-foreach="taxes" t-as="m">
                                             <t t-if="m['id'] == tax.id">
                                                 <td class="text-right" width="25%" style="font-size:8px; padding: 0;">
-                                                    <span t-field="tax.name" />
+                                                    <span t-field="tax.name"/>
                                                 </td>
                                             </t>
                                         </t>
@@ -262,20 +257,19 @@
             </table>
         </xpath>
 
-        <!-- Eliminar la comunicación de pago duplicada del template base -->
+        <!-- Quitar comunicación de pago duplicada del base -->
         <xpath expr="//p[@name='payment_communication']" position="replace">
         </xpath>
 
+        <!-- Totales y pagos -->
         <xpath expr="//div[@class='clearfix mb-4']" position="replace">
             <div class="clearfix mb-4">
                 <div id="total" class="row">
-                    <!-- Columna izquierda para el total en letra -->
+                    <!-- Columna izquierda: total en letra + referencia de pago -->
                     <div class="col-6">
                         <div style="color: black; font-size: 11px; padding-top: 10px;">
-                            <strong><span t-esc="o._get_amount_2_text(o.amount_total)" /></strong>
+                            <strong><span t-esc="o._get_amount_2_text(o.amount_total)"/></strong>
                         </div>
-                        
-                        <!-- Información de comunicación de pago debajo del total en letra -->
                         <p t-if="o.move_type in ('out_invoice', 'in_refund') and o.payment_reference" name="payment_communication" style="margin-top: 15px; font-size: 10px;">
                             <strong>Utilice la siguiente comunicación para su pago:</strong> <b><span t-field="o.payment_reference"/></b>
                             <t t-if="o.partner_bank_id">
@@ -285,14 +279,12 @@
                         </p>
                     </div>
                     
-                    <!-- Columna derecha para los totales numéricos -->
+                    <!-- Columna derecha: totales numéricos -->
                     <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-6 col-md-6'}">
                         <table class="table table-sm table-borderless" style="page-break-inside: avoid;">
-                            <!--Tax totals-->
                             <t t-set="tax_totals" t-value="o.tax_totals"/>
                             <t t-call="account.document_tax_totals"/>
 
-                            <!--Payments-->
                             <t t-if="print_with_payments">
                                 <t t-if="o.payment_state != 'invoicing_legacy'">
                                     <t t-set="payments_vals" t-value="o.sudo().invoice_payments_widget and o.sudo().invoice_payments_widget['content'] or []"/>
@@ -322,81 +314,51 @@
             </div>
         </xpath>
 
+        <!-- Bloque CFDI relacionado y datos fiscales -->
         <xpath expr="//div[@name='comment']" position="before">
             <t t-if="o.tipo_relacion">
                 <div class="row cfdi-section" style="font-size: 10px; margin-bottom: 5px;">
-                    <div>
-                        <strong>CFDI Relacionado </strong>
-                    </div>
-                    <div>
-                        Tipo de Relación: <span t-field="o.tipo_relacion" />
-                    </div>
-                    <div>
-                        CFDI Relacionado: <span t-field="o.uuid_relacionado" />
-                    </div>
+                    <div><strong>CFDI Relacionado </strong></div>
+                    <div>Tipo de Relación: <span t-field="o.tipo_relacion"/></div>
+                    <div>CFDI Relacionado: <span t-field="o.uuid_relacionado"/></div>
                 </div>
             </t>
 
             <div t-if="o.folio_fiscal" class="col-12 cfdi-section" style="font-size:8px; margin-top: 15px;">
                 <table class="borderless" cellspacing="0" style="width:100%;border:none;border-collapse:separate;border-spacing: 1 px; line-height: 1.0;">
                     <tr>
-                        <td style="padding: 1px 2px;">
-                            <strong>Método de pago</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.methodo_pago" />
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <strong>Fecha y hora de certificación</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.fecha_certificacion" />
-                        </td>
+                        <td style="padding: 1px 2px;"><strong>Método de pago</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.methodo_pago"/></td>
+                        <td style="padding: 1px 2px;"><strong>Fecha y hora de certificación</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.fecha_certificacion"/></td>
                     </tr>
                     <tr>
-                        <td style="padding: 1px 2px;">
-                            <strong>Moneda</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.moneda" />
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <strong>Certificado SAT</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.cetificaso_sat" />
-                        </td>
+                        <td style="padding: 1px 2px;"><strong>Moneda</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.moneda"/></td>
+                        <td style="padding: 1px 2px;"><strong>Certificado SAT</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.cetificaso_sat"/></td>
                     </tr>
                     <tr>
-                        <td style="padding: 1px 2px;">
-                            <strong>Tipo de cambio</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.tipocambio" />
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <strong>Folio fiscal</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.folio_fiscal" />
-                        </td>
+                        <td style="padding: 1px 2px;"><strong>Tipo de cambio</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.tipocambio"/></td>
+                        <td style="padding: 1px 2px;"><strong>Folio fiscal</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.folio_fiscal"/></td>
                     </tr>
                     <tr>
-                        <td style="padding: 1px 2px;">
-                            <strong>Número de certificado</strong>
-                        </td>
-                        <td style="padding: 1px 2px;">
-                            <span t-field="o.numero_cetificado" />
-                        </td>
+                        <td style="padding: 1px 2px;"><strong>Número de certificado</strong></td>
+                        <td style="padding: 1px 2px;"><span t-field="o.numero_cetificado"/></td>
+                        <td style="padding: 1px 2px;"></td>
+                        <td style="padding: 1px 2px;"></td>
                     </tr>
                 </table>
             </div>
         </xpath>
 
+        <!-- QR y cadenas -->
         <xpath expr="//div[@name='comment']" position="after">
             <div t-if="o.folio_fiscal" name="cadenas" class="row" style="page-break-inside: avoid; margin-top: 25px; clear: both;">
                 <div class="barcode col-3">
-                    <img t-if="o.qrcode_image" t-att-src="image_data_uri(o.qrcode_image)" style="height: 120px;width: 120px;" />
+                    <img t-if="o.qrcode_image" t-att-src="image_data_uri(o.qrcode_image)" style="height: 120px;width: 120px;"/>
                 </div>
                 <div class="col-9" style="font-size:7px; line-height: 1.0;">
                     <strong>Cadena Original del Complemento digital del SAT</strong><br/>
@@ -417,9 +379,8 @@
             </p>
         </xpath>
 
-        <!-- AGREGAR DATOS DEL VEHÍCULO AL FINAL -->
+        <!-- Datos del vehículo (si hay SO asociada) -->
         <xpath expr="//div[@name='comment']" position="before">
-            <!-- Solo mostrar si la factura tiene una orden de venta asociada -->
             <t t-if="o.invoice_origin">
                 <t t-set="sale_order" t-value="o.env['sale.order'].search([('name', '=', o.invoice_origin)], limit=1)"/>
                 <t t-if="sale_order">
