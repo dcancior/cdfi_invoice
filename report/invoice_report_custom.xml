@@ -48,11 +48,13 @@
             <attribute name="class">mt-0</attribute>
         </xpath>
 
-        <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') + fecha pegada a la derecha -->
+        <!-- Título dinámico (Nota de Venta si desglosar_iva/desglose_iva = 'no') + fecha pegada a la derecha -->
         <xpath expr="//h2" position="replace">
             <h2 class="d-flex align-items-center" style="display:flex; align-items:center; width:100%; gap:12px;">
-                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
-                <!-- Lado izquierdo: título (sin forzar 12) + folio (12) -->
+                <!-- Bandera segura para Nota de Venta, sin getattr/strip/lower -->
+                <t t-set="nv2" t-value="(o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or ''"/>
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and (nv2 in ('no','No','NO', False, 0))"/>
+                <!-- Lado izquierdo: título + folio -->
                 <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
@@ -72,7 +74,7 @@
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
-                <!-- Lado derecho: fecha solo para Nota de Venta, 12pt, pegada a la derecha -->
+                <!-- Lado derecho: fecha solo para Nota de Venta -->
                 <span t-if="is_nota_venta and o.invoice_date" class="hdr-meta-12" style="margin-left:auto; text-align:right;">
                     <span t-field="o.invoice_date"/>
                 </span>
@@ -83,21 +85,21 @@
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2" style="margin-bottom: 8px; font-size: 11px;">
 
+                <!-- Bandera segura reutilizable en todo el bloque -->
+                <t t-set="nv" t-value="(o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or ''"/>
+                <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
+
                 <!-- OCULTAR fechas cuando es Nota de Venta -->
-                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and ((o.desglosar_iva or '').strip().lower() != 'no')" name="invoice_date" style="line-height: 1.1;">
-                    <strong t-esc="'Fecha de Nota de Venta:' if ((o.move_type == 'out_invoice') and ((o.desglosar_iva or '').strip().lower() == 'no')) else 'Fecha de factura:'"/>
+                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and (not nv_is_no)" name="invoice_date" style="line-height: 1.1;">
+                    <strong t-esc="'Fecha de Nota de Venta:' if (not nv_is_no and o.move_type == 'out_invoice') else 'Fecha de factura:'"/>
                     <p class="m-0" t-field="o.invoice_date"/>
                 </div>
-                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due and ((o.desglosar_iva or '').strip().lower() != 'no')" name="due_date" style="line-height: 1.1;">
+                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due and (not nv_is_no)" name="due_date" style="line-height: 1.1;">
                     <strong>Fecha de vencimiento:</strong>
                     <p class="m-0" t-field="o.invoice_date_due"/>
                 </div>
 
-                <!-- Estos quedan como estaban -->
-                <!-- HIDE 'Uso' cuando desglose_iva/desglosar_iva es 'no' (sin usar .strip()/.lower()) -->
-                <t t-set="nv" t-value="(getattr(o, 'desglosar_iva', '') or getattr(o, 'desglose_iva', ''))"/>
-                <t t-set="nv_is_no" t-value="(nv == 'no') or (nv == 'No') or (nv == 'NO') or (nv is False) or (nv == 0)"/>
-
+                <!-- Ocultar 'Uso' si nv_is_no -->
                 <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id and (not nv_is_no)" name="origin" style="line-height: 1.1;">
                     <strong>Uso:</strong>
                     <p class="m-0">
@@ -139,7 +141,7 @@
             <div id="comprobante_emision" class="row" style="margin-bottom: 5px; font-size: 11px;">
                 <!-- Mostrar 'Tipo comprobante' SOLO si NO estamos en modo 'no desglosar IVA' -->
                 <div class="col-auto mw-100 mb-1"
-                     t-if="o.tipo_comprobante and ((o.desglosar_iva or '').strip().lower() != 'no')"
+                     t-if="o.tipo_comprobante and (not nv_is_no)"
                      name="tipo_comprobante" style="line-height: 1.1;">
                     <strong>Tipo comprobante:</strong>
                     <p class="m-0" t-field="o.tipo_comprobante"/>
@@ -151,7 +153,7 @@
             </div>
             
             <div name="general_information" class="row" style="margin-bottom: 4px;">
-                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and nv_is_no"/>
                 
                 <!-- NOTA DE VENTA: Máximo 2 renglones (1 fila x 2 columnas): Cliente | Móvil principal -->
                 <t t-if="is_nota_venta">
