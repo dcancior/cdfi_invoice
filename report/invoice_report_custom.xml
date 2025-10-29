@@ -2,7 +2,7 @@
     <!-- Inherit invoice report (from module accounting) -->
     <template id="report_invoice_inherit_cdfi" inherit_id="account.report_invoice_document">
     
-        <!-- Estilos para margen y secciones CFDI -->
+        <!-- Estilos para margen y tipografías unificadas -->
         <xpath expr="." position="inside">
             <style>
                 /* Espaciado adicional en páginas siguientes para evitar conflicto con header */
@@ -11,47 +11,48 @@
                         margin-top: 120px !important;
                         padding-top: 40px !important;
                     }
-                    
                     /* Asegurar que el QR no se superponga */
                     div[name="cadenas"] {
                         margin-top: 20px !important;
                         page-break-inside: avoid !important;
                     }
-                    
                     /* Espaciado adicional para elementos CFDI */
                     .cfdi-section {
                         margin-top: 15px !important;
                         margin-bottom: 15px !important;
                     }
                 }
-                
+
                 /* También aplicar en vista previa */
                 .page:not(:first-child) {
                     margin-top: 100px;
                     padding-top: 30px;
                 }
 
-                /* Tamaños de texto específicos */
-                .hdr-meta-12 { font-size: 12px !important; color: #000 !important; }
+                /* ===== Unificación de tipografías =====
+                   - Encabezado (labels/títulos): 12 pt negrita
+                   - Contenido (valores): 11 pt normal
+                   - ¡OJO! No toca el tamaño/color del título principal (los spans del h2) */
+                .hdr-meta-12 { font-size: 12px !important; color: #000 !important; } /* metadatos en header */
+                .hdr-date-12 { font-size: 12px !important; color: #000 !important; }
 
-                /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
-                .invoice-body-11 thead th { font-size: 12px !important; font-weight: 700 !important; }
-                .invoice-body-11 tbody td { font-size: 11px !important; font-weight: 400 !important; }
-
-                /* Encabezados/valores unificados en bloques superiores */
+                /* Bloques de información (labels 12 bold, valores 11 normal) */
                 .hdr-block-uni strong { font-size: 12px !important; font-weight: 700 !important; color: #000 !important; }
                 .hdr-block-uni p,
                 .hdr-block-uni span:not(strong),
                 .hdr-block-uni .val { font-size: 11px !important; font-weight: 400 !important; }
 
-                /* Vehículo (mismo ancho que productos) */
+                /* Tabla de líneas: encabezados 12 bold, celdas 11 normal */
+                .invoice-body-11 thead th { font-size: 12px !important; font-weight: 700 !important; }
+                .invoice-body-11 tbody td { font-size: 11px !important; font-weight: 400 !important; }
+
+                /* ===== Vehículo (mismo ancho que la tabla de productos) ===== */
                 .veh-block { margin-top:16px; }
                 .veh-title { font-size:12px !important; font-weight:700 !important; color:#333; margin:0 0 6px 0; }
                 .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
                 .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; word-wrap:break-word; }
                 .veh-label { font-weight:700 !important; font-size:12px !important; background:#f9f9fb; white-space:nowrap; color:#000; }
                 .veh-val { font-weight:400 !important; font-size:11px !important; }
-                .hdr-date-12 { font-size: 12px !important; color: #000 !important; }
             </style>
         </xpath>
 
@@ -64,10 +65,12 @@
             <attribute name="class">mt-0</attribute>
         </xpath>
 
-        <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') + fecha pegada a la derecha -->
+        <!-- Título dinámico (sin tocar tamaño/color del bloque de spans indicado) + fecha a la derecha (12 pt) -->
         <xpath expr="//h2" position="replace">
             <h2 style="position:relative; width:100%;">
                 <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
+
+                <!-- IZQ: Título + folio (metadatos del folio en 12 pt) -->
                 <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
@@ -87,13 +90,15 @@
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
+
+                <!-- DER: Fecha (12 pt) pegada al extremo derecho -->
                 <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-12" style="position:absolute; right:0; top:0;">
                     <span t-field="o.invoice_date"/>
                 </span>
             </h2>
         </xpath>
 
-        <!-- Información principal -->
+        <!-- Información principal (unificada con hdr-block-uni) -->
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2 hdr-block-uni" style="margin-bottom: 8px;">
 
@@ -136,7 +141,7 @@
             </div>
         </xpath>
 
-        <!-- Bloques posteriores a la información -->
+        <!-- Bloques posteriores a la información (también con unificación tipográfica) -->
         <xpath expr="//div[@id='informations']" position="after">
             <t t-if="o.company_id.modo_prueba == True">
                 <div style="position:absolute;opacity:0.25;z-index:1000;width:100%;">
@@ -188,7 +193,7 @@
                     </div>
                 </t>
 
-                <!-- Resto de casos -->
+                <!-- Resto de casos: se deja igual, con sizes unificados -->
                 <t t-else="">
                     <div class="col-6" style="line-height: 1.1;">
                         <span t-if="o.move_type == 'out_invoice'"><strong>Datos receptor:</strong></span>
@@ -231,10 +236,10 @@
             </div>
         </xpath>
 
-        <!-- Tabla de líneas (alineación + ocultar "Impuesto" cuando nv_is_no) -->
+        <!-- Tabla de líneas (encabezados 12 / contenido 11 por CSS) -->
         <xpath expr="//table[@name='invoice_line_table']" position="replace">
             <table class="table table-sm o_main_table table-borderless invoice-body-11" style="margin-bottom: 5px;">
-                <!-- Variables de control -->
+                <!-- Variables locales para controlar la columna Impuesto -->
                 <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
                 <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
 
@@ -246,6 +251,7 @@
                         <th width="40%" style="padding: 2px 3px;">Descripción</th>
                         <th class="text-right" style="padding: 2px 3px;">Precio Unitario</th>
                         <th t-if="display_discount" class="text-right" style="padding: 2px 3px;">Descuento</th>
+                        <!-- Ocultar encabezado de Impuesto cuando desglosar_iva = no -->
                         <th t-if="not nv_is_no" class="text-right" style="padding: 2px 3px;">Impuesto</th>
                         <th class="text-right" style="padding: 2px 3px;">
                             <span groups="account.group_show_line_subtotals_tax_excluded">Importe</span>
@@ -276,6 +282,7 @@
                                 <span t-esc="l.price_unit * ((l.discount or 0.0) / 100.0) * l.quantity"
                                       t-options='{"widget": "monetary", "display_currency": l.move_id.currency_id}'/>
                             </td>
+                            <!-- Ocultar celda de Impuesto cuando desglosar_iva = no -->
                             <td t-if="not nv_is_no" class="text-right" style="padding: 1px 2px;">
                                 <t t-set="taxes_join" t-value="', '.join([(tax.description or tax.name) for tax in l.tax_ids])"/>
                                 <span t-esc="taxes_join"/>
@@ -308,7 +315,7 @@
         <xpath expr="//p[@name='payment_communication']" position="replace">
         </xpath>
 
-        <!-- Totales y pagos (con filtros cuando nv_is_no) -->
+        <!-- Totales y pagos (sin cambios funcionales; tamaños heredan por defecto) -->
         <xpath expr="//div[@class='clearfix mb-4']" position="replace">
             <div class="clearfix mb-4">
                 <div id="total" class="row">
@@ -326,25 +333,10 @@
                         </p>
                     </div>
                     
-                    <!-- Columna derecha: totales numéricos (modificados si nv_is_no) -->
+                    <!-- Columna derecha: totales numéricos -->
                     <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-6 col-md-6'}">
                         <table class="table table-sm table-borderless" style="page-break-inside: avoid;">
-
-                            <!-- Preparar tax_totals (filtrar IVA 0% y renombrar 'Importe sin Impuestos' a 'Importe' cuando nv_is_no) -->
-                            <t t-set="tt" t-value="o.tax_totals"/>
-                            <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
-                            <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
-
-                            <t t-if="nv_is_no">
-                                <t t-set="clean_groups" t-value="{k: [g for g in v if (g.get('tax_group_name') or '').strip() not in ('IVA 0%','IVA 0 %','IVA 0','VAT 0%')] for k, v in tt.get('groups_by_subtotal', {}).items()}"/>
-                                <t t-set="renamed_subtotals" t-value="[ (dict(s, **{'name': 'Importe'})) if ((s.get('name') or '').lower() in ('importe sin impuestos','untaxed amount','amount without tax')) or (('sin' in (s.get('name') or '').lower()) and ('imp' in (s.get('name') or '').lower())) else s for s in tt.get('subtotals', []) ]"/>
-                                <t t-set="tax_totals" t-value="dict(tt, **{'groups_by_subtotal': clean_groups, 'subtotals': renamed_subtotals})"/>
-                            </t>
-                            <t t-else="">
-                                <t t-set="tax_totals" t-value="tt"/>
-                            </t>
-
-                            <!-- Pintar totales con el tax_totals preparado -->
+                            <t t-set="tax_totals" t-value="o.tax_totals"/>
                             <t t-call="account.document_tax_totals"/>
 
                             <t t-if="print_with_payments">
@@ -441,7 +433,7 @@
             </p>
         </xpath>
 
-        <!-- Datos del vehículo -->
+        <!-- Datos del vehículo (misma anchura que tabla de productos, etiquetas 12/bold, valores 11) -->
         <xpath expr="//div[@name='comment']" position="before">
             <t t-if="o.invoice_origin">
                 <t t-set="sale_order" t-value="o.env['sale.order'].search([('name', '=', o.invoice_origin)], limit=1)"/>
@@ -463,6 +455,7 @@
                         <t t-set="unidad" t-value="(sale_order.num_unidad or '—')"/>
                         <t t-set="obs" t-value="(sale_order.observations or '')"/>
 
+                        <!-- Igual ancho que la tabla de productos -->
                         <table class="table table-sm o_main_table table-bordered veh-table">
                             <colgroup>
                                 <col style="width:14%;"/>
