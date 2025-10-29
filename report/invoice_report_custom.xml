@@ -1,7 +1,5 @@
 <odoo>
-    <!-- ========================= -->
-    <!--  INHERIT FACTURA (QWEB)   -->
-    <!-- ========================= -->
+    <!-- Inherit invoice report (from module accounting) -->
     <template id="report_invoice_inherit_cdfi" inherit_id="account.report_invoice_document">
     
         <!-- Estilos para margen y secciones CFDI -->
@@ -35,25 +33,25 @@
 
                 /* Tamaños de texto específicos */
                 .hdr-meta-12 { font-size: 12px !important; color: #000 !important; }
-                .hdr-date-12 { font-size: 12px !important; color: #000 !important; }
 
-                /* Unificación de encabezados y contenido */
-                .hdr-block-uni strong { font-size: 12px !important; font-weight: 700 !important; color: #000 !important; }
-                .hdr-block-uni .val,
-                .hdr-block-uni p,
-                .hdr-block-uni span:not(strong) { font-size: 11px !important; font-weight: 400 !important; }
-
-                /* Tabla de líneas: encabezado 12 (negritas), cuerpo 11 */
+                /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
                 .invoice-body-11 thead th { font-size: 12px !important; font-weight: 700 !important; }
                 .invoice-body-11 tbody td { font-size: 11px !important; font-weight: 400 !important; }
 
-                /* Bloque de vehículo con mismo ancho visual que la tabla de productos */
+                /* Encabezados/valores unificados en bloques superiores */
+                .hdr-block-uni strong { font-size: 12px !important; font-weight: 700 !important; color: #000 !important; }
+                .hdr-block-uni p,
+                .hdr-block-uni span:not(strong),
+                .hdr-block-uni .val { font-size: 11px !important; font-weight: 400 !important; }
+
+                /* Vehículo (mismo ancho que productos) */
                 .veh-block { margin-top:16px; }
-                .veh-title { font-size:14px !important; font-weight:700 !important; color:#000; margin:0 0 6px 0; }
+                .veh-title { font-size:12px !important; font-weight:700 !important; color:#333; margin:0 0 6px 0; }
                 .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
                 .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; word-wrap:break-word; }
                 .veh-label { font-weight:700 !important; font-size:12px !important; background:#f9f9fb; white-space:nowrap; color:#000; }
                 .veh-val { font-weight:400 !important; font-size:11px !important; }
+                .hdr-date-12 { font-size: 12px !important; color: #000 !important; }
             </style>
         </xpath>
 
@@ -69,9 +67,7 @@
         <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') + fecha pegada a la derecha -->
         <xpath expr="//h2" position="replace">
             <h2 style="position:relative; width:100%;">
-                <t t-set="is_nota_venta"
-                   t-value="o.move_type == 'out_invoice' and ((getattr(o, 'desglosar_iva', getattr(o,'desglose_iva','')) or '') in ('no','No','NO'))"/>
-
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
                 <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
@@ -91,8 +87,6 @@
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
-
-                <!-- Fecha a la derecha (tamaño 12 en encabezado; tú pediste mantener estilos del título intactos) -->
                 <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-12" style="position:absolute; right:0; top:0;">
                     <span t-field="o.invoice_date"/>
                 </span>
@@ -102,13 +96,14 @@
         <!-- Información principal -->
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2 hdr-block-uni" style="margin-bottom: 8px;">
-                <!-- Bandera reutilizable -->
-                <t t-set="nv_raw" t-value="getattr(o, 'desglosar_iva', getattr(o,'desglose_iva',''))"/>
-                <t t-set="nv_is_no" t-value="(nv_raw in ('no','No','NO')) or (nv_raw in (False, 0, None))"/>
+
+                <!-- Bandera segura reutilizable -->
+                <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
 
                 <!-- Fechas solo si NO es Nota de Venta -->
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and (not nv_is_no)" name="invoice_date" style="line-height: 1.1;">
-                    <strong>Fecha de factura:</strong>
+                    <strong t-esc="'Fecha de Nota de Venta:' if (not nv_is_no and o.move_type == 'out_invoice') else 'Fecha de factura:'"/>
                     <p class="m-0 val" t-field="o.invoice_date"/>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due and (not nv_is_no)" name="due_date" style="line-height: 1.1;">
@@ -156,9 +151,9 @@
             </t>
 
             <div id="comprobante_emision" class="row hdr-block-uni" style="margin-bottom: 5px;">
-                <!-- Bandera local -->
-                <t t-set="nv_raw" t-value="getattr(o, 'desglosar_iva', getattr(o,'desglose_iva',''))"/>
-                <t t-set="nv_is_no" t-value="(nv_raw in ('no','No','NO')) or (nv_raw in (False, 0, None))"/>
+                <!-- Definir nv/nv_is_no localmente para evitar escopo -->
+                <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
 
                 <!-- Mostrar 'Tipo comprobante' SOLO si NO estamos en modo 'no desglosar IVA' -->
                 <div class="col-auto mw-100 mb-1"
@@ -174,7 +169,7 @@
             </div>
             
             <div name="general_information" class="row hdr-block-uni" style="margin-bottom: 4px;">
-                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((getattr(o,'desglosar_iva', getattr(o,'desglose_iva','')) or '') in ('no','No','NO'))"/>
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and (((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '') in ('no','No','NO', False, 0))"/>
                 
                 <!-- NOTA DE VENTA: Cliente | Móvil principal -->
                 <t t-if="is_nota_venta">
@@ -240,8 +235,8 @@
         <xpath expr="//table[@name='invoice_line_table']" position="replace">
             <table class="table table-sm o_main_table table-borderless invoice-body-11" style="margin-bottom: 5px;">
                 <!-- Variables de control -->
-                <t t-set="nv_raw" t-value="getattr(o, 'desglosar_iva', getattr(o,'desglose_iva',''))"/>
-                <t t-set="nv_is_no" t-value="(nv_raw in ('no','No','NO')) or (nv_raw in (False, 0, None))"/>
+                <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
 
                 <thead>
                     <tr style="line-height: 1.0;">
@@ -313,7 +308,7 @@
         <xpath expr="//p[@name='payment_communication']" position="replace">
         </xpath>
 
-        <!-- Totales y pagos (usando plantillas propias para robustez PDF) -->
+        <!-- Totales y pagos (con filtros cuando nv_is_no) -->
         <xpath expr="//div[@class='clearfix mb-4']" position="replace">
             <div class="clearfix mb-4">
                 <div id="total" class="row">
@@ -331,16 +326,26 @@
                         </p>
                     </div>
                     
-                    <!-- Columna derecha: totales numéricos -->
+                    <!-- Columna derecha: totales numéricos (modificados si nv_is_no) -->
                     <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-6 col-md-6'}">
                         <table class="table table-sm table-borderless" style="page-break-inside: avoid;">
-                            <!-- Pasar flags y tax_totals al render del bloque de totales -->
-                            <t t-set="nv_raw" t-value="getattr(o, 'desglosar_iva', getattr(o,'desglose_iva',''))"/>
-                            <t t-set="nv_is_no" t-value="(nv_raw in ('no','No','NO')) or (nv_raw in (False, 0, None))"/>
-                            <t t-set="tax_totals" t-value="o.tax_totals"/>
 
-                            <!-- Usar nuestras plantillas robustas (PDF-safe) -->
-                            <t t-call="cdfi.document_tax_totals_slim"/>
+                            <!-- Preparar tax_totals (filtrar IVA 0% y renombrar 'Importe sin Impuestos' a 'Importe' cuando nv_is_no) -->
+                            <t t-set="tt" t-value="o.tax_totals"/>
+                            <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                            <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
+
+                            <t t-if="nv_is_no">
+                                <t t-set="clean_groups" t-value="{k: [g for g in v if (g.get('tax_group_name') or '').strip() not in ('IVA 0%','IVA 0 %','IVA 0','VAT 0%')] for k, v in tt.get('groups_by_subtotal', {}).items()}"/>
+                                <t t-set="renamed_subtotals" t-value="[ (dict(s, **{'name': 'Importe'})) if ((s.get('name') or '').lower() in ('importe sin impuestos','untaxed amount','amount without tax')) or (('sin' in (s.get('name') or '').lower()) and ('imp' in (s.get('name') or '').lower())) else s for s in tt.get('subtotals', []) ]"/>
+                                <t t-set="tax_totals" t-value="dict(tt, **{'groups_by_subtotal': clean_groups, 'subtotals': renamed_subtotals})"/>
+                            </t>
+                            <t t-else="">
+                                <t t-set="tax_totals" t-value="tt"/>
+                            </t>
+
+                            <!-- Pintar totales con el tax_totals preparado -->
+                            <t t-call="account.document_tax_totals"/>
 
                             <t t-if="print_with_payments">
                                 <t t-if="o.payment_state != 'invoicing_legacy'">
@@ -377,7 +382,7 @@
                 <div class="row cfdi-section hdr-block-uni" style="margin-bottom: 5px;">
                     <div><strong>CFDI Relacionado </strong></div>
                     <div><strong>Tipo de Relación:</strong> <span class="val" t-field="o.tipo_relacion"/></div>
-                    <div><strong>CFDI Relacionado:</strong> <span class="val" t-field="o.uuid_relacionado"/></span></div>
+                    <div><strong>CFDI Relacionado:</strong> <span class="val" t-field="o.uuid_relacionado"/></div>
                 </div>
             </t>
 
@@ -436,7 +441,7 @@
             </p>
         </xpath>
 
-        <!-- Datos del vehículo (mismo ancho visual que productos) -->
+        <!-- Datos del vehículo -->
         <xpath expr="//div[@name='comment']" position="before">
             <t t-if="o.invoice_origin">
                 <t t-set="sale_order" t-value="o.env['sale.order'].search([('name', '=', o.invoice_origin)], limit=1)"/>
@@ -445,8 +450,8 @@
                         <h4 class="veh-title">Datos del Vehículo</h4>
 
                         <!-- Variables de apoyo -->
-                        <t t-set="marca" t-value="sale_order and (dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto) or '—') or '—'"/>
-                        <t t-set="modelo" t-value="(sale_order.nombre_auto.name if sale_order.nombre_auto else '—')"/>
+                        <t t-set="marca" t-value="(dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') or '—') if sale_order else '—'"/>
+                        <t t-set="modelo" t-value="(sale_order.nombre_auto.name if sale_order.nombre_auto else '') or '—'"/>
                         <t t-set="anio" t-value="(sale_order.anio_auto or '—')"/>
                         <t t-set="color" t-value="(sale_order.color_auto or '—')"/>
                         <t t-set="vin" t-value="(sale_order.serie_auto or '—')"/>
@@ -509,71 +514,4 @@
         </xpath>
 
     </template>
-
-    <!-- ============================== -->
-    <!--  BLOQUES DE TOTALES (PDF-SAFE) -->
-    <!-- ============================== -->
-
-    <!-- Versión slim del document_tax_totals con renombre del subtotal y filtrado IVA 0% cuando nv_is_no -->
-    <template id="document_tax_totals_slim">
-        <t t-foreach="tax_totals['subtotals']" t-as="subtotal">
-            <tr class="border-black o_subtotal">
-                <td>
-                    <strong t-esc="( (nv_is_no and ((subtotal.get('name') or '').lower() in ('importe sin impuestos','untaxed amount','amount without tax'))) and 'Importe' ) or subtotal.get('name')"/>
-                </td>
-                <td class="text-end">
-                    <span t-att-class="oe_subtotal_footer_separator" t-esc="subtotal.get('formatted_amount')"/>
-                </td>
-            </tr>
-
-            <!-- Mostrar grupos por subtotal, ocultando IVA 0% si nv_is_no -->
-            <t t-set="subtotal_to_show" t-value="subtotal.get('name')"/>
-            <t t-call="cdfi.tax_groups_totals_slim"/>
-        </t>
-
-        <t t-if="'formatted_rounding_amount' in tax_totals and tax_totals.get('rounding_amount') != 0">
-            <td>Rounding</td>
-            <td class="text-end">
-                <span t-esc="tax_totals.get('formatted_rounding_amount')"/>
-            </td>
-        </t>
-
-        <!-- Total -->
-        <tr class="border-black o_total">
-            <td><strong>Total</strong></td>
-            <td class="text-end">
-                <span t-esc="tax_totals.get('formatted_amount_total_rounded')" t-if="'formatted_amount_total_rounded' in tax_totals"/>
-                <span t-esc="tax_totals.get('formatted_amount_total')" t-else=""/>
-            </td>
-        </tr>
-    </template>
-
-    <!-- Lista de grupos por subtotal, con filtro IVA 0% cuando nv_is_no -->
-    <template id="tax_groups_totals_slim">
-        <t t-foreach="tax_totals.get('groups_by_subtotal', {}).get(subtotal_to_show, [])" t-as="amount_by_group">
-            <t t-set="gname" t-value="amount_by_group.get('tax_group_name') or ''"/>
-            <t t-if="not (nv_is_no and (gname in ('IVA 0%','IVA 0 %','IVA 0','VAT 0%')))">
-                <tr>
-                    <t t-if="tax_totals.get('display_tax_base')">
-                        <td>
-                            <span t-esc="gname"/>
-                            <span t-if="not amount_by_group.get('hide_base_amount')" class="text-nowrap"> on
-                                <t t-esc="amount_by_group.get('formatted_tax_group_base_amount')"/>
-                            </span>
-                        </td>
-                        <td class="text-end o_price_total">
-                            <span class="text-nowrap" t-esc="amount_by_group.get('formatted_tax_group_amount')"/>
-                        </td>
-                    </t>
-                    <t t-else="">
-                        <td><span class="text-nowrap" t-esc="gname"/></td>
-                        <td class="text-end o_price_total">
-                            <span class="text-nowrap" t-esc="amount_by_group.get('formatted_tax_group_amount')"/>
-                        </td>
-                    </t>
-                </tr>
-            </t>
-        </t>
-    </template>
-
 </odoo>
