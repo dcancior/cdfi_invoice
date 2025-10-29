@@ -38,14 +38,31 @@
                 /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
                 .invoice-body-11, .invoice-body-11 * { font-size: 11px !important; }
 
-                /* Tarjeta de vehículo a TODO el ancho visual y estilo profesional */
+                /* === VEHÍCULO: a TODO el ancho del área imprimible === */
+                /* Nota: se compensa el padding lateral del contenedor de Odoo con márgenes negativos
+                   y un width expandido. En print usamos un poquito más por el renderer de wkhtmltopdf. */
                 .veh-card {
-                    border:1px solid #999; border-radius:8px;
-                    padding:10px; margin-top:16px;
-                    /* ocupar el ancho completo de la “hoja útil” compensando el padding lateral del contenedor */
-                    width:calc(100% + 30px); max-width:none;
-                    margin-left:-15px; margin-right:-15px;
+                    border:1px solid #999;
+                    border-radius:8px;
+                    padding:10px;
+                    margin-top:16px;
+
+                    /* Ancho extendido en vista previa */
+                    width:calc(100% + 60px);
+                    margin-left:-30px;
+                    margin-right:-30px;
+
+                    box-sizing:border-box;
                 }
+                @media print {
+                    .veh-card {
+                        /* Un pelín más en PDF para llegar realmente a los bordes del área útil */
+                        width:calc(100% + 80px);
+                        margin-left:-40px;
+                        margin-right:-40px;
+                    }
+                }
+
                 .veh-title { font-size:14px !important; font-weight:700; color:#333; margin:0 0 6px 0; }
                 .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; table-layout:fixed; }
                 .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; word-wrap:break-word; }
