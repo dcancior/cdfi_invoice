@@ -64,7 +64,7 @@
                     <span t-if="o.name != '/'" t-esc="' — '"/><span t-if="o.name != '/'" t-field="o.name"/>
                 </span>
                 <!-- Lado derecho: fecha solo para Nota de Venta -->
-                <span t-if="is_nota_venta and o.invoice_date" class="text-end">
+                <span t-if="is_nota_venta and o.invoice_date" class="text-end" style="color:#000; font-size:14px; margin-left:auto;">
                     <span t-field="o.invoice_date"/>
                 </span>
             </h2>
