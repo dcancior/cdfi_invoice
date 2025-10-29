@@ -94,15 +94,18 @@
                 </div>
 
                 <!-- Estos quedan como estaban -->
-                <!-- HIDE 'Uso' when desglose_iva/desglosar_iva == 'no' -->
+                <!-- HIDE 'Uso' cuando desglose_iva/desglosar_iva es 'no' (sin usar .strip()/.lower()) -->
                 <t t-set="nv" t-value="(getattr(o, 'desglosar_iva', '') or getattr(o, 'desglose_iva', ''))"/>
-                <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id and (nv.strip().lower() != 'no')" name="origin" style="line-height: 1.1;">
+                <t t-set="nv_is_no" t-value="(nv == 'no') or (nv == 'No') or (nv == 'NO') or (nv is False) or (nv == 0)"/>
+
+                <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id and (not nv_is_no)" name="origin" style="line-height: 1.1;">
                     <strong>Uso:</strong>
                     <p class="m-0">
                         <t t-esc="o.uso_cfdi_id.description or o.uso_cfdi_id.name or o.uso_cfdi_id.display_name"/>
                         <t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>
                     </p>
                 </div>
+
                 <div class="col-auto mw-100 mb-1" t-if="o.methodo_pago" name="reference" style="line-height: 1.1;">
                     <strong>Método de pago:</strong>
                     <p class="m-0">
