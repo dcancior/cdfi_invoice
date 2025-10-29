@@ -67,14 +67,18 @@
         <!-- Información principal -->
         <xpath expr="//div[@id='informations']" position="replace">
             <div id="informations" class="row mt-2 mb-2" style="margin-bottom: 8px; font-size: 11px;">
-                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date" name="invoice_date" style="line-height: 1.1;">
-                    <strong t-esc="'Fecha de Nota de Venta:' if ((o.move_type == 'out_invoice') and ((o.desglosar_iva or '').strip().lower() == 'no')) else 'Fecha de factura:'"/>
+
+                <!-- OCULTAR fechas cuando es Nota de Venta -->
+                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and ((o.desglosar_iva or '').strip().lower() != 'no')" name="invoice_date" style="line-height: 1.1;">
+                    <strong t-esc="'Fecha:' if ((o.move_type == 'out_invoice') and ((o.desglosar_iva or '').strip().lower() == 'no')) else 'Fecha de factura:'"/>
                     <p class="m-0" t-field="o.invoice_date"/>
                 </div>
-                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due" name="due_date" style="line-height: 1.1;">
+                <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due and ((o.desglosar_iva or '').strip().lower() != 'no')" name="due_date" style="line-height: 1.1;">
                     <strong>Fecha de vencimiento:</strong>
                     <p class="m-0" t-field="o.invoice_date_due"/>
                 </div>
+
+                <!-- Estos quedan como estaban -->
                 <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id" name="origin" style="line-height: 1.1;">
                     <strong>Uso:</strong>
                     <p class="m-0">
@@ -129,23 +133,24 @@
             <div name="general_information" class="row" style="margin-bottom: 4px;">
                 <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
                 
+                <!-- NOTA DE VENTA: Máximo 2 renglones (1 fila x 2 columnas): Cliente | Móvil principal -->
                 <t t-if="is_nota_venta">
                     <div class="col-12" style="font-size:10px; line-height: 1.1;">
-                        <strong>Datos Del Cliente:</strong><br/>
-                        <span t-field="o.partner_id.name"/><br/>
-                        <t t-if="o.partner_id.mobile">
-                            <strong>Celular: </strong><span t-field="o.partner_id.mobile"/>
-                        </t>
-                        <t t-else="">
-                            <t t-if="o.partner_id.phone">
-                                <strong>Teléfono: </strong><span t-field="o.partner_id.phone"/>
-                            </t>
-                            <t t-else="">
-                                <strong>Contacto: </strong>—
-                            </t>
-                        </t>
+                        <div class="row">
+                            <div class="col-8">
+                                <strong>Cliente:</strong> <span t-field="o.partner_id.name"/>
+                            </div>
+                            <div class="col-4">
+                                <t t-set="movil_principal" t-value="o.partner_id.mobile or o.partner_id.phone"/>
+                                <strong>Móvil principal:</strong>
+                                <t t-if="movil_principal"><span t-esc="movil_principal"/></t>
+                                <t t-else="">—</t>
+                            </div>
+                        </div>
                     </div>
                 </t>
+
+                <!-- Resto de casos: se deja igual -->
                 <t t-else="">
                     <div class="col-6" style="font-size:10px; line-height: 1.1;">
                         <span t-if="o.move_type == 'out_invoice'"><strong>Datos receptor:</strong></span>
