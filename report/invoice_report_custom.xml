@@ -38,13 +38,19 @@
                 /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
                 .invoice-body-11, .invoice-body-11 * { font-size: 11px !important; }
 
-                /* Tarjeta de vehículo compacta y profesional (a todo el ancho) */
-                .veh-card { border:1px solid #999; border-radius:8px; padding:10px; margin-top:16px; width:100%; max-width:100%; }
+                /* Tarjeta de vehículo a TODO el ancho visual y estilo profesional */
+                .veh-card {
+                    border:1px solid #999; border-radius:8px;
+                    padding:10px; margin-top:16px;
+                    /* ocupar el ancho completo de la “hoja útil” compensando el padding lateral del contenedor */
+                    width:calc(100% + 30px); max-width:none;
+                    margin-left:-15px; margin-right:-15px;
+                }
                 .veh-title { font-size:14px !important; font-weight:700; color:#333; margin:0 0 6px 0; }
-                .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; }
-                .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; }
-                .veh-label { background:#f7f7f9; font-weight:600; white-space:nowrap; }
-                .veh-val { }
+                .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; table-layout:fixed; }
+                .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; word-wrap:break-word; }
+                .veh-label { background:#f7f7f9; font-weight:700; white-space:nowrap; }
+                .veh-val { font-weight:400; }
             </style>
         </xpath>
 
