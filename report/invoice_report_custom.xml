@@ -33,9 +33,18 @@
 
                 /* Tamaños de texto específicos */
                 .hdr-meta-12 { font-size: 12px !important; color: #000 !important; }
+                .hdr-date-14 { font-size: 14px !important; color: #000 !important; margin-left:auto; text-align:right; }
 
                 /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
                 .invoice-body-11, .invoice-body-11 * { font-size: 11px !important; }
+
+                /* Tarjeta de vehículo compacta y profesional */
+                .veh-card { border:1px solid #999; border-radius:8px; padding:10px; margin-top:16px; }
+                .veh-title { font-size:14px !important; font-weight:700; color:#333; margin:0 0 6px 0; }
+                .veh-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; table-layout:fixed; }
+                .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; }
+                .veh-label { background:#f7f7f9; font-weight:600; white-space:nowrap; width:14%; }
+                .veh-val { }
             </style>
         </xpath>
 
@@ -74,8 +83,10 @@
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
-                <!-- Lado derecho: fecha solo para Nota de Venta -->
-                <span t-if="is_nota_venta and o.invoice_date" class="hdr-meta-12" style="margin-left:auto; text-align:right;">
+                <!-- Separador flexible para empujar la fecha hasta el extremo derecho -->
+                <span style="flex:1 1 auto;"></span>
+                <!-- Lado derecho: fecha solo para Nota de Venta, NEGRO y 14pt, pegada a la derecha -->
+                <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-14">
                     <span t-field="o.invoice_date"/>
                 </span>
             </h2>
@@ -411,24 +422,60 @@
             <t t-if="o.invoice_origin">
                 <t t-set="sale_order" t-value="o.env['sale.order'].search([('name', '=', o.invoice_origin)], limit=1)"/>
                 <t t-if="sale_order">
-                    <div style="border:2px solid #888; border-radius:8px; padding:12px; margin-top:24px; clear:both;">
-                        <h4 style="margin-bottom:8px; color:#444;">Datos del Vehículo</h4>
-                        <p style="font-size:10px; line-height:1.4; margin:0;">
-                            <strong>Marca:</strong> <t t-esc="dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') if sale_order else ''"/>, 
-                            <strong>Modelo:</strong> <t t-esc="sale_order.nombre_auto.name if sale_order.nombre_auto else ''"/>, 
-                            <strong>Año:</strong> <t t-esc="sale_order.anio_auto or ''"/>, 
-                            <strong>Color:</strong> <t t-esc="sale_order.color_auto or ''"/>, 
-                            <strong>VIN:</strong> <t t-esc="sale_order.serie_auto or ''"/>, 
-                            <strong>Placas:</strong> <t t-esc="sale_order.placas_auto or ''"/>, 
-                            <strong>Kilometraje:</strong> <t t-esc="sale_order.kilometraje_auto or ''"/>, 
-                            <strong>Tipo de combustible:</strong> <t t-esc="sale_order.tipo_combustible or ''"/>, 
-                            <strong>Nivel de Combustible:</strong> <t t-esc="sale_order.tanque_gasolina or ''"/>, 
-                            <strong>Operador:</strong> <t t-esc="sale_order.nombre_operador or ''"/>, 
-                            <strong>Número de Unidad:</strong> <t t-esc="sale_order.num_unidad or ''"/>
-                            <t t-if="sale_order.observations">
-                                <br/><strong>Observaciones:</strong> <t t-esc="sale_order.observations"/>
-                            </t>
-                        </p>
+                    <div class="veh-card">
+                        <h4 class="veh-title">Datos del Vehículo</h4>
+
+                        <!-- Variables de apoyo para valores y defaults -->
+                        <t t-set="marca" t-value="(dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') or '—') if sale_order else '—'"/>
+                        <t t-set="modelo" t-value="(sale_order.nombre_auto.name if sale_order.nombre_auto else '') or '—'"/>
+                        <t t-set="anio" t-value="(sale_order.anio_auto or '—')"/>
+                        <t t-set="color" t-value="(sale_order.color_auto or '—')"/>
+                        <t t-set="vin" t-value="(sale_order.serie_auto or '—')"/>
+                        <t t-set="placas" t-value="(sale_order.placas_auto or '—')"/>
+                        <t t-set="km" t-value="(sale_order.kilometraje_auto or '—')"/>
+                        <t t-set="comb" t-value="(sale_order.tipo_combustible or '—')"/>
+                        <t t-set="nivel" t-value="(sale_order.tanque_gasolina or '—')"/>
+                        <t t-set="oper" t-value="(sale_order.nombre_operador or '—')"/>
+                        <t t-set="unidad" t-value="(sale_order.num_unidad or '—')"/>
+                        <t t-set="obs" t-value="(sale_order.observations or '')"/>
+
+                        <table class="veh-table">
+                            <tr>
+                                <td class="veh-label">Marca</td>
+                                <td class="veh-val"><t t-esc="marca"/></td>
+                                <td class="veh-label">Modelo</td>
+                                <td class="veh-val"><t t-esc="modelo"/></td>
+                                <td class="veh-label">Año</td>
+                                <td class="veh-val"><t t-esc="anio"/></td>
+                            </tr>
+                            <tr>
+                                <td class="veh-label">Color</td>
+                                <td class="veh-val"><t t-esc="color"/></td>
+                                <td class="veh-label">VIN</td>
+                                <td class="veh-val"><t t-esc="vin"/></td>
+                                <td class="veh-label">Placas</td>
+                                <td class="veh-val"><t t-esc="placas"/></td>
+                            </tr>
+                            <tr>
+                                <td class="veh-label">Kilometraje</td>
+                                <td class="veh-val"><t t-esc="km"/></td>
+                                <td class="veh-label">Combustible</td>
+                                <td class="veh-val"><t t-esc="comb"/></td>
+                                <td class="veh-label">Nivel Comb.</td>
+                                <td class="veh-val"><t t-esc="nivel"/></td>
+                            </tr>
+                            <tr>
+                                <td class="veh-label">Operador</td>
+                                <td class="veh-val"><t t-esc="oper"/></td>
+                                <td class="veh-label">No. Unidad</td>
+                                <td class="veh-val"><t t-esc="unidad"/></td>
+                                <td class="veh-label">Observaciones</td>
+                                <td class="veh-val">
+                                    <t t-if="obs"><t t-esc="obs"/></t>
+                                    <t t-else="">—</t>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 </t>
             </t>
