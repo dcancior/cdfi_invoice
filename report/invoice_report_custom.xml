@@ -2,7 +2,7 @@
     <!-- Inherit invoice report (from module accounting) -->
     <template id="report_invoice_inherit_cdfi" inherit_id="account.report_invoice_document">
     
-        <!-- Estilos para margen y secciones CFDI -->
+        <!-- Estilos para margen y tipografías unificadas -->
         <xpath expr="." position="inside">
             <style>
                 /* Espaciado adicional en páginas siguientes para evitar conflicto con header */
@@ -11,40 +11,48 @@
                         margin-top: 120px !important;
                         padding-top: 40px !important;
                     }
-                    
                     /* Asegurar que el QR no se superponga */
                     div[name="cadenas"] {
                         margin-top: 20px !important;
                         page-break-inside: avoid !important;
                     }
-                    
                     /* Espaciado adicional para elementos CFDI */
                     .cfdi-section {
                         margin-top: 15px !important;
                         margin-bottom: 15px !important;
                     }
                 }
-                
+
                 /* También aplicar en vista previa */
                 .page:not(:first-child) {
                     margin-top: 100px;
                     padding-top: 30px;
                 }
 
-                /* Tamaños de texto específicos */
-                .hdr-meta-12 { font-size: 12px !important; color: #000 !important; }
-                .hdr-date-14 { font-size: 14px !important; color: #000 !important; }
+                /* ===== Unificación de tipografías =====
+                   - Encabezado (labels/títulos): 12 pt negrita
+                   - Contenido (valores): 11 pt normal
+                   - ¡OJO! No toca el tamaño/color del título principal (los spans del h2) */
+                .hdr-meta-12 { font-size: 12px !important; color: #000 !important; } /* metadatos en header */
+                .hdr-date-12 { font-size: 12px !important; color: #000 !important; }
 
-                /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
-                .invoice-body-11, .invoice-body-11 * { font-size: 11px !important; }
+                /* Bloques de información (labels 12 bold, valores 11 normal) */
+                .hdr-block-uni strong { font-size: 12px !important; font-weight: 700 !important; color: #000 !important; }
+                .hdr-block-uni p,
+                .hdr-block-uni span:not(strong),
+                .hdr-block-uni .val { font-size: 11px !important; font-weight: 400 !important; }
 
-                /* ====== VEHÍCULO (mismo ancho que la tabla de productos) ====== */
+                /* Tabla de líneas: encabezados 12 bold, celdas 11 normal */
+                .invoice-body-11 thead th { font-size: 12px !important; font-weight: 700 !important; }
+                .invoice-body-11 tbody td { font-size: 11px !important; font-weight: 400 !important; }
+
+                /* ===== Vehículo (mismo ancho que la tabla de productos) ===== */
                 .veh-block { margin-top:16px; }
-                .veh-title { font-size:14px !important; font-weight:700; color:#333; margin:0 0 6px 0; }
-                .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; table-layout:fixed; }
+                .veh-title { font-size:12px !important; font-weight:700 !important; color:#333; margin:0 0 6px 0; }
+                .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; table-layout:fixed; }
                 .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; word-wrap:break-word; }
-                .veh-label { font-weight:700; white-space:nowrap; background:#f9f9fb; }
-                .veh-val { font-weight:400; }
+                .veh-label { font-weight:700 !important; font-size:12px !important; background:#f9f9fb; white-space:nowrap; color:#000; }
+                .veh-val { font-weight:400 !important; font-size:11px !important; }
             </style>
         </xpath>
 
@@ -57,12 +65,12 @@
             <attribute name="class">mt-0</attribute>
         </xpath>
 
-        <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') + fecha realmente pegada a la derecha -->
+        <!-- Título dinámico (sin tocar tamaño/color del bloque de spans indicado) + fecha a la derecha (12 pt) -->
         <xpath expr="//h2" position="replace">
-            <!-- Usamos posición absoluta para garantizar que la fecha llegue al borde derecho en wkhtmltopdf -->
             <h2 style="position:relative; width:100%;">
                 <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
-                <!-- Lado izquierdo: título + folio (12 pts para metadatos; el título queda como lo traías) -->
+
+                <!-- IZQ: Título + folio (metadatos del folio en 12 pt) -->
                 <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
@@ -82,35 +90,36 @@
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
-                <!-- Fecha para Nota de Venta: negro, 14, y pegada al extremo derecho -->
-                <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-14" style="position:absolute; right:0; top:0;">
+
+                <!-- DER: Fecha (12 pt) pegada al extremo derecho -->
+                <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-12" style="position:absolute; right:0; top:0;">
                     <span t-field="o.invoice_date"/>
                 </span>
             </h2>
         </xpath>
 
-        <!-- Información principal -->
+        <!-- Información principal (unificada con hdr-block-uni) -->
         <xpath expr="//div[@id='informations']" position="replace">
-            <div id="informations" class="row mt-2 mb-2" style="margin-bottom: 8px; font-size: 11px;">
+            <div id="informations" class="row mt-2 mb-2 hdr-block-uni" style="margin-bottom: 8px;">
 
-                <!-- Bandera segura reutilizable en todo el bloque -->
+                <!-- Bandera segura reutilizable -->
                 <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
                 <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
 
-                <!-- OCULTAR fechas cuando es Nota de Venta -->
+                <!-- Fechas solo si NO es Nota de Venta -->
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and (not nv_is_no)" name="invoice_date" style="line-height: 1.1;">
                     <strong t-esc="'Fecha de Nota de Venta:' if (not nv_is_no and o.move_type == 'out_invoice') else 'Fecha de factura:'"/>
-                    <p class="m-0" t-field="o.invoice_date"/>
+                    <p class="m-0 val" t-field="o.invoice_date"/>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due and (not nv_is_no)" name="due_date" style="line-height: 1.1;">
                     <strong>Fecha de vencimiento:</strong>
-                    <p class="m-0" t-field="o.invoice_date_due"/>
+                    <p class="m-0 val" t-field="o.invoice_date_due"/>
                 </div>
 
                 <!-- Ocultar 'Uso' si nv_is_no -->
                 <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id and (not nv_is_no)" name="origin" style="line-height: 1.1;">
                     <strong>Uso:</strong>
-                    <p class="m-0">
+                    <p class="m-0 val">
                         <t t-esc="o.uso_cfdi_id.description or o.uso_cfdi_id.name or o.uso_cfdi_id.display_name"/>
                         <t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>
                     </p>
@@ -118,13 +127,13 @@
 
                 <div class="col-auto mw-100 mb-1" t-if="o.methodo_pago" name="reference" style="line-height: 1.1;">
                     <strong>Método de pago:</strong>
-                    <p class="m-0">
+                    <p class="m-0 val">
                         <span t-field="o.methodo_pago"/> (<t t-esc="o.methodo_pago"/>)
                     </p>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.forma_pago_id" name="customer_code" style="line-height: 1.1;">
                     <strong>Forma de pago:</strong>
-                    <p class="m-0">
+                    <p class="m-0 val">
                         <t t-esc="o.forma_pago_id.description or o.forma_pago_id.name or o.forma_pago_id.display_name"/>
                         <t t-if="o.forma_pago_id.code"> (<t t-esc="o.forma_pago_id.code"/>)</t>
                     </p>
@@ -132,7 +141,7 @@
             </div>
         </xpath>
 
-        <!-- Bloques posteriores a la información -->
+        <!-- Bloques posteriores a la información (también con unificación tipográfica) -->
         <xpath expr="//div[@id='informations']" position="after">
             <t t-if="o.company_id.modo_prueba == True">
                 <div style="position:absolute;opacity:0.25;z-index:1000;width:100%;">
@@ -146,76 +155,80 @@
                 </div>
             </t>
 
-            <div id="comprobante_emision" class="row" style="margin-bottom: 5px; font-size: 11px;">
+            <div id="comprobante_emision" class="row hdr-block-uni" style="margin-bottom: 5px;">
+                <!-- Definir nv/nv_is_no localmente para evitar escopo -->
+                <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
+
                 <!-- Mostrar 'Tipo comprobante' SOLO si NO estamos en modo 'no desglosar IVA' -->
                 <div class="col-auto mw-100 mb-1"
                      t-if="o.tipo_comprobante and (not nv_is_no)"
                      name="tipo_comprobante" style="line-height: 1.1;">
                     <strong>Tipo comprobante:</strong>
-                    <p class="m-0" t-field="o.tipo_comprobante"/>
+                    <p class="m-0 val" t-field="o.tipo_comprobante"/>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.fecha_factura" name="fecha_factura" style="line-height: 1.1;">
                     <strong>Fecha de emisión:</strong>
-                    <p class="m-0" t-field="o.fecha_factura"/>
+                    <p class="m-0 val" t-field="o.fecha_factura"/>
                 </div>
             </div>
             
-            <div name="general_information" class="row" style="margin-bottom: 4px;">
-                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and nv_is_no"/>
+            <div name="general_information" class="row hdr-block-uni" style="margin-bottom: 4px;">
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and (((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '') in ('no','No','NO', False, 0))"/>
                 
-                <!-- NOTA DE VENTA: Máximo 2 renglones (1 fila x 2 columnas): Cliente | Móvil principal -->
+                <!-- NOTA DE VENTA: Cliente | Móvil principal -->
                 <t t-if="is_nota_venta">
-                    <div class="col-12" style="font-size:12px; line-height: 1.1;">
+                    <div class="col-12" style="line-height: 1.1;">
                         <div class="row">
                             <div class="col-8">
-                                <strong>Cliente:</strong> <span t-field="o.partner_id.name"/>
+                                <strong>Cliente:</strong> <span class="val" t-field="o.partner_id.name"/>
                             </div>
                             <div class="col-4">
                                 <t t-set="movil_principal" t-value="o.partner_id.mobile or o.partner_id.phone"/>
                                 <strong>Móvil principal:</strong>
-                                <t t-if="movil_principal"><span t-esc="movil_principal"/></t>
-                                <t t-else="">—</t>
+                                <t t-if="movil_principal"><span class="val" t-esc="movil_principal"/></t>
+                                <t t-else=""><span class="val">—</span></t>
                             </div>
                         </div>
                     </div>
                 </t>
 
-                <!-- Resto de casos: se deja igual -->
+                <!-- Resto de casos: se deja igual, con sizes unificados -->
                 <t t-else="">
-                    <div class="col-6" style="font-size:10px; line-height: 1.1;">
+                    <div class="col-6" style="line-height: 1.1;">
                         <span t-if="o.move_type == 'out_invoice'"><strong>Datos receptor:</strong></span>
                         <span t-if="o.move_type == 'in_invoice'"><strong>Datos emisor:</strong></span><br/>
-                        <span t-field="o.partner_id.name"/><br/>
-                        <span t-field="o.partner_id.street"/> <span t-field="o.partner_id.street2"/><br/>
-                        <span t-field="o.partner_id.state_id.name"/>, <span t-field="o.partner_id.city"/>
-                        - C.P <span t-field="o.partner_id.zip"/><br/>
-                        RFC Receptor:
-                        <span t-field="o.partner_id.vat"/><br/>
-                        Régimen fiscal:
-                        <span t-if="o.partner_id.regimen_fiscal_id">
+                        <span class="val" t-field="o.partner_id.name"/><br/>
+                        <span class="val" t-field="o.partner_id.street"/> <span class="val" t-field="o.partner_id.street2"/><br/>
+                        <span class="val" t-field="o.partner_id.state_id.name"/>, <span class="val" t-field="o.partner_id.city"/>
+                        - C.P <span class="val" t-field="o.partner_id.zip"/><br/>
+                        <strong>RFC Receptor:</strong>
+                        <span class="val" t-field="o.partner_id.vat"/><br/>
+                        <strong>Régimen fiscal:</strong>
+                        <span class="val" t-if="o.partner_id.regimen_fiscal_id">
                             <t t-esc="o.partner_id.regimen_fiscal_id.description or o.partner_id.regimen_fiscal_id.name or o.partner_id.regimen_fiscal_id.display_name"/>
                             <t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>
                         </span>
-                        <span t-if="not o.partner_id.regimen_fiscal_id">—</span>
+                        <span class="val" t-if="not o.partner_id.regimen_fiscal_id">—</span>
                         <br/>
                     </div>
-                    <div class="col-6" style="font-size:10px; line-height: 1.1;">
+                    <div class="col-6" style="line-height: 1.1;">
                         <t t-if="o.move_type == 'out_invoice'">
                             <strong>Datos emisor:</strong><br/>
-                            Nombre emisor: <span t-field="o.company_id.nombre_fiscal"/><br/>
-                            RFC Emisor: <span t-field="o.company_id.vat"/><br/>
-                            Régimen fiscal:
-                            <span t-if="o.company_id.regimen_fiscal_id">
+                            <span class="val">Nombre emisor: </span><span class="val" t-field="o.company_id.nombre_fiscal"/><br/>
+                            <span class="val">RFC Emisor: </span><span class="val" t-field="o.company_id.vat"/><br/>
+                            <strong>Régimen fiscal:</strong>
+                            <span class="val" t-if="o.company_id.regimen_fiscal_id">
                                 <t t-esc="o.company_id.regimen_fiscal_id.description or o.company_id.regimen_fiscal_id.name or o.company_id.regimen_fiscal_id.display_name"/>
                                 <t t-if="o.company_id.regimen_fiscal_id.code"> (<t t-esc="o.company_id.regimen_fiscal_id.code"/>)</t>
                             </span>
-                            <span t-if="not o.company_id.regimen_fiscal_id">—</span><br/>
-                            Lugar de expedición:
+                            <span class="val" t-if="not o.company_id.regimen_fiscal_id">—</span><br/>
+                            <strong>Lugar de expedición:</strong>
                             <t t-if="o.journal_id.codigo_postal">
-                                <span t-field="o.journal_id.codigo_postal"/>
+                                <span class="val" t-field="o.journal_id.codigo_postal"/>
                             </t>
                             <t t-else="">
-                                <span t-field="o.company_id.partner_id.zip"/>
+                                <span class="val" t-field="o.company_id.partner_id.zip"/>
                             </t>
                         </t>
                     </div>
@@ -223,7 +236,7 @@
             </div>
         </xpath>
 
-        <!-- Tabla de líneas (alineación corregida) -->
+        <!-- Tabla de líneas (encabezados 12 / contenido 11 por CSS) -->
         <xpath expr="//table[@name='invoice_line_table']" position="replace">
             <table class="table table-sm o_main_table table-borderless invoice-body-11" style="margin-bottom: 5px;">
                 <thead>
@@ -296,7 +309,7 @@
         <xpath expr="//p[@name='payment_communication']" position="replace">
         </xpath>
 
-        <!-- Totales y pagos -->
+        <!-- Totales y pagos (sin cambios funcionales; tamaños heredan por defecto) -->
         <xpath expr="//div[@class='clearfix mb-4']" position="replace">
             <div class="clearfix mb-4">
                 <div id="total" class="row">
@@ -352,36 +365,36 @@
         <!-- Bloque CFDI relacionado y datos fiscales -->
         <xpath expr="//div[@name='comment']" position="before">
             <t t-if="o.tipo_relacion">
-                <div class="row cfdi-section" style="font-size: 10px; margin-bottom: 5px;">
+                <div class="row cfdi-section hdr-block-uni" style="margin-bottom: 5px;">
                     <div><strong>CFDI Relacionado </strong></div>
-                    <div>Tipo de Relación: <span t-field="o.tipo_relacion"/></div>
-                    <div>CFDI Relacionado: <span t-field="o.uuid_relacionado"/></div>
+                    <div><strong>Tipo de Relación:</strong> <span class="val" t-field="o.tipo_relacion"/></div>
+                    <div><strong>CFDI Relacionado:</strong> <span class="val" t-field="o.uuid_relacionado"/></div>
                 </div>
             </t>
 
-            <div t-if="o.folio_fiscal" class="col-12 cfdi-section" style="font-size:8px; margin-top: 15px;">
-                <table class="borderless" cellspacing="0" style="width:100%;border:none;border-collapse:separate;border-spacing: 1 px; line-height: 1.0;">
+            <div t-if="o.folio_fiscal" class="col-12 cfdi-section hdr-block-uni" style="font-size: inherit; margin-top: 15px;">
+                <table class="borderless" cellspacing="0" style="width:100%;border:none;border-collapse:separate;border-spacing: 1px; line-height: 1.0;">
                     <tr>
                         <td style="padding: 1px 2px;"><strong>Método de pago</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.methodo_pago"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.methodo_pago"/></td>
                         <td style="padding: 1px 2px;"><strong>Fecha y hora de certificación</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.fecha_certificacion"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.fecha_certificacion"/></td>
                     </tr>
                     <tr>
                         <td style="padding: 1px 2px;"><strong>Moneda</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.moneda"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.moneda"/></td>
                         <td style="padding: 1px 2px;"><strong>Certificado SAT</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.cetificaso_sat"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.cetificaso_sat"/></td>
                     </tr>
                     <tr>
                         <td style="padding: 1px 2px;"><strong>Tipo de cambio</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.tipocambio"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.tipocambio"/></td>
                         <td style="padding: 1px 2px;"><strong>Folio fiscal</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.folio_fiscal"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.folio_fiscal"/></td>
                     </tr>
                     <tr>
                         <td style="padding: 1px 2px;"><strong>Número de certificado</strong></td>
-                        <td style="padding: 1px 2px;"><span t-field="o.numero_cetificado"/></td>
+                        <td style="padding: 1px 2px;"><span class="val" t-field="o.numero_cetificado"/></td>
                         <td style="padding: 1px 2px;"></td>
                         <td style="padding: 1px 2px;"></td>
                     </tr>
@@ -414,7 +427,7 @@
             </p>
         </xpath>
 
-        <!-- Datos del vehículo (si hay SO asociada) -->
+        <!-- Datos del vehículo (misma anchura que tabla de productos, etiquetas 12/bold, valores 11) -->
         <xpath expr="//div[@name='comment']" position="before">
             <t t-if="o.invoice_origin">
                 <t t-set="sale_order" t-value="o.env['sale.order'].search([('name', '=', o.invoice_origin)], limit=1)"/>
@@ -422,7 +435,7 @@
                     <div class="veh-block">
                         <h4 class="veh-title">Datos del Vehículo</h4>
 
-                        <!-- Variables de apoyo para valores y defaults -->
+                        <!-- Variables de apoyo -->
                         <t t-set="marca" t-value="(dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') or '—') if sale_order else '—'"/>
                         <t t-set="modelo" t-value="(sale_order.nombre_auto.name if sale_order.nombre_auto else '') or '—'"/>
                         <t t-set="anio" t-value="(sale_order.anio_auto or '—')"/>
@@ -436,7 +449,7 @@
                         <t t-set="unidad" t-value="(sale_order.num_unidad or '—')"/>
                         <t t-set="obs" t-value="(sale_order.observations or '')"/>
 
-                        <!-- Mismo ancho que la tabla de productos: o_main_table + table-bordered -->
+                        <!-- Igual ancho que la tabla de productos -->
                         <table class="table table-sm o_main_table table-bordered veh-table">
                             <colgroup>
                                 <col style="width:14%;"/>
