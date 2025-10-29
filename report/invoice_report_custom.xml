@@ -113,20 +113,13 @@
             </t>
 
             <div id="comprobante_emision" class="row" style="margin-bottom: 5px; font-size: 11px;">
-                <!-- Mostrar 'Tipo comprobante' SOLO si NO estamos en modo 'no desglosar IVA'.
-                     Soporta ambos nombres de campo: desglosar_iva y desglose_iva, y tipos booleano/str. -->
+                <!-- Mostrar 'Tipo comprobante' SOLO si NO estamos en modo 'no desglosar IVA' -->
                 <div class="col-auto mw-100 mb-1"
-                     t-if="o.tipo_comprobante and not (
-                             (getattr(o, 'desglosar_iva', None) in (False, 0)) or
-                             (str(getattr(o, 'desglosar_iva', '')).strip().lower() == 'no') or
-                             (getattr(o, 'desglose_iva', None) in (False, 0)) or
-                             (str(getattr(o, 'desglose_iva', '')).strip().lower() == 'no')
-                         )"
+                     t-if="o.tipo_comprobante and ((o.desglosar_iva or '').strip().lower() != 'no')"
                      name="tipo_comprobante" style="line-height: 1.1;">
                     <strong>Tipo comprobante:</strong>
                     <p class="m-0" t-field="o.tipo_comprobante"/>
                 </div>
-
                 <div class="col-auto mw-100 mb-1" t-if="o.fecha_factura" name="fecha_factura" style="line-height: 1.1;">
                     <strong>Fecha de emisión:</strong>
                     <p class="m-0" t-field="o.fecha_factura"/>
