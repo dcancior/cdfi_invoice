@@ -336,7 +336,16 @@
                     <!-- Columna derecha: totales numéricos -->
                     <div t-attf-class="#{'col-6' if report_type != 'html' else 'col-sm-6 col-md-6'}">
                         <table class="table table-sm table-borderless" style="page-break-inside: avoid;">
-                            <t t-set="tax_totals" t-value="o.tax_totals"/>
+                            <!-- ====== AQUI SE FILTRAN GRUPOS "IVA 0%" (o cualquier impuesto con monto 0) CUANDO nv_is_no ====== -->
+                            <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                            <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
+                            <t t-set="tax_totals_raw" t-value="o.tax_totals"/>
+                            <t t-set="tax_totals" t-value="tax_totals_raw"/>
+                            <t t-if="nv_is_no">
+                                <t t-set="filtered_groups" t-value="dict((k, [g for g in v if (g.get('tax_group_amount') or 0.0) != 0.0]) for (k, v) in (tax_totals_raw.get('groups_by_subtotal') or {}).items())"/>
+                                <t t-set="tax_totals" t-value="dict(tax_totals_raw, groups_by_subtotal=filtered_groups)"/>
+                            </t>
+                            <!-- Render estándar de totales usando nuestra variable filtrada -->
                             <t t-call="account.document_tax_totals"/>
 
                             <t t-if="print_with_payments">
