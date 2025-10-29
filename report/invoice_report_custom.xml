@@ -33,6 +33,15 @@
             </style>
         </xpath>
 
+        <!-- 1) Eliminar el bloque de dirección bajo el encabezado -->
+        <xpath expr="//div[@class='row'][.//div[@name='address_not_same_as_shipping'] or .//div[@name='address_same_as_shipping'] or .//div[@name='no_shipping']]" position="replace">
+        </xpath>
+
+        <!-- 2) Quitar el margen superior para que el título sea la primera línea -->
+        <xpath expr="//div[@class='mt-5'][1]" position="attributes">
+            <attribute name="class">mt-0</attribute>
+        </xpath>
+
         <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') -->
         <xpath expr="//h2" position="replace">
             <h2>
