@@ -33,17 +33,17 @@
 
                 /* Tamaños de texto específicos */
                 .hdr-meta-12 { font-size: 12px !important; color: #000 !important; }
-                .hdr-date-14 { font-size: 14px !important; color: #000 !important; margin-left:auto; text-align:right; }
+                .hdr-date-14 { font-size: 14px !important; color: #000 !important; }
 
                 /* Forzar tamaño 11 en toda la tabla de líneas (incluidos th/td internos) */
                 .invoice-body-11, .invoice-body-11 * { font-size: 11px !important; }
 
-                /* Tarjeta de vehículo compacta y profesional */
-                .veh-card { border:1px solid #999; border-radius:8px; padding:10px; margin-top:16px; }
+                /* Tarjeta de vehículo compacta y profesional (a todo el ancho) */
+                .veh-card { border:1px solid #999; border-radius:8px; padding:10px; margin-top:16px; width:100%; max-width:100%; }
                 .veh-title { font-size:14px !important; font-weight:700; color:#333; margin:0 0 6px 0; }
-                .veh-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; table-layout:fixed; }
+                .veh-table { width:100%; max-width:100%; border-collapse:separate; border-spacing:0; font-size:12px !important; }
                 .veh-table td { border:1px solid #ddd; padding:6px 8px; vertical-align:top; }
-                .veh-label { background:#f7f7f9; font-weight:600; white-space:nowrap; width:14%; }
+                .veh-label { background:#f7f7f9; font-weight:600; white-space:nowrap; }
                 .veh-val { }
             </style>
         </xpath>
@@ -57,13 +57,12 @@
             <attribute name="class">mt-0</attribute>
         </xpath>
 
-        <!-- Título dinámico (Nota de Venta si desglosar_iva/desglose_iva = 'no') + fecha pegada a la derecha -->
+        <!-- Título dinámico (Nota de Venta si desglosar_iva = 'no') + fecha realmente pegada a la derecha -->
         <xpath expr="//h2" position="replace">
-            <h2 class="d-flex align-items-center" style="display:flex; align-items:center; width:100%; gap:12px;">
-                <!-- Bandera segura para Nota de Venta, sin getattr/strip/lower -->
-                <t t-set="nv2" t-value="(o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or ''"/>
-                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and (nv2 in ('no','No','NO', False, 0))"/>
-                <!-- Lado izquierdo: título + folio -->
+            <!-- Usamos posición absoluta para garantizar que la fecha llegue al borde derecho en wkhtmltopdf -->
+            <h2 style="position:relative; width:100%;">
+                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
+                <!-- Lado izquierdo: título + folio (12 pts para metadatos; el título queda como lo traías) -->
                 <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
@@ -83,10 +82,8 @@
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
-                <!-- Separador flexible para empujar la fecha hasta el extremo derecho -->
-                <span style="flex:1 1 auto;"></span>
-                <!-- Lado derecho: fecha solo para Nota de Venta, NEGRO y 14pt, pegada a la derecha -->
-                <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-14">
+                <!-- Fecha para Nota de Venta: negro, 14, y pegada al extremo derecho -->
+                <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-14" style="position:absolute; right:0; top:0;">
                     <span t-field="o.invoice_date"/>
                 </span>
             </h2>
@@ -440,6 +437,14 @@
                         <t t-set="obs" t-value="(sale_order.observations or '')"/>
 
                         <table class="veh-table">
+                            <colgroup>
+                                <col style="width:14%;"/>
+                                <col style="width:20%;"/>
+                                <col style="width:14%;"/>
+                                <col style="width:20%;"/>
+                                <col style="width:14%;"/>
+                                <col style="width:18%;"/>
+                            </colgroup>
                             <tr>
                                 <td class="veh-label">Marca</td>
                                 <td class="veh-val"><t t-esc="marca"/></td>
