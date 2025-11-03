@@ -582,7 +582,7 @@ class AccountMove(models.Model):
                 for component in line.product_id.product_parts_ids:
                     components.append({'ClaveProdServ': component.product_id.clave_producto,
                                       'Cantidad': component.cantidad,
-                                      'Descripcion': self.clean_text(component.product_id.name),
+                                      'Descripcion': self.clean_text((component.product_id.name or '')),
                                       })
 
             if line.product_id.objetoimp:
@@ -719,8 +719,25 @@ class AccountMove(models.Model):
           return 0
 
     def clean_text(self, text):
-        clean_text = text.replace('\n', ' ').replace('\\', ' ').replace('-', ' ').replace('/', ' ').replace('|', ' ')
-        clean_text = clean_text.replace(',', ' ').replace(';', ' ').replace('>', ' ').replace('<', ' ')
+        # Asegurar string y tolerar None/False/objetos raros
+        if not text:
+            text = ''
+        elif not isinstance(text, str):
+            try:
+                text = str(text)
+            except Exception:
+                text = ''
+
+        clean_text = (text
+                    .replace('\n', ' ')
+                    .replace('\\', ' ')
+                    .replace('-', ' ')
+                    .replace('/', ' ')
+                    .replace('|', ' ')
+                    .replace(',', ' ')
+                    .replace(';', ' ')
+                    .replace('>', ' ')
+                    .replace('<', ' '))
         return clean_text[:1000]
 
     def check_cfdi_values(self):
