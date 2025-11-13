@@ -16,18 +16,11 @@
             </tree>
 
             <!-- Campo Estado CFDI antes de 'state' -->
-            <!-- Cambiado: dos versiones del mismo campo para controlar el color -->
             <field name="state" position="before">
-                <!-- (A) Con badge/colores: visible SOLO si NO está cancelado -->
                 <field name="estado_factura" string="Estado CFDI" widget="badge"
-                       attrs="{'invisible': [('state','in',['cancel'])]}"
-                       decoration-success="estado_factura == 'factura_correcta'"
-                       decoration-danger="estado_factura == 'factura_cancelada'"
-                       decoration-warning="estado_factura == 'factura_no_generada'"/>
-
-                <!-- (B) Texto plano (sin badge): visible SOLO si SÍ está cancelado -->
-                <field name="estado_factura" string="Estado CFDI"
-                       attrs="{'invisible': [('state','not in',['cancel'])]}"/>
+                    decoration-success="estado_factura == 'factura_correcta'"
+                    decoration-danger="estado_factura == 'factura_cancelada'"
+                    decoration-warning="estado_factura == 'factura_no_generada'"/>
             </field>
         </field>
     </record>
