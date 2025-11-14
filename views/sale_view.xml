@@ -134,19 +134,14 @@
         <field name="name">sale.order.tree.hide.invoice_status</field>
         <field name="model">sale.order</field>
 
-        <!-- Odoo usa uno de estos IDs según versión, uno de los dos te debe aplicar -->
-        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
-        <!-- Si tu versión usa otra vista, puedes cambiar este ref por sale.view_order_tree -->
+        <!-- 👇 CAMBIA este ref por el que viste en la vista lista -->
+        <field name="inherit_id" ref="sale.view_quotation_tree"/>
 
         <field name="arch" type="xml">
-            <!-- Buscamos la columna del estado de facturación -->
-            <xpath expr="//tree//field[@name='invoice_status']" position="replace">
-                <!-- Seguimos declarando el campo pero invisible, para no romper nada -->
-                <field name="invoice_status" invisible="1"/>
-            </xpath>
+            <!-- Modificamos solo los atributos del campo -->
+            <xpath expr="//tree//field[@name='invoice_status']" position="attributes">
+				<attribute name="optional">hide</attribute>
+			</xpath>
         </field>
-    </record>
-
-
-	
+    </record>	
 </odoo>
