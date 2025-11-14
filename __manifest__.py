@@ -3,7 +3,7 @@
 #                 @author IT Admin
 #
 ##############################################################################
-
+# pylint: skip-file
 {
     'name': 'Ventas Factura Electronica Mexico CFDI',
     'version': '16.15',
