@@ -135,7 +135,7 @@
         <field name="model">sale.order</field>
 
         <!-- 👇 CAMBIA este ref por el que viste en la vista lista -->
-        <field name="inherit_id" ref="sale.view_quotation_tree"/>
+        <field name="inherit_id" ref="sale.view_order_tree"/>
 
         <field name="arch" type="xml">
             <!-- Modificamos solo los atributos del campo -->
