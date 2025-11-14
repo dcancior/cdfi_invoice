@@ -125,5 +125,28 @@
 	</record>
 
 
+	<!-- ===========================================================
+	     5) OCULTAR LA COLUMNA "invoice_status" EN LA VISTA LISTA
+	     - Reemplaza la columna por una invisible para no romper nada
+	   =========================================================== -->
+	<!-- Heredamos la vista lista de pedidos de venta -->
+    <record id="view_order_tree_hide_invoice_status" model="ir.ui.view">
+        <field name="name">sale.order.tree.hide.invoice_status</field>
+        <field name="model">sale.order</field>
+
+        <!-- Odoo usa uno de estos IDs según versión, uno de los dos te debe aplicar -->
+        <field name="inherit_id" ref="sale.view_quotation_tree_with_onboarding"/>
+        <!-- Si tu versión usa otra vista, puedes cambiar este ref por sale.view_order_tree -->
+
+        <field name="arch" type="xml">
+            <!-- Buscamos la columna del estado de facturación -->
+            <xpath expr="//tree//field[@name='invoice_status']" position="replace">
+                <!-- Seguimos declarando el campo pero invisible, para no romper nada -->
+                <field name="invoice_status" invisible="1"/>
+            </xpath>
+        </field>
+    </record>
+
+
 	
 </odoo>
