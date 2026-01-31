@@ -70,8 +70,8 @@
              - amarillo: estados intermedios/no generada/solicitudes -->
         <tree position="attributes">
             <attribute name="decoration-success">estado_cfdi == 'factura_correcta'</attribute>
-            <attribute name="decoration-danger">estado_cfdi == 'factura_cancelada' or state == 'cancel'</attribute>
-
+            <attribute name="decoration-danger">estado_cfdi == 'factura_cancelada' or state == 'cancel'</attribute>            <attribute name="decoration-warning">estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')</attribute>
+        </tree>
 	        <!-- OPCIÓN PREFERIDA (comentada): insertar antes de la columna 'state'
 	             Si el XPath no engancha (depende de la vista base), usamos el fallback de abajo -->
 	        <!--
