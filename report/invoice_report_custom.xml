@@ -235,16 +235,12 @@
                 </t>
             </div>
 
-            <!-- Cajitas de datos del cliente y empresa (lado a lado, condicionales) - Compatible con wkhtmltopdf -->
+            <!-- Cajitas de datos del cliente y empresa (lado a lado, sin condición de desglose_iva) - Compatible con wkhtmltopdf -->
             <t t-if="o.move_type == 'out_invoice'">
-                <t t-set="nv_desg" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
-                <t t-set="mostrar_cajitas" t-value="nv_desg and nv_desg not in ('no','No','NO')"/>
+                <t t-set="receptor" t-value="o.partner_id"/>
+                <t t-set="emisor" t-value="o.company_id"/>
                 
-                <t t-if="mostrar_cajitas">
-                    <t t-set="receptor" t-value="o.partner_invoice_id or o.partner_id"/>
-                    <t t-set="emisor" t-value="o.company_id"/>
-                    
-                    <table class="table table-borderless" style="margin-top: 12px; margin-bottom: 8px; width: 100%; border-collapse: collapse;">
+                <table class="table table-borderless" style="margin-top: 12px; margin-bottom: 8px; width: 100%; border-collapse: collapse;">
                         <tr>
                             <!-- Cajita izquierda: DATOS DEL CLIENTE -->
                             <td style="width: 48%; padding-right: 2%; vertical-align: top;">
@@ -297,7 +293,7 @@
                                     <tr>
                                         <td style="padding: 5px 10px; background-color: #E9ECEF;">
                                             <strong style="font-size: 9px; display: block;">Nombre:</strong>
-                                            <span style="font-size: 9px;" t-field="emisor.name"/>
+                                            <span style="font-size: 9px;" t-field="emisor.nombre_fiscal"/>
                                         </td>
                                     </tr>
                                     <!-- Fila 2: RFC -->
@@ -323,7 +319,6 @@
                             </td>
                         </tr>
                     </table>
-                </t>
             </t>
         </xpath>
 
