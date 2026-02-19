@@ -91,9 +91,12 @@
                     </span>
                 </span>
 
-                <!-- DER: Fecha (12 pt) pegada al extremo derecho -->
-                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" class="hdr-date-12" style="position:absolute; right:0; top:0;">
-                    <span t-field="o.invoice_date"/>
+                <!-- DER: Fechas (Factura y Vencimiento) - reducido a 10pt para caber en una línea -->
+                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" style="position:absolute; right:0; top:0; font-size: 10px; color: #000; text-align: right;">
+                    <strong>Fecha:</strong> <span t-field="o.invoice_date"/>
+                    <t t-if="o.invoice_date_due">
+                        <br/><strong>Vencimiento:</strong> <span t-field="o.invoice_date_due"/>
+                    </t>
                 </span>
             </h2>
         </xpath>
