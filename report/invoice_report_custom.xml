@@ -222,8 +222,8 @@
                 </t>
             </div>
 
-            <!-- Cajitas de datos del cliente y empresa (lado a lado, para todas las facturas de salida) - Compatible con wkhtmltopdf -->
-            <t t-if="o.move_type == 'out_invoice'">
+            <!-- Cajitas de datos del cliente y empresa (lado a lado, solo para Notas de Venta) - Compatible con wkhtmltopdf -->
+            <t t-if="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')">
                 <t t-set="receptor" t-value="o.partner_id"/>
                 <t t-set="emisor" t-value="o.company_id"/>
                     
