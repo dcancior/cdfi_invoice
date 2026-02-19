@@ -235,12 +235,16 @@
                 </t>
             </div>
 
-            <!-- Cajitas de datos del cliente y empresa (lado a lado, sin condición de desglose_iva) - Compatible con wkhtmltopdf -->
+            <!-- Cajitas de datos del cliente y empresa (lado a lado, solo cuando desglosar_iva='no') - Compatible con wkhtmltopdf -->
             <t t-if="o.move_type == 'out_invoice'">
-                <t t-set="receptor" t-value="o.partner_id"/>
-                <t t-set="emisor" t-value="o.company_id"/>
+                <t t-set="nv_check" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="mostrar_cajitas" t-value="nv_check and nv_check in ('no','No','NO')"/>
                 
-                <table class="table table-borderless" style="margin-top: 12px; margin-bottom: 8px; width: 100%; border-collapse: collapse;">
+                <t t-if="mostrar_cajitas">
+                    <t t-set="receptor" t-value="o.partner_id"/>
+                    <t t-set="emisor" t-value="o.company_id"/>
+                    
+                    <table class="table table-borderless" style="margin-top: 12px; margin-bottom: 8px; width: 100%; border-collapse: collapse;">
                         <tr>
                             <!-- Cajita izquierda: DATOS DEL CLIENTE -->
                             <td style="width: 48%; padding-right: 2%; vertical-align: top;">
@@ -269,11 +273,8 @@
                                     <tr>
                                         <td style="padding: 5px 10px; background-color: #E9ECEF;">
                                             <strong style="font-size: 9px; display: block;">Dirección:</strong>
-                                            <span style="font-size: 9px;">
-                                                <span t-field="receptor.street"/>
-                                                <t t-if="receptor.street2">, <span t-field="receptor.street2"/></t>
-                                                <br/>
-                                                <span t-field="receptor.city"/>, <span t-field="receptor.state_id.name"/> C.P. <span t-field="receptor.zip"/>
+                                            <span style="font-size: 8px; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">
+                                                <span t-field="receptor.street"/><t t-if="receptor.street2">, <span t-field="receptor.street2"/></t> <span t-field="receptor.city"/>, <span t-field="receptor.state_id.name"/> C.P. <span t-field="receptor.zip"/>
                                             </span>
                                         </td>
                                     </tr>
@@ -307,11 +308,8 @@
                                     <tr>
                                         <td style="padding: 5px 10px; background-color: #E9ECEF;">
                                             <strong style="font-size: 9px; display: block;">Dirección:</strong>
-                                            <span style="font-size: 9px;">
-                                                <span t-field="emisor.partner_id.street"/>
-                                                <t t-if="emisor.partner_id.street2">, <span t-field="emisor.partner_id.street2"/></t>
-                                                <br/>
-                                                <span t-field="emisor.partner_id.city"/>, <span t-field="emisor.partner_id.state_id.name"/> C.P. <span t-field="emisor.partner_id.zip"/>
+                                            <span style="font-size: 8px; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">
+                                                <span t-field="emisor.partner_id.street"/><t t-if="emisor.partner_id.street2">, <span t-field="emisor.partner_id.street2"/></t> <span t-field="emisor.partner_id.city"/>, <span t-field="emisor.partner_id.state_id.name"/> C.P. <span t-field="emisor.partner_id.zip"/>
                                             </span>
                                         </td>
                                     </tr>
@@ -319,6 +317,7 @@
                             </td>
                         </tr>
                     </table>
+                </t>
             </t>
         </xpath>
 
