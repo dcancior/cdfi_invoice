@@ -48,6 +48,7 @@
                             <field name="estado_factura" widget="badge"/>
                             <field name="fecha_factura" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
                             <field name="proceso_timbrado"/>
+                            <field name="lock_invoice_lines" groups="base.group_system"/>
                         </group>
                         <group string="CFDI Relacionados">
                             <field name="tipo_relacion" attrs="{'readonly': [('estado_factura','!=','factura_no_generada')]}"/>
