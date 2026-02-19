@@ -142,6 +142,12 @@ class AccountMove(models.Model):
     )
     fg_ano = fields.Char(string=_('Año'))
     tercero_id = fields.Many2one('res.partner', string="A cuenta de terceros")
+    lock_invoice_lines = fields.Boolean(
+        string=_('Bloquear edición de líneas'),
+        default=False,
+        tracking=True,
+        groups='base.group_system',  # Solo administradores
+    )
 
 #    @api.model
 #    def _reverse_moves(self, default_values, cancel=True):
@@ -213,11 +219,16 @@ class AccountMove(models.Model):
 
     def write(self, vals):
         # 🔒 CANDADO: no permitir agregar/editar/eliminar líneas de productos/servicios
-        # (secciones y notas sí) en facturas de venta/NC, sin importar el estado.
+        # (secciones y notas sí) en facturas de venta/NC, SIN IMPORTAR EL ESTADO.
+        # Este bloqueo solo se aplica si 'lock_invoice_lines' está activado (control de administrador).
         if 'invoice_line_ids' in vals:
             for move in self:
                 # Limita a ventas/notas de crédito; agrega in_invoice/in_refund si también quieres proveedores
                 if move.move_type not in ('out_invoice', 'out_refund'):
+                    continue
+
+                # Solo aplicar bloqueo si el campo lock_invoice_lines está activado
+                if not move.lock_invoice_lines:
                     continue
 
                 cmds = vals.get('invoice_line_ids') or []
@@ -231,29 +242,29 @@ class AccountMove(models.Model):
                     if op == 0:
                         line_vals = cmd[2] or {}
                         if not line_vals.get('display_type'):
-                            raise UserError("No se pueden agregar productos/servicios a la factura.")
+                            raise UserError("No se pueden agregar productos/servicios a la factura. (Bloqueo activo)")
 
                     # (1, id, vals) -> actualizar línea existente (bloquear si es product/service)
                     elif op == 1:
                         line_id, line_vals = cmd[1], (cmd[2] or {})
                         line = self.env['account.move.line'].browse(line_id)
                         if line.move_id == move and not line.display_type:
-                            raise UserError("No se pueden modificar líneas de productos/servicios en la factura.")
+                            raise UserError("No se pueden modificar líneas de productos/servicios en la factura. (Bloqueo activo)")
 
                     # (2, id) -> eliminar línea (bloquear si es product/service)
                     elif op == 2:
                         line_id = cmd[1]
                         line = self.env['account.move.line'].browse(line_id)
                         if line.move_id == move and not line.display_type:
-                            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura.")
+                            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura. (Bloqueo activo)")
 
                     # (4, id) -> enlazar línea existente (bloquear)
                     elif op == 4:
-                        raise UserError("No se pueden agregar productos/servicios a la factura.")
+                        raise UserError("No se pueden agregar productos/servicios a la factura. (Bloqueo activo)")
 
                     # (6, 0, ids) -> reemplazar todo el conjunto (bloquear)
                     elif op == 6:
-                        raise UserError("No se puede reemplazar la lista de productos/servicios de la factura.")
+                        raise UserError("No se puede reemplazar la lista de productos/servicios de la factura. (Bloqueo activo)")
 
         # 👇 tu lógica existente (no la toques)
         if 'desglosar_iva' in vals:
