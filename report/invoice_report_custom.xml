@@ -108,7 +108,7 @@
 
                 <!-- Fechas solo si NO es Nota de Venta -->
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and (not nv_is_no)" name="invoice_date" style="line-height: 1.1;">
-                    <strong t-esc="'Fecha de Nota de Venta:' if (not nv_is_no and o.move_type == 'out_invoice') else 'Fecha de factura:'"/>
+                    <strong t-esc="'Fecha de Nota de Venta:' if nv_is_no else 'Fecha de Factura:'"/>
                     <p class="m-0 val" t-field="o.invoice_date"/>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date_due and (not nv_is_no)" name="due_date" style="line-height: 1.1;">
