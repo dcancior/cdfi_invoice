@@ -92,7 +92,7 @@
                 </span>
 
                 <!-- DER: Fecha (12 pt) pegada al extremo derecho -->
-                <span t-if="is_nota_venta and o.invoice_date" class="hdr-date-12" style="position:absolute; right:0; top:0;">
+                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" class="hdr-date-12" style="position:absolute; right:0; top:0;">
                     <span t-field="o.invoice_date"/>
                 </span>
             </h2>
