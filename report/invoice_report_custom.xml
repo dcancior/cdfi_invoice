@@ -234,6 +234,109 @@
                     </div>
                 </t>
             </div>
+
+            <!-- Cajitas de datos del cliente y empresa (lado a lado, condicionales) -->
+            <t t-if="o.move_type == 'out_invoice'">
+                <t t-set="nv_desg" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="mostrar_cajitas" t-value="nv_desg not in ('no','No','NO', False, 0)"/>
+                
+                <t t-if="mostrar_cajitas">
+                    <t t-set="receptor" t-value="o.partner_invoice_id or o.partner_id"/>
+                    <t t-set="emisor" t-value="o.company_id"/>
+                    
+                    <div style="margin-top: 12px; margin-bottom: 8px;">
+                        <div class="row">
+                            <!-- Cajita izquierda: DATOS DEL CLIENTE -->
+                            <div class="col-6" style="padding-right: 5px;">
+                                <div style="border: 2px solid #714B67; border-radius: 8px; overflow: hidden; height: 160px; display: flex; flex-direction: column;">
+                                    <!-- Header -->
+                                    <div class="row" style="margin: 0;">
+                                        <div class="col-12" style="padding: 6px 12px; background-color: #E89898; color: white;">
+                                            <strong style="color: white; letter-spacing: 1px; font-size: 10px;">DATOS DEL CLIENTE</strong>
+                                        </div>
+                                    </div>
+                                    <!-- Fila 1: Nombre (fondo gris) -->
+                                    <div class="row" style="margin: 0;">
+                                        <div class="col-4" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <strong style="font-size: 9px;">Nombre:</strong>
+                                        </div>
+                                        <div class="col-8" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <span style="font-size: 9px;" t-field="receptor.name"/>
+                                        </div>
+                                    </div>
+                                    <!-- Fila 2: RFC (fondo blanco) -->
+                                    <div class="row" style="margin: 0;">
+                                        <div class="col-4" style="padding: 5px 10px; background-color: white;">
+                                            <strong style="font-size: 9px;">RFC:</strong>
+                                        </div>
+                                        <div class="col-8" style="padding: 5px 10px; background-color: white;">
+                                            <span style="font-size: 9px;" t-field="receptor.vat"/>
+                                        </div>
+                                    </div>
+                                    <!-- Fila 3: Dirección (fondo gris, flex: 1 para llenar espacio) -->
+                                    <div class="row" style="margin: 0; flex: 1;">
+                                        <div class="col-4" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <strong style="font-size: 9px;">Dirección:</strong>
+                                        </div>
+                                        <div class="col-8" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <span style="font-size: 9px;">
+                                                <span t-field="receptor.street"/>
+                                                <t t-if="receptor.street2">, <span t-field="receptor.street2"/></t>
+                                                <br/>
+                                                <span t-field="receptor.city"/>, <span t-field="receptor.state_id.name"/> C.P. <span t-field="receptor.zip"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cajita derecha: DATOS DE LA EMPRESA -->
+                            <div class="col-6" style="padding-left: 5px;">
+                                <div style="border: 2px solid #714B67; border-radius: 8px; overflow: hidden; height: 160px; display: flex; flex-direction: column;">
+                                    <!-- Header -->
+                                    <div class="row" style="margin: 0;">
+                                        <div class="col-12" style="padding: 6px 12px; background-color: #E89898; color: white;">
+                                            <strong style="color: white; letter-spacing: 1px; font-size: 10px;">DATOS DE LA EMPRESA</strong>
+                                        </div>
+                                    </div>
+                                    <!-- Fila 1: Nombre (fondo gris) -->
+                                    <div class="row" style="margin: 0;">
+                                        <div class="col-4" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <strong style="font-size: 9px;">Nombre:</strong>
+                                        </div>
+                                        <div class="col-8" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <span style="font-size: 9px;" t-field="emisor.nombre_fiscal"/>
+                                        </div>
+                                    </div>
+                                    <!-- Fila 2: RFC (fondo blanco) -->
+                                    <div class="row" style="margin: 0;">
+                                        <div class="col-4" style="padding: 5px 10px; background-color: white;">
+                                            <strong style="font-size: 9px;">RFC:</strong>
+                                        </div>
+                                        <div class="col-8" style="padding: 5px 10px; background-color: white;">
+                                            <span style="font-size: 9px;" t-field="emisor.vat"/>
+                                        </div>
+                                    </div>
+                                    <!-- Fila 3: Dirección (fondo gris, flex: 1 para llenar espacio) -->
+                                    <div class="row" style="margin: 0; flex: 1;">
+                                        <div class="col-4" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <strong style="font-size: 9px;">Dirección:</strong>
+                                        </div>
+                                        <div class="col-8" style="padding: 5px 10px; background-color: #E9ECEF;">
+                                            <span style="font-size: 9px;">
+                                                <span t-field="emisor.partner_id.street"/>
+                                                <t t-if="emisor.partner_id.street2">, <span t-field="emisor.partner_id.street2"/></t>
+                                                <br/>
+                                                <span t-field="emisor.partner_id.city"/>, <span t-field="emisor.partner_id.state_id.name"/> C.P. <span t-field="emisor.partner_id.zip"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
         </xpath>
 
         <!-- Tabla de líneas (encabezados 12 / contenido 11 por CSS) -->
