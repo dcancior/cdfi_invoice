@@ -71,7 +71,7 @@
                 <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
 
                 <!-- Título + folio a la izquierda -->
-                <span style="display: block;">
+                <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
                         <span t-if="o.state == 'draft'">Borrador de Nota de Venta</span>
@@ -91,11 +91,12 @@
                     </span>
                 </span>
                 
-                <!-- Fechas a la derecha (12pt) -->
-                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" style="display: block; text-align: right; font-size: 12px; color: #000; margin-top: -20px;">
+                <!-- Fechas a la derecha en la misma línea (12pt) -->
+                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" style="position: absolute; right: 0; top: 0; font-size: 12px; color: #000;">
                     <strong>Fecha de Factura:</strong> <span t-field="o.invoice_date"/>
                     <t t-if="o.invoice_date_due">
-                        <br/><strong>Fecha de Vencimiento:</strong> <span t-field="o.invoice_date_due"/>
+                        <span t-esc="' — '"/>
+                        <strong>Fecha de Vencimiento:</strong> <span t-field="o.invoice_date_due"/>
                     </t>
                 </span>
             </h2>
