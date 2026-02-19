@@ -176,22 +176,8 @@
             <div name="general_information" class="row hdr-block-uni" style="margin-bottom: 4px;">
                 <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and (((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '') in ('no','No','NO', False, 0))"/>
                 
-                <!-- NOTA DE VENTA: Cliente | Móvil principal -->
-                <t t-if="is_nota_venta">
-                    <div class="col-12" style="line-height: 1.1;">
-                        <div class="row">
-                            <div class="col-8">
-                                <strong>Cliente:</strong> <span class="val" t-field="o.partner_id.name"/>
-                            </div>
-                            <div class="col-4">
-                                <t t-set="movil_principal" t-value="o.partner_id.mobile or o.partner_id.phone"/>
-                                <strong>Móvil principal:</strong>
-                                <t t-if="movil_principal"><span class="val" t-esc="movil_principal"/></t>
-                                <t t-else=""><span class="val">—</span></t>
-                            </div>
-                        </div>
-                    </div>
-                </t>
+                <!-- NOTA DE VENTA: Cliente | Móvil principal - OCULTADO, solo mostrar cajitas -->
+                <!-- Línea de cliente y móvil ocultada cuando es nota de venta -->
 
                 <!-- Resto de casos: se deja igual, con sizes unificados -->
                 <t t-else="">
@@ -248,32 +234,29 @@
                         <tr>
                             <!-- Cajita izquierda: DATOS DEL CLIENTE -->
                             <td style="width: 48%; padding-right: 2%; vertical-align: top;">
-                                <table style="width: 100%; border: 2px solid #714B67; border-collapse: collapse;">
+                                <table style="width: 100%; border: 2px solid #714B67; border-collapse: collapse; height: 140px;">
                                     <!-- Header -->
-                                    <tr>
+                                    <tr style="height: 25px;">
                                         <td style="padding: 6px 12px; background-color: #E89898; color: white; text-align: center;">
-                                            <strong style="color: white; letter-spacing: 1px; font-size: 10px;">DATOS DEL CLIENTE</strong>
+                                            <strong style="color: white; letter-spacing: 1px; font-size: 11px;">DATOS DEL CLIENTE</strong>
                                         </td>
                                     </tr>
                                     <!-- Fila 1: Nombre -->
-                                    <tr>
-                                        <td style="padding: 5px 10px; background-color: #E9ECEF;">
-                                            <strong style="font-size: 9px; display: block;">Nombre:</strong>
-                                            <span style="font-size: 9px;" t-field="receptor.name"/>
+                                    <tr style="height: 38px;">
+                                        <td style="padding: 5px 10px; background-color: #E9ECEF; vertical-align: middle;">
+                                            <strong style="font-size: 10px; display: inline;">Nombre:</strong> <span style="font-size: 10px;" t-field="receptor.name"/>
                                         </td>
                                     </tr>
                                     <!-- Fila 2: RFC -->
-                                    <tr>
-                                        <td style="padding: 5px 10px; background-color: white;">
-                                            <strong style="font-size: 9px; display: block;">RFC:</strong>
-                                            <span style="font-size: 9px;" t-field="receptor.vat"/>
+                                    <tr style="height: 38px;">
+                                        <td style="padding: 5px 10px; background-color: white; vertical-align: middle;">
+                                            <strong style="font-size: 10px; display: inline;">RFC:</strong> <span style="font-size: 10px;" t-field="receptor.vat"/>
                                         </td>
                                     </tr>
                                     <!-- Fila 3: Dirección -->
-                                    <tr>
-                                        <td style="padding: 5px 10px; background-color: #E9ECEF;">
-                                            <strong style="font-size: 9px; display: block;">Dirección:</strong>
-                                            <span style="font-size: 8px; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">
+                                    <tr style="height: 39px;">
+                                        <td style="padding: 5px 10px; background-color: #E9ECEF; vertical-align: middle;">
+                                            <strong style="font-size: 10px; display: inline;">Dirección:</strong> <span style="font-size: 10px; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">
                                                 <span t-field="receptor.street"/><t t-if="receptor.street2">, <span t-field="receptor.street2"/></t> <span t-field="receptor.city"/>, <span t-field="receptor.state_id.name"/> C.P. <span t-field="receptor.zip"/>
                                             </span>
                                         </td>
@@ -283,32 +266,29 @@
 
                             <!-- Cajita derecha: DATOS DE LA EMPRESA -->
                             <td style="width: 48%; padding-left: 2%; vertical-align: top;">
-                                <table style="width: 100%; border: 2px solid #714B67; border-collapse: collapse;">
+                                <table style="width: 100%; border: 2px solid #714B67; border-collapse: collapse; height: 140px;">
                                     <!-- Header -->
-                                    <tr>
+                                    <tr style="height: 25px;">
                                         <td style="padding: 6px 12px; background-color: #E89898; color: white; text-align: center;">
-                                            <strong style="color: white; letter-spacing: 1px; font-size: 10px;">DATOS DE LA EMPRESA</strong>
+                                            <strong style="color: white; letter-spacing: 1px; font-size: 11px;">DATOS DE LA EMPRESA</strong>
                                         </td>
                                     </tr>
                                     <!-- Fila 1: Nombre -->
-                                    <tr>
-                                        <td style="padding: 5px 10px; background-color: #E9ECEF;">
-                                            <strong style="font-size: 9px; display: block;">Nombre:</strong>
-                                            <span style="font-size: 9px;" t-field="emisor.nombre_fiscal"/>
+                                    <tr style="height: 38px;">
+                                        <td style="padding: 5px 10px; background-color: #E9ECEF; vertical-align: middle;">
+                                            <strong style="font-size: 10px; display: inline;">Nombre:</strong> <span style="font-size: 10px;" t-field="emisor.nombre_fiscal"/>
                                         </td>
                                     </tr>
                                     <!-- Fila 2: RFC -->
-                                    <tr>
-                                        <td style="padding: 5px 10px; background-color: white;">
-                                            <strong style="font-size: 9px; display: block;">RFC:</strong>
-                                            <span style="font-size: 9px;" t-field="emisor.vat"/>
+                                    <tr style="height: 38px;">
+                                        <td style="padding: 5px 10px; background-color: white; vertical-align: middle;">
+                                            <strong style="font-size: 10px; display: inline;">RFC:</strong> <span style="font-size: 10px;" t-field="emisor.vat"/>
                                         </td>
                                     </tr>
                                     <!-- Fila 3: Dirección -->
-                                    <tr>
-                                        <td style="padding: 5px 10px; background-color: #E9ECEF;">
-                                            <strong style="font-size: 9px; display: block;">Dirección:</strong>
-                                            <span style="font-size: 8px; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">
+                                    <tr style="height: 39px;">
+                                        <td style="padding: 5px 10px; background-color: #E9ECEF; vertical-align: middle;">
+                                            <strong style="font-size: 10px; display: inline;">Dirección:</strong> <span style="font-size: 10px; line-height: 1.2; word-wrap: break-word; overflow-wrap: break-word;">
                                                 <span t-field="emisor.partner_id.street"/><t t-if="emisor.partner_id.street2">, <span t-field="emisor.partner_id.street2"/></t> <span t-field="emisor.partner_id.city"/>, <span t-field="emisor.partner_id.state_id.name"/> C.P. <span t-field="emisor.partner_id.zip"/>
                                             </span>
                                         </td>
