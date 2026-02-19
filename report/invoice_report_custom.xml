@@ -70,8 +70,8 @@
             <h2 style="position:relative; width:100%;">
                 <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
 
-                <!-- Título + folio + fechas en una misma línea -->
-                <span>
+                <!-- Título + folio a la izquierda -->
+                <span style="display: block;">
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
                         <span t-if="o.state == 'draft'">Borrador de Nota de Venta</span>
@@ -89,16 +89,14 @@
                         <span t-if="o.name != '/'" t-esc="' — '"/>
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
-                    
-                    <!-- Fechas en la misma línea (10pt) -->
-                    <span t-if="o.move_type == 'out_invoice' and o.invoice_date" style="font-size: 10px; color: #000;">
-                        <span t-esc="' — '"/>
-                        <strong>Fecha de Factura:</strong> <span t-field="o.invoice_date"/>
-                        <t t-if="o.invoice_date_due">
-                            <span t-esc="' — '"/>
-                            <strong>Fecha de Vencimiento:</strong> <span t-field="o.invoice_date_due"/>
-                        </t>
-                    </span>
+                </span>
+                
+                <!-- Fechas a la derecha (12pt) -->
+                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" style="display: block; text-align: right; font-size: 12px; color: #000; margin-top: -20px;">
+                    <strong>Fecha de Factura:</strong> <span t-field="o.invoice_date"/>
+                    <t t-if="o.invoice_date_due">
+                        <br/><strong>Fecha de Vencimiento:</strong> <span t-field="o.invoice_date_due"/>
+                    </t>
                 </span>
             </h2>
         </xpath>
