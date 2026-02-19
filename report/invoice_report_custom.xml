@@ -110,7 +110,7 @@
                 <t t-set="nv" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
                 <t t-set="nv_is_no" t-value="nv in ('no','No','NO', False, 0)"/>
 
-                <!-- Fechas solo si NO es Nota de Venta -->
+                <!-- Fechas solo si NO es Nota de Venta 
                 <div class="col-auto mw-100 mb-1" t-if="o.invoice_date and (not nv_is_no)" name="invoice_date" style="line-height: 1.1;">
                     <strong t-esc="'Fecha de Nota de Venta:' if nv_is_no else 'Fecha de Factura:'"/>
                     <p class="m-0 val" t-field="o.invoice_date"/>
@@ -119,6 +119,7 @@
                     <strong>Fecha de vencimiento:</strong>
                     <p class="m-0 val" t-field="o.invoice_date_due"/>
                 </div>
+                -->
 
                 <!-- Ocultar 'Uso' si nv_is_no -->
                 <div class="col-auto mw-100 mb-1" t-if="o.uso_cfdi_id and (not nv_is_no)" name="origin" style="line-height: 1.1;">
