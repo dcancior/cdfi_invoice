@@ -218,14 +218,10 @@
                 </t>
             </div>
 
-            <!-- Cajitas de datos del cliente y empresa (lado a lado, solo cuando desglosar_iva='no') - Compatible con wkhtmltopdf -->
+            <!-- Cajitas de datos del cliente y empresa (lado a lado, para todas las facturas de salida) - Compatible con wkhtmltopdf -->
             <t t-if="o.move_type == 'out_invoice'">
-                <t t-set="nv_check" t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
-                <t t-set="mostrar_cajitas" t-value="nv_check and nv_check in ('no','No','NO')"/>
-                
-                <t t-if="mostrar_cajitas">
-                    <t t-set="receptor" t-value="o.partner_id"/>
-                    <t t-set="emisor" t-value="o.company_id"/>
+                <t t-set="receptor" t-value="o.partner_id"/>
+                <t t-set="emisor" t-value="o.company_id"/>
                     
                     <table class="table table-borderless" style="margin-top: 12px; margin-bottom: 8px; width: 100%; border-collapse: collapse;">
                         <tr>
@@ -294,7 +290,6 @@
                             </td>
                         </tr>
                     </table>
-                </t>
             </t>
         </xpath>
 
