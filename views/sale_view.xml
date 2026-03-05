@@ -98,30 +98,30 @@
 	     4) HERENCIA DE LA VISTA DE BÚSQUEDA (SEARCH) DE PEDIDOS
 	     - Agrega filtros rápidos por estado_cfdi
 	     - Cada filtro aplica un dominio sobre sale.order
-	   =========================================================== -->
+	   =========================================================== 
 	<record id="view_order_search_inherit_estado_cfdi" model="ir.ui.view">
 	    <field name="name">sale.order.search.inherit.estado_cfdi</field>
 	    <field name="model">sale.order</field>
 	    <field name="inherit_id" ref="sale.view_sales_order_filter"/>
 	    <field name="arch" type="xml">
-	        <!-- Insertamos filtros dentro del <search> original -->
+	        
 	        <xpath expr="//search" position="inside">
-	            <!-- Muestra solo pedidos con CFDI emitido correctamente -->
+	            
 	            <filter name="estado_cfdi_emitido" string="CFDI Emitido"
 	                    domain="[('estado_cfdi','=','factura_correcta')]"/>
-	            <!-- Muestra pedidos con CFDI cancelado -->
+	          
 	            <filter name="estado_cfdi_cancelado" string="CFDI Cancelado"
 	                    domain="[('estado_cfdi','=','factura_cancelada')]"/>
-	            <!-- Muestra pedidos con cancelación en proceso -->
+	            
 	            <filter name="estado_cfdi_en_proceso" string="Cancelación en proceso"
 	                    domain="[('estado_cfdi','=','solicitud_cancelar')]"/>
-	            <!-- Muestra pedidos donde el CFDI aún no se ha generado -->
+	            
 	            <filter name="estado_cfdi_no_generado" string="CFDI no generado"
 	                    domain="[('estado_cfdi','=','factura_no_generada')]"/>
 	        </xpath>
 	    </field>
 	</record>
-
+	-->
 
 	<!-- ===========================================================
 	     5) OCULTAR LA COLUMNA "invoice_status" EN LA VISTA LISTA
