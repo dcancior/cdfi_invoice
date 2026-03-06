@@ -42,14 +42,7 @@
 	        <attribute name="decoration-success">invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'</attribute>
 	      </xpath>
 
-	      <!-- Reemplazamos la columna invoice_status para mostrarla como badge
-	           con colores según su estado -->
-	      <xpath expr="//field[@name='invoice_status']" position="replace">
-	        <field name="invoice_status" widget="badge" optional="show"
-	               decoration-success="invoice_status == 'invoiced' or invoice_status == 'cfdi_emitido'"
-	               decoration-info="invoice_status == 'to invoice'"
-	               decoration-warning="invoice_status == 'upselling'"/>
-	      </xpath>
+	    
 	    </field>
   	</record>
 
@@ -68,11 +61,7 @@
 	             - verde: factura_correcta
              - rojo:  factura_cancelada o pedido cancelado
              - amarillo: estados intermedios/no generada/solicitudes -->
-        <tree position="attributes">
-            <attribute name="decoration-success">estado_cfdi == 'factura_correcta'</attribute>
-            <attribute name="decoration-danger">estado_cfdi == 'factura_cancelada' or state == 'cancel'</attribute>            
-			<attribute name="decoration-warning">estado_cfdi in ('factura_no_generada','solicitud_cancelar','solicitud_rechazada')</attribute>
-        </tree>
+      
 	        <!-- OPCIÓN PREFERIDA (comentada): insertar antes de la columna 'state'
 	             Si el XPath no engancha (depende de la vista base), usamos el fallback de abajo -->
 	        <!--
@@ -138,8 +127,6 @@
     <record id="view_order_tree_hide_invoice_status" model="ir.ui.view">
         <field name="name">sale.order.tree.hide.invoice_status</field>
         <field name="model">sale.order</field>
-
-        <!-- 👇 CAMBIA este ref por el que viste en la vista lista -->
         <field name="inherit_id" ref="sale.view_order_tree"/>
 
         <field name="arch" type="xml">
