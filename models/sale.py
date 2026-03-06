@@ -143,7 +143,6 @@ class SaleOrder(models.Model):
             move.partner_id = move.partner_id.commercial_partner_id
         return moves
 
-
     # -------------------------------------------------------------------------
     # Campo espejo del estado CFDI tomando en cuenta TODAS las facturas del pedido
     # -------------------------------------------------------------------------
