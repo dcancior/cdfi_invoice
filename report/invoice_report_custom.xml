@@ -513,7 +513,7 @@
                         <h4 class="veh-title">Datos del Vehículo</h4>
 
                         <!-- Variables de apoyo -->
-                        <t t-set="marca" t-value="(dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') or '—') if sale_order else '—'"/>
+                        <t t-set="marca" t-value="(sale_order.marca_auto_id.name if sale_order.marca_auto_id else '—') if sale_order else '—'"/>
                         <t t-set="modelo" t-value="(sale_order.nombre_auto.name if sale_order.nombre_auto else '') or '—'"/>
                         <t t-set="anio" t-value="(sale_order.anio_auto or '—')"/>
                         <t t-set="color" t-value="(sale_order.color_auto or '—')"/>

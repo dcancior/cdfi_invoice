@@ -397,7 +397,7 @@
                     <div style="border:2px solid #888; border-radius:8px; padding:12px; margin-top:24px; clear:both;">
                         <h4 style="margin-bottom:8px; color:#444;">Datos del Vehículo</h4>
                         <p style="font-size:10px; line-height:1.4; margin:0;">
-                            <strong>Marca:</strong> <t t-esc="dict(sale_order._fields['marca_auto'].selection).get(sale_order.marca_auto, '') if sale_order else ''"/>, 
+                            <strong>Marca:</strong> <t t-esc="sale_order.marca_auto_id.name if sale_order.marca_auto_id else ''"/>, 
                             <strong>Modelo:</strong> <t t-esc="sale_order.nombre_auto.name if sale_order.nombre_auto else ''"/>, 
                             <strong>Año:</strong> <t t-esc="sale_order.anio_auto or ''"/>, 
                             <strong>Color:</strong> <t t-esc="sale_order.color_auto or ''"/>, 
