@@ -1,0 +1,6 @@
+<odoo>
+    <record id="group_allow_unreconcile" model="res.groups">
+        <field name="name">Permitir romper conciliaciones con contraseña</field>
+        <field name="category_id" ref="base.module_category_accounting_accounting"/>
+    </record>
+</odoo>
