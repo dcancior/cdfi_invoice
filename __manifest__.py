@@ -16,6 +16,9 @@
         'sale','account','purchase', 'base_vat'
     ],
     'data': [
+
+        'security/security.xml',  # <-- DEBE IR AQUÍ (en la sección data)
+        
         'data/catalogo.unidad.medida.csv',
         'data/catalogo.forma.pago.csv',
         'data/catalogo.uso.cfdi.csv',
@@ -44,11 +47,9 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'cdfi_invoice/static/src/xml/password_dialog.xml',
             'cdfi_invoice/static/src/js/password_dialog.js',
             'cdfi_invoice/static/src/js/account_payment_field_extend.js',
-        ],
-    'web.assets_qweb': [
-        'cdfi_invoice/static/src/xml/password_dialog.xml',
         ],
     },
     'images': ['static/description/banner.jpg'],
