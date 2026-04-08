@@ -17,7 +17,7 @@
     ],
     'data': [
 
-        'security/security.xml',  # <-- DEBE IR AQUÍ (en la sección data)
+        'security/security.xml',
 
         'data/catalogo.unidad.medida.csv',
         'data/catalogo.forma.pago.csv',

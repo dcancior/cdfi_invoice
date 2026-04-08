@@ -1,6 +1,14 @@
 <odoo>
+    <!-- Primero definimos una categoría para que el grupo no se pierda -->
+    <record id="category_cdfi_permisos" model="ir.module.category">
+        <field name="name">CDFI Facturación Especial</field>
+        <field name="sequence">100</field>
+    </record>
+
     <record id="group_allow_unreconcile" model="res.groups">
         <field name="name">Permitir romper conciliaciones con contraseña</field>
-        <!-- Al no tener categoría, aparecerá en la sección "Otros" o al final del formulario del usuario -->
+        <field name="category_id" ref="category_cdfi_permisos"/>
+        <!-- Esto lo asigna automáticamente al Admin para que no tengas que buscarlo -->
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
     </record>
 </odoo>
