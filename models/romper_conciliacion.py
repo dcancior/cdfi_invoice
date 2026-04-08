@@ -7,18 +7,19 @@ class AccountMove(models.Model):
     def js_remove_outstanding_partial_with_password(self, partial_id, password):
         self.ensure_one()
         
-        # 1. Verificar si el usuario pertenece al grupo
-        if not self.env.user.has_group('cdfi_invoice.group_allow_unreconcile'):
-            raise UserError(_("No tienes permisos suficientes para romper conciliaciones."))
-
-        # 2. Verificar la contraseña del usuario actual
-        # (Usamos el método nativo de Odoo para verificar el password del usuario logueado)
-        user = self.env.user
-        authenticated = user._check_credentials(password, {'type': 'interactive'})
+        # Buscamos el grupo por nombre técnico exacto
+        group_name = "Permitir romper conciliaciones con contraseña"
+        group = self.env['res.groups'].search([('name', '=', group_name)], limit=1)
         
-        if not authenticated:
+        # Verificamos si el usuario actual tiene ese grupo en su lista de grupos
+        if not group or group not in self.env.user.groups_id:
+            raise UserError(_("No tienes permisos suficientes para romper conciliaciones. (Grupo: %s)") % group_name)
+
+        # Validar contraseña del usuario
+        try:
+            self.env.user._check_credentials(password, {'type': 'interactive'})
+        except Exception:
             raise UserError(_("Contraseña incorrecta."))
 
-        # 3. Lógica original para romper la conciliación
         partial = self.env['account.partial.reconcile'].browse(partial_id)
         return partial.unlink()
