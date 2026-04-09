@@ -40,9 +40,8 @@ class ResPartner(models.Model):
         # quita 'vat' para que no se replique entre partner comercial e hijos
         return [f for f in fields_list if f != 'vat']
 
-    # --- CONVENIENCIA: prellenar RFC del hijo solo al crear (si es invoice) ---
-    @api.model_create_multi
-    def create(self, vals_list):
+    @api.model
+    def create(self, vals):
         # Si se crea una dirección de facturación sin RFC, toma el maestro del partner
         if vals.get('type') == 'invoice' and not vals.get('vat') and vals.get('parent_id'):
             parent = self.env['res.partner'].browse(vals['parent_id'])
