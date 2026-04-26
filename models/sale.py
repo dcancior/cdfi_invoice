@@ -7,7 +7,6 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
-
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
@@ -49,9 +48,6 @@ class SaleOrder(models.Model):
         selection_add=[('cfdi_emitido', _('CFDI Emitido'))]
     )
 
-    # ------------------------------
-    # Onchanges
-    # ------------------------------
     @api.onchange('partner_id')
     def _get_uso_cfdi(self):
         if self.partner_id:
@@ -83,9 +79,6 @@ class SaleOrder(models.Model):
                 order.partner_invoice_id = order.partner_id.commercial_partner_id
         return res
 
-    # ------------------------------
-    # Computes
-    # ------------------------------
     @api.depends('date_order')
     def _compute_fecha_corregida(self):
         for sale in self:
@@ -113,17 +106,11 @@ class SaleOrder(models.Model):
             if any(inv.estado_factura == 'factura_correcta' for inv in invoices):
                 order.invoice_status = 'cfdi_emitido'
 
-    # ------------------------------
-    # Helpers / API
-    # ------------------------------
     @api.model
     def _get_amount_2_text(self, amount_total):
         currency = self.currency_id and self.currency_id.name or 'MXN'
         return amount_to_text_es_MX.get_amount_to_text(self, amount_total, 'es_cheque', currency)
 
-    # ------------------------------
-    # Overrides de creación de factura
-    # ------------------------------
     def _prepare_invoice(self):
         # Consolidado: incluye CFDI y fuerza partner comercial
         vals = super()._prepare_invoice()
@@ -143,9 +130,6 @@ class SaleOrder(models.Model):
             move.partner_id = move.partner_id.commercial_partner_id
         return moves
 
-    # -------------------------------------------------------------------------
-    # Campo espejo del estado CFDI tomando en cuenta TODAS las facturas del pedido
-    # -------------------------------------------------------------------------
     estado_cfdi = fields.Selection(
         selection=[
             ('factura_no_generada', 'CFDI no generado'),
@@ -161,8 +145,6 @@ class SaleOrder(models.Model):
         help="Resumen del estado CFDI según las facturas relacionadas al pedido."
     )
 
-    # Mapa de prioridades para resolver mezclas de estados en múltiples facturas
-    # (valor mayor => mayor prioridad visual/funcional)
     _ESTADO_CFDI_PRIORITY = {
         'solicitud_cancelar': 4,
         'factura_correcta':   3,
@@ -210,25 +192,6 @@ class SaleOrder(models.Model):
 
             # Si por alguna razón el mejor_estado no está mapeado, cae a 'factura_no_generada'
             order.estado_cfdi = mejor_estado if mejor_estado in self._ESTADO_CFDI_PRIORITY else 'factura_no_generada'
-
-    # -------------------------------------------------------------------------
-    # (Opcional) Si quisieras una variante "estricta" (solo 'factura_correcta' cuando TODAS lo están):
-    # Descomenta y usa esta función dentro del compute en vez del bloque de prioridad:
-    # -------------------------------------------------------------------------
-    # def _aggregate_estado_cfdi_estricto(self, estados):
-    #     if not estados:
-    #         return 'factura_no_generada'
-    #     if estados == {'factura_correcta'}:
-    #         return 'factura_correcta'
-    #     if estados == {'factura_cancelada'}:
-    #         return 'factura_cancelada'
-    #     if 'solicitud_cancelar' in estados:
-    #         return 'solicitud_cancelar'
-    #     if 'solicitud_rechazada' in estados:
-    #         return 'solicitud_rechazada'
-    #     return 'factura_no_generada'
-
-    
 
     @api.onchange('methodo_pago')
     def _onchange_methodo_pago_set_forma_pago(self):
@@ -350,12 +313,17 @@ class SaleOrderLine(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
-        # Evita editar líneas si hay facturas no canceladas
-        locked = self.filtered(lambda l: l.order_id and l.order_id._must_lock_lines())
-        if locked:
-            raise UserError(_(
-                "No se pueden editar líneas del pedido porque existe una factura/NC vigente."
-            ))
+        # Detectar si SOLO están cambiando mechanic_id
+        only_mechanic_change = set(vals.keys()) <= {'mechanic_id'}
+
+        # Si hay más campos involucrados → aplicar bloqueo normal
+        if not only_mechanic_change:
+            locked = self.filtered(lambda l: l.order_id and l.order_id._must_lock_lines())
+            if locked:
+                raise UserError(_(
+                    "No se pueden editar líneas del pedido porque existe una factura/NC vigente."
+                ))
+
         return super().write(vals)
 
     def unlink(self):
