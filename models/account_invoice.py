@@ -146,7 +146,7 @@ class AccountMove(models.Model):
         string=_('Bloquear edición de líneas'),
         default=False,
         tracking=True,
-        groups='base.group_system',  # Solo administradores
+        groups='base.group_system,cdfi_invoice.group_allow_unlock_invoices',  # Solo administradores
     )
 
 #    @api.model
