@@ -14,7 +14,7 @@
 
     <record id="group_allow_unlock_invoices" model="res.groups">
         <field name="name">Permitir desbloquear líneas de factura</field>
-        <field name="category_id" ref="base.module_category_accounting_accounting"/>
+        <field name="category_id" ref="category_cdfi_permisos"/>
         <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
     </record>
 </odoo>
