@@ -35,16 +35,6 @@
                 </group>
                 </xpath>
 
-
-                <!-- Romper el o_address_format global -->
-                <xpath expr="//div[contains(@class, 'o_address_format')]" position="replace">
-                    <div>
-                        <field name="city"/>
-                        <field name="state_id"/>
-                        <field name="country_id" invisible="1"/>
-                    </div>
-                </xpath>
-
             </field>
             </record>
 
