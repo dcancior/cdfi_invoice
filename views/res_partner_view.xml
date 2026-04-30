@@ -41,6 +41,7 @@
                     <div>
                         <field name="city"/>
                         <field name="state_id"/>
+                        <field name="country_id" invisible="1"/>
                     </div>
                 </xpath>
 
