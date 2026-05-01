@@ -13,7 +13,7 @@
     'author': 'IT Admin',
     'website': 'www.itadmin.com.mx',
     'depends': [
-        'sale','account','purchase', 'base_vat'
+        'base','mail','sale','account','purchase', 'base_vat'
     ],
     'data': [
 

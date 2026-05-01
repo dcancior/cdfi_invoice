@@ -103,6 +103,12 @@
                             </group>
                         </group>
                     </sheet>
+
+                    <!-- AQUÍ VA EL CHATTER: Justo después de cerrar el </sheet> y antes del </form> -->
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="message_ids"/>
+                    </div>
                 </form>
             </field>
         </record>
@@ -122,6 +128,21 @@
                     'views': [(env.ref('cdfi_invoice.view_company_form_cfdi_only').id, 'form')],
                     'target': 'current',
                 }
+            </field>
+        </record>
+
+        <record id="Partner_form_chatter" model="ir.ui.view">
+            <field name="name">res.company.form.chatter</field>
+            <field name="model">res.company</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <!-- Esto busca el final del formulario original y pega el chatter -->
+                <xpath expr="//sheet" position="after">
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </xpath>
             </field>
         </record>
 
