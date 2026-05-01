@@ -9,3 +9,4 @@ access_reason_cancelation_wizard,reason_cancelation_wizard,cdfi_invoice.model_re
 access_account_payment_mail,access_account_payment_mail,cdfi_invoice.model_account_payment_mail,base.group_user,1,1,1,1
 access_facturas_pago,facturas_pago,cdfi_invoice.model_facturas_pago,base.group_user,1,1,1,1
 access_product_parts,access_product_parts,cdfi_invoice.model_product_parts,,1,1,1,1
+access_res_company_cfdi_config,res.company.cfdi.config,base.model_res_company,cdfi_invoice.group_cfdi_config,1,1,0,0
