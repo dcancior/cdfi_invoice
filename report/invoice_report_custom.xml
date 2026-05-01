@@ -65,12 +65,15 @@
             <attribute name="class">mt-0</attribute>
         </xpath>
 
-        <!-- Título dinámico (sin tocar tamaño/color del bloque de spans indicado) + fecha a la derecha (12 pt) -->
+        <!-- Título dinámico + fecha dinámica según desglose IVA -->
         <xpath expr="//h2" position="replace">
             <h2 style="position:relative; width:100%;">
-                <t t-set="is_nota_venta" t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
 
-                <!-- Título + folio a la izquierda -->
+                <!-- Determinar si es Nota de Venta -->
+                <t t-set="is_nota_venta"
+                t-value="o.move_type == 'out_invoice' and ((o.desglosar_iva or '').strip().lower() == 'no')"/>
+
+                <!-- Título + folio -->
                 <span>
                     <t t-if="is_nota_venta">
                         <span t-if="o.state == 'posted'">Nota de Venta</span>
@@ -85,20 +88,34 @@
                         <span t-if="o.move_type == 'in_invoice'">Factura del Proveedor</span>
                         <span t-if="o.move_type == 'in_refund'">Nota de crédito del proveedor</span>
                     </t>
+
                     <span class="hdr-meta-12">
                         <span t-if="o.name != '/'" t-esc="' — '"/>
                         <span t-if="o.name != '/'" t-field="o.name"/>
                     </span>
                 </span>
-                
-                <!-- Fechas a la derecha en la misma línea (12pt) -->
-                <span t-if="o.move_type == 'out_invoice' and o.invoice_date" style="position: absolute; right: 0; top: 0; font-size: 12px; color: #000;">
-                    <strong>Fecha de Factura:</strong> <span t-field="o.invoice_date"/>
-                    <t t-if="o.invoice_date_due">
+
+                <!-- Variables para controlar IVA -->
+                <t t-set="nv"
+                t-value="((o._fields.get('desglosar_iva') and o['desglosar_iva']) or (o._fields.get('desglose_iva') and o['desglose_iva']) or '')"/>
+                <t t-set="nv_is_no"
+                t-value="nv in ('no','No','NO', False, 0)"/>
+
+                <!-- Fechas dinámicas -->
+                <span t-if="o.move_type == 'out_invoice' and o.invoice_date"
+                    style="position: absolute; right: 0; top: 0; font-size: 10px; color: #000;">
+
+                    <strong t-esc="'Fecha de Nota de Venta:' if nv_is_no else 'Fecha de Factura:'"/>
+                    <span t-field="o.invoice_date"/>
+
+                    <!-- Solo mostrar vencimiento si es factura -->
+                    <t t-if="o.invoice_date_due and not nv_is_no">
                         <span t-esc="' — '"/>
-                        <strong>Fecha de Vencimiento:</strong> <span t-field="o.invoice_date_due"/>
+                        <strong>Fecha de Vencimiento:</strong>
+                        <span t-field="o.invoice_date_due"/>
                     </t>
                 </span>
+
             </h2>
         </xpath>
 
