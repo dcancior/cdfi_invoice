@@ -143,7 +143,7 @@
                     <strong>Uso:</strong>
                     <p class="m-0 val">
                         <t t-esc="o.uso_cfdi_id.description or o.uso_cfdi_id.name or o.uso_cfdi_id.display_name"/>
-                        <t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>
+                        <!--<t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>-->
                     </p>
                 </div>
 
@@ -157,7 +157,7 @@
                     <strong>Forma de pago:</strong>
                     <p class="m-0 val">
                         <t t-esc="o.forma_pago_id.description or o.forma_pago_id.name or o.forma_pago_id.display_name"/>
-                        <t t-if="o.forma_pago_id.code"> (<t t-esc="o.forma_pago_id.code"/>)</t>
+                        <!--<t t-if="o.forma_pago_id.code"> (<t t-esc="o.forma_pago_id.code"/>)</t>-->
                     </p>
                 </div>
             </div>
@@ -212,7 +212,7 @@
                         <strong>Régimen fiscal:</strong>
                         <span class="val" t-if="o.partner_id.regimen_fiscal_id">
                             <t t-esc="o.partner_id.regimen_fiscal_id.description or o.partner_id.regimen_fiscal_id.name or o.partner_id.regimen_fiscal_id.display_name"/>
-                            <t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>
+                            <!--<t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>-->
                         </span>
                         <span class="val" t-if="not o.partner_id.regimen_fiscal_id">—</span>
                         <br/>
@@ -225,7 +225,7 @@
                             <strong>Régimen fiscal:</strong>
                             <span class="val" t-if="o.company_id.regimen_fiscal_id">
                                 <t t-esc="o.company_id.regimen_fiscal_id.description or o.company_id.regimen_fiscal_id.name or o.company_id.regimen_fiscal_id.display_name"/>
-                                <t t-if="o.company_id.regimen_fiscal_id.code"> (<t t-esc="o.company_id.regimen_fiscal_id.code"/>)</t>
+                                <!--<t t-if="o.company_id.regimen_fiscal_id.code"> (<t t-esc="o.company_id.regimen_fiscal_id.code"/>)</t>-->
                             </span>
                             <span class="val" t-if="not o.company_id.regimen_fiscal_id">—</span><br/>
                             <strong>Lugar de expedición:</strong>
