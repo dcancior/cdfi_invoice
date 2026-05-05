@@ -79,7 +79,7 @@
                     <strong>Uso:</strong>
                     <p class="m-0">
                         <t t-esc="o.uso_cfdi_id.description or o.uso_cfdi_id.name or o.uso_cfdi_id.display_name"/>
-                        <t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>
+                        <!-- <t t-if="o.uso_cfdi_id.code"> (<t t-esc="o.uso_cfdi_id.code"/>)</t>-->
                     </p>
                 </div>
                 <div class="col-auto mw-100 mb-1" t-if="o.methodo_pago" name="reference" style="line-height: 1.1;">
@@ -92,11 +92,12 @@
                     <strong>Forma de pago:</strong>
                     <p class="m-0">
                         <t t-esc="o.forma_pago_id.description or o.forma_pago_id.name or o.forma_pago_id.display_name"/>
-                        <t t-if="o.forma_pago_id.code"> (<t t-esc="o.forma_pago_id.code"/>)</t>
+                        <!-- <t t-if="o.forma_pago_id.code"> (<t t-esc="o.forma_pago_id.code"/>)</t>-->
                     </p>
                 </div>
             </div>
         </xpath>
+
 
         <!-- Bloques posteriores a la información -->
         <xpath expr="//div[@id='informations']" position="after">
@@ -157,7 +158,7 @@
                         Régimen fiscal:
                         <span t-if="o.partner_id.regimen_fiscal_id">
                             <t t-esc="o.partner_id.regimen_fiscal_id.description or o.partner_id.regimen_fiscal_id.name or o.partner_id.regimen_fiscal_id.display_name"/>
-                            <t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>
+                            <!-- <t t-if="o.partner_id.regimen_fiscal_id.code"> (<t t-esc="o.partner_id.regimen_fiscal_id.code"/>)</t>-->
                         </span>
                         <span t-if="not o.partner_id.regimen_fiscal_id">—</span>
                         <br/>
@@ -170,7 +171,7 @@
                             Régimen fiscal:
                             <span t-if="o.company_id.regimen_fiscal_id">
                                 <t t-esc="o.company_id.regimen_fiscal_id.description or o.company_id.regimen_fiscal_id.name or o.company_id.regimen_fiscal_id.display_name"/>
-                                <t t-if="o.company_id.regimen_fiscal_id.code"> (<t t-esc="o.company_id.regimen_fiscal_id.code"/>)</t>
+                                <!-- <t t-if="o.company_id.regimen_fiscal_id.code"> (<t t-esc="o.company_id.regimen_fiscal_id.code"/>)</t>-->
                             </span>
                             <span t-if="not o.company_id.regimen_fiscal_id">—</span><br/>
                             Lugar de expedición:
