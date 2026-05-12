@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <!-- FACTURA: campo solo-lectura y aviso en forma de "pill" -->
+    <record id="view_move_form_inherit_desglosar_iva_readonly_and_hidden_button" model="ir.ui.view">
+      <field name="name">account.move.form.desglosar_iva.readonly.and.hidden.button</field>
+      <field name="model">account.move</field>
+      <field name="inherit_id" ref="account.view_move_form"/>
+      <field name="priority" eval="90"/>
+      <field name="arch" type="xml">
+        <!-- Campo radio solo lectura, antes de tax_totals -->
+        <xpath expr="//field[@name='tax_totals']" position="before">
+          <field name="desglosar_iva" 
+            widget="radio" 
+            options="{'horizontal': true}"/>
+          <!-- Campos técnicos -->
+          <field name="move_type" invisible="1"/>
+          <field name="state" invisible="1"/>
+          <field name="desglosar_iva_locked" invisible="1"/>
+          <field name="wm_from_so_without_desglosar" invisible="1"/>
+        </xpath>
+        <!-- se agrega la nota que viene de cotización a facturacion' -->
+        <xpath expr="//sheet//field[@name='invoice_origin']" position="after">
+          <group string="Nota" colspan="4"
+                attrs="{'invisible': [('move_type','not in',('out_invoice','out_refund'))]}">
+            <field name="narration" nolabel="1" placeholder="Nota / Términos y condiciones…"/>
+          </group>
+        </xpath>
+      </field>
+    </record>
+  </data>
+</odoo>
