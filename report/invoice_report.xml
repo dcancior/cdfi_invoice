@@ -216,7 +216,7 @@
 									<span t-field="l.quantity" />
 								</td>
 								<td>
-									<span t-field="l.product_id.clave_unidad" /> - <span t-field="l.product_id.unidad_medida" />
+									<span t-field="l.product_id.cat_unidad_medida.clave" /> - <span t-field="l.product_id.cat_unidad_medida.descripcion" />
 								</td>
 								<td>
 									<span t-field="l.name" />
