@@ -132,7 +132,7 @@
 							<div>
 							<t t-if="o.factura_cfdi">
 								<strong>Fecha: </strong>
-								<span t-esc="str(o.invoice_datetime).replace('T', ' ')"/>
+								<span t-esc="str(o.fecha_factura).replace('T', ' ') if o.fecha_factura else ''"/>
 							</t>
 							<t t-if="not o.factura_cfdi">
 								<strong>Fecha de venta: </strong>
