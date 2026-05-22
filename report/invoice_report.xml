@@ -275,26 +275,15 @@
 												t-options='{"widget": "monetary", "display_currency": o.currency_id}' />
 										</td>
 									</tr>
-                                    <t t-foreach="o.amount_by_group" t-as="amount_by_group">
-                                        <tr style="">
-                                            <t t-if="len(o.line_ids.filtered(lambda line: line.tax_line_id)) == 1 and o.amount_untaxed == amount_by_group[2]">
-                                                <td><span t-esc="amount_by_group[0]"/></td>
+                                    <t t-foreach="(o.tax_totals or {}).get('groups_by_subtotal', {}).values()" t-as="tax_groups">
+                                        <t t-foreach="tax_groups" t-as="tax_group">
+                                            <tr>
+                                                <td><span t-esc="tax_group['tax_group_name']"/></td>
                                                 <td class="text-right o_price_total">
-                                                    <span t-esc="amount_by_group[3]"/>
+                                                    <span t-esc="tax_group['formatted_tax_group_amount']"/>
                                                 </td>
-                                            </t>
-                                            <t t-else="">
-                                                <td>
-                                                    <span t-esc="amount_by_group[0]"/>
-                                                   <!-- <span>&amp;nbsp;<span>on</span>
-                                                        <t t-esc="amount_by_group[4]"/>
-                                                    </span>-->
-                                                </td>
-                                                <td class="text-right o_price_total">
-                                                    <span t-esc="amount_by_group[3]"/>
-                                                </td>
-                                            </t>
-                                        </tr>
+                                            </tr>
+                                        </t>
                                     </t>
 									<tr class="border-black">
 										<td>
