@@ -25,4 +25,11 @@
             </h2>
         </xpath>
     </template>
+
+    <!-- Punto de extensión para complemento_iedu y otros módulos que hereden de cdfi_invoice.report_invoice_document -->
+    <template id="report_invoice_document" inherit_id="account.report_invoice_document">
+        <xpath expr="//div[hasclass('page')]" position="inside">
+            <div name="cadenas"/>
+        </xpath>
+    </template>
 </odoo>
