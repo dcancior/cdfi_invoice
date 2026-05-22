@@ -85,7 +85,7 @@ class AccountMove(models.Model):
                                  help='Amount of the invoice in letter')
     qr_value = fields.Char(string=_('QR Code Value'))
     fecha_factura = fields.Datetime(string=_('Fecha Factura'))
-    # serie_emisor = fields.Char(string=_('A'))
+    serie_emisor = fields.Char(string=_('Serie'))
     tipo_relacion = fields.Selection(
         selection=[('01', 'Nota de crédito de los documentos relacionados'),
                    ('02', 'Nota de débito de los documentos relacionados'),
