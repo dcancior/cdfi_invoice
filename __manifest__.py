@@ -37,6 +37,7 @@
         'views/purchase_view.xml',
         'views/account_journal_view.xml',
         'views/res_currency.xml',
+        'report/invoice_report.xml',
         'report/invoice_report_custom.xml',
         'report/payment_report.xml',
         'data/mail_template_data.xml',
