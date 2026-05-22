@@ -192,6 +192,9 @@ class AccountMove(models.Model):
         for vals in vals_list:
             if 'desglosar_iva' in vals:
                 vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
+            # Garantizar valor válido: entradas de pago llegan con False/None
+            if not vals.get('desglosar_iva'):
+                vals['desglosar_iva'] = 'nota'
 
         moves = super().create(vals_list)
 
