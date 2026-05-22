@@ -87,7 +87,7 @@
 
 					<!--INICIA LOGO DE LA EMPRESA-->
 						<div class="col-4">
-							<img t-if="o.company_id.logo" t-att-src="'data:image/png;base64,%s' % to_text(o.company_id.logo)"
+							<img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
 							style="max-height: 130px;max-width: 130px;" />
 						</div>
 					<!--TERMINA LOGO DE LA EMPRESA-->
@@ -415,7 +415,7 @@
 				<div name="cadenas" class="row" style="page-break-inside: avoid">
 						<!--INICIA CODIGOQR-->
 						<div class="col-xs-5">
-							<img t-if="o.qrcode_image" t-att-src="'data:image/png;base64,%s' % to_text(o.qrcode_image)"
+							<img t-if="o.qrcode_image" t-att-src="image_data_uri(o.qrcode_image)"
 							style="height: 190px;width: 190px;padding-left:10px;" />
 						</div>
 						<!--TERMINA CODIGO QR-->
