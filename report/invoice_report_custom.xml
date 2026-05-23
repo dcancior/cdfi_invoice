@@ -122,6 +122,26 @@
             </div>
         </xpath>
 
+        <!-- Título del PDF: "Nota de Venta" cuando el diario tiene código NOT -->
+        <xpath expr="//div[hasclass('page')]/h2" position="replace">
+            <h2>
+                <t t-if="o.journal_id.code == 'NOT'">
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Nota de Venta</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Nota de Venta (Borrador)</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Nota de Venta (Cancelada)</span>
+                </t>
+                <t t-else="">
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Invoice</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Draft Invoice</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Cancelled Invoice</span>
+                    <span t-if="o.move_type == 'out_refund'">Credit Note</span>
+                    <span t-if="o.move_type == 'in_refund'">Vendor Credit Note</span>
+                    <span t-if="o.move_type == 'in_invoice'">Vendor Bill</span>
+                </t>
+                <span t-if="o.name != '/'" t-field="o.name"/>
+            </h2>
+        </xpath>
+
         <xpath expr="//div[@name='customer_code']" position="after">
             <t t-if="o.factura_cfdi">
                 <t t-set="original_o_grid_layout" t-value="o_grid_layout"/>
