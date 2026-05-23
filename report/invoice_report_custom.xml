@@ -17,6 +17,67 @@
             </t>
         </xpath>
 
+        <!-- Recuadros Emisor / Receptor en primera hoja -->
+        <xpath expr="//div[@id='informations']" position="before">
+            <t t-if="o.factura_cfdi">
+                <div class="row mb-3">
+                    <div class="col-6" style="padding-right:5px;">
+                        <div style="border:1px solid #adb5bd;border-radius:4px;overflow:hidden;height:100%;">
+                            <div style="font-size:11px;font-weight:bold;text-align:center;background-color:#f1f3f4;padding:5px 8px;border-bottom:1px solid #adb5bd;">
+                                DATOS DEL EMISOR
+                            </div>
+                            <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;width:40%;white-space:nowrap;">Nombre:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.company_id.nombre_fiscal"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">RFC:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.company_id.vat"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Régimen fiscal:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.company_id.regimen_fiscal_id.code"/> - <span t-field="o.company_id.regimen_fiscal_id.description"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Lugar expedición:</td>
+                                    <td style="padding:3px 8px 3px 0;">
+                                        <t t-if="o.journal_id.codigo_postal"><span t-field="o.journal_id.codigo_postal"/></t>
+                                        <t t-if="not o.journal_id.codigo_postal"><span t-field="o.company_id.partner_id.zip"/></t>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-6" style="padding-left:5px;">
+                        <div style="border:1px solid #adb5bd;border-radius:4px;overflow:hidden;height:100%;">
+                            <div style="font-size:11px;font-weight:bold;text-align:center;background-color:#f1f3f4;padding:5px 8px;border-bottom:1px solid #adb5bd;">
+                                DATOS DEL RECEPTOR
+                            </div>
+                            <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;width:40%;white-space:nowrap;">Nombre:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">RFC:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.vat"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Régimen fiscal:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Uso CFDI:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.uso_cfdi_id.code"/> - <span t-field="o.uso_cfdi_id.description"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </xpath>
+
         <xpath expr="//div[hasclass('row')]//div[@name='address_not_same_as_shipping']//t[@t-set='address']" position="inside">
             <p name="fiscal_regime">
                 Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/>
