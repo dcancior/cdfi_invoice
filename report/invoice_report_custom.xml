@@ -78,6 +78,17 @@
             </t>
         </xpath>
 
+        <!-- Ocultar dirección estándar del receptor cuando es CFDI (los recuadros ya la muestran) -->
+        <xpath expr="//div[@name='no_shipping']" position="attributes">
+            <attribute name="t-attf-style">#{'display:none;' if o.factura_cfdi else ''}</attribute>
+        </xpath>
+        <xpath expr="//div[@name='address_same_as_shipping']" position="attributes">
+            <attribute name="t-attf-style">#{'display:none;' if o.factura_cfdi else ''}</attribute>
+        </xpath>
+        <xpath expr="//div[@name='address_not_same_as_shipping']" position="attributes">
+            <attribute name="t-attf-style">#{'display:none;' if o.factura_cfdi else ''}</attribute>
+        </xpath>
+
         <xpath expr="//div[hasclass('row')]//div[@name='address_not_same_as_shipping']//t[@t-set='address']" position="inside">
             <p name="fiscal_regime">
                 Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/>
