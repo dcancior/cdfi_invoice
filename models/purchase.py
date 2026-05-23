@@ -18,7 +18,7 @@ class PurchaseOrder(models.Model):
                    ('PPD', _('Pago en parcialidades o diferido')),],
         string=_('Método de pago'), 
     )
-    uso_cfdi_id  =  fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI')
+    uso_cfdi_id  =  fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
     estado_factura = fields.Selection(
         selection=[('factura_no_generada', 'Factura no generada'), ('factura_correcta', 'Factura correcta'), 
                    ('problemas_factura', 'Problemas con la factura'), ('factura_cancelada', 'Factura cancelada'), ],
@@ -53,9 +53,10 @@ class PurchaseOrder(models.Model):
     def action_view_invoice(self, invoices=False):
         res = super(PurchaseOrder,self).action_view_invoice(invoices=invoices)
         if res:
+            context = {} 
             if res.get('context')==None:
                 res['context']={}
-            if res['context']:    
+            if res['context']:
                 context=ast.literal_eval(res['context'])
             order = self[0] 
             context.update({

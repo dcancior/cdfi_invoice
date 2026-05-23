@@ -3,13 +3,12 @@
 import base64
 import json
 import requests
-
+import datetime
 from lxml import etree
-from datetime import datetime, date
 
 from odoo import fields, models, api, _
 import odoo.addons.decimal_precision as dp
-from odoo.exceptions import UserError, Warning
+from odoo.exceptions import UserError
 
 from reportlab.graphics.barcode import createBarcodeDrawing
 from reportlab.lib.units import mm
@@ -24,57 +23,38 @@ _logger = logging.getLogger(__name__)
 class AccountMove(models.Model):
     _inherit = 'account.move'
 
-    #impedir volver a borrador la factura si esta cancelada
-    def button_draft(self):
-        # Odoo llama a este método al pulsar "Restablecer a borrador"
-        for move in self:
-            if move.state == 'cancel':
-                raise UserError("No se puede restablecer a borrador una factura cancelada.")
-        return super().button_draft()
-
-    # En algunas instalaciones el botón llama a action_draft; cubrimos ambos por seguridad.
-    def action_draft(self):
-        for move in self:
-            if move.state == 'cancel':
-                raise UserError("No se puede restablecer a borrador una factura cancelada.")
-        # Si no existe super().action_draft en tu versión, quita la siguiente línea:
-        return super().action_draft()
-
-
-    factura_cfdi = fields.Boolean('Factura CFDI')
+    factura_cfdi = fields.Boolean('Factura CFDI', copy=False)
     tipo_comprobante = fields.Selection(
         selection=[('I', 'Ingreso'),
                    ('E', 'Egreso'),
                    ('T', 'Traslado'),
                    ],
         string=_('Tipo de comprobante'),
-        tracking=True,
     )
-    forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago', tracking=True)
+    forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
     methodo_pago = fields.Selection(
         selection=[('PUE', _('Pago en una sola exhibición')),
                    ('PPD', _('Pago en parcialidades o diferido')), ],
         string=_('Método de pago'),
-        tracking=True,
     )
-    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)', tracking=True)
+    uso_cfdi_id = fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
     estado_factura = fields.Selection(
-        selection=[('factura_no_generada', 'CFDI no generado'), ('factura_correcta', 'CFDI Emitido'),
-                   ('solicitud_cancelar', 'Cancelación en proceso'), ('factura_cancelada', 'CFDI Cancelado'),
+        selection=[('factura_no_generada', 'Factura no generada'), ('factura_correcta', 'Factura correcta'),
+                   ('solicitud_cancelar', 'Cancelación en proceso'), ('factura_cancelada', 'Factura cancelada'),
                    ('solicitud_rechazada', 'Cancelación rechazada'), ],
         string=_('Estado de factura'),
         default='factura_no_generada',
-        readonly=True
+        readonly=True, copy=False
     )
     pdf_cdfi_invoice = fields.Binary("CDFI Invoice")
-    qrcode_image = fields.Binary("QRCode")
-    numero_cetificado = fields.Char(string=_('Numero de cetificado'))
-    cetificaso_sat = fields.Char(string=_('Cetificao SAT'))
-    folio_fiscal = fields.Char(string=_('Folio Fiscal'), readonly=True)
-    fecha_certificacion = fields.Char(string=_('Fecha y Hora Certificación'))
-    cadena_origenal = fields.Char(string=_('Cadena Origenal del Complemento digital de SAT'))
-    selo_digital_cdfi = fields.Char(string=_('Selo Digital del CDFI'))
-    selo_sat = fields.Char(string=_('Selo del SAT'))
+    qrcode_image = fields.Binary("QRCode", copy=False)
+    numero_cetificado = fields.Char(string=_('Numero de cetificado'), copy=False)
+    cetificaso_sat = fields.Char(string=_('Cetificao SAT'), copy=False)
+    folio_fiscal = fields.Char(string=_('Folio Fiscal'), readonly=True, copy=False)
+    fecha_certificacion = fields.Char(string=_('Fecha y Hora Certificación'), copy=False)
+    cadena_origenal = fields.Char(string=_('Cadena Origenal del Complemento digital de SAT'), copy=False)
+    selo_digital_cdfi = fields.Char(string=_('Selo Digital del CDFI'), copy=False)
+    selo_sat = fields.Char(string=_('Selo del SAT'), copy=False)
     moneda = fields.Char(string=_('Moneda'))
     tipocambio = fields.Char(string=_('TipoCambio'))
     # folio = fields.Char(string=_('Folio'))
@@ -83,9 +63,9 @@ class AccountMove(models.Model):
     amount_to_text = fields.Char('Amount to Text', compute='_get_amount_to_text',
                                  size=256,
                                  help='Amount of the invoice in letter')
-    qr_value = fields.Char(string=_('QR Code Value'))
-    fecha_factura = fields.Datetime(string=_('Fecha Factura'))
-    serie_emisor = fields.Char(string=_('Serie'))
+    qr_value = fields.Char(string=_('QR Code Value'), copy=False)
+    fecha_factura = fields.Datetime(string=_('Fecha Factura'), copy=False)
+    # serie_emisor = fields.Char(string=_('A'))
     tipo_relacion = fields.Selection(
         selection=[('01', 'Nota de crédito de los documentos relacionados'),
                    ('02', 'Nota de débito de los documentos relacionados'),
@@ -143,154 +123,18 @@ class AccountMove(models.Model):
     fg_ano = fields.Char(string=_('Año'))
     tercero_id = fields.Many2one('res.partner', string="A cuenta de terceros")
 
-#    @api.model
-#    def _reverse_moves(self, default_values, cancel=True):
-#        values = super(AccountMove, self)._reverse_moves(default_values, cancel)
-#        if self.estado_factura == 'factura_correcta':
-#            values['uuid_relacionado'] = self.folio_fiscal
-#            values['methodo_pago'] = 'PUE'
-#            values['forma_pago_id'] = self.forma_pago_id.id
-#            values['tipo_comprobante'] = 'E'
-#            values['uso_cfdi_id'] = self.env['catalogo.uso.cfdi'].sudo().search([('code', '=', 'G02')]).id
-#            values['tipo_relacion'] = '01'
-#            values['fecha_factura'] = None
-#            values['qrcode_image'] = None
-#            values['numero_cetificado'] = None
-#            values['cetificaso_sat'] = None
-#            values['selo_digital_cdfi'] = None
-#            values['folio_fiscal'] = None
-#            values['estado_factura'] = 'factura_no_generada'
-#            values['factura_cfdi'] = False
-#            values['edi_document_ids'] = None
-#        return values
-
-
-    # Si quieres, fija un default explícito y evitas nulos:
-    # desglosar_iva = fields.Selection([...], default='si')
-
-    @staticmethod
-    def _normalize_desglosar_iva(v):
-        # Aceptar ya válidos
-        if v in ('si', 'no', False, None):
-            return v
-        # Booleans → claves de selección
-        if isinstance(v, bool):
-            return 'si' if v else 'no'
-        # Strings comunes → claves
-        if isinstance(v, str):
-            low = v.strip().lower()
-            if low in ('true', '1', 'yes', 'y', 'si', 'sí'):
-                return 'si'
-            if low in ('false', '0', 'no', ''):
-                return 'no'  # o False si prefieres dejarlo vacío
-        # Cualquier otro caso: dejar vacío para no romper
-        return False
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        # normalización existente
-        for vals in vals_list:
-            if 'desglosar_iva' in vals:
-                vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
-            # Garantizar valor válido: entradas de pago llegan con False/None
-            if not vals.get('desglosar_iva'):
-                vals['desglosar_iva'] = 'nota'
-
-        moves = super().create(vals_list)
-
-        # 👇 priorización por uso: registrar selección elegida
-        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
-        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
-
-        for move, vals in zip(moves, vals_list):
-            # tomar de vals (si vino por create) o del registro (por defaults/onchanges)
-            fid = vals.get('forma_pago_id') or move.forma_pago_id.id
-            if fid:
-                UsageForma.bump(fid, user_id=self.env.uid)
-
-            uid_cfdi = vals.get('uso_cfdi_id') or move.uso_cfdi_id.id
-            if uid_cfdi:
-                UsageUso.bump(uid_cfdi, user_id=self.env.uid)
-
-        return moves
-
-    def write(self, vals):
-        # 🔒 CANDADO: no permitir agregar/editar/eliminar líneas de productos/servicios
-        # (secciones y notas sí) en facturas de venta/NC, sin importar el estado.
-        if 'invoice_line_ids' in vals:
-            for move in self:
-                # Limita a ventas/notas de crédito; agrega in_invoice/in_refund si también quieres proveedores
-                if move.move_type not in ('out_invoice', 'out_refund'):
-                    continue
-
-                cmds = vals.get('invoice_line_ids') or []
-                for cmd in cmds:
-                    # cmd es (op, id, vals) o (op, id) según el caso
-                    if not isinstance(cmd, (list, tuple)) or not cmd:
-                        continue
-                    op = cmd[0]
-
-                    # (0, 0, vals) -> crear línea (bloquear si es product/service)
-                    if op == 0:
-                        line_vals = cmd[2] or {}
-                        if not line_vals.get('display_type'):
-                            raise UserError("No se pueden agregar productos/servicios a la factura.")
-
-                    # (1, id, vals) -> actualizar línea existente (bloquear si es product/service)
-                    elif op == 1:
-                        line_id, line_vals = cmd[1], (cmd[2] or {})
-                        line = self.env['account.move.line'].browse(line_id)
-                        if line.move_id == move and not line.display_type:
-                            raise UserError("No se pueden modificar líneas de productos/servicios en la factura.")
-
-                    # (2, id) -> eliminar línea (bloquear si es product/service)
-                    elif op == 2:
-                        line_id = cmd[1]
-                        line = self.env['account.move.line'].browse(line_id)
-                        if line.move_id == move and not line.display_type:
-                            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura.")
-
-                    # (4, id) -> enlazar línea existente (bloquear)
-                    elif op == 4:
-                        raise UserError("No se pueden agregar productos/servicios a la factura.")
-
-                    # (6, 0, ids) -> reemplazar todo el conjunto (bloquear)
-                    elif op == 6:
-                        raise UserError("No se puede reemplazar la lista de productos/servicios de la factura.")
-
-        # 👇 tu lógica existente (no la toques)
-        if 'desglosar_iva' in vals:
-            vals['desglosar_iva'] = self._normalize_desglosar_iva(vals['desglosar_iva'])
-
-        res = super().write(vals)
-
-        # 👇 tu lógica posterior (priorización de uso) tal cual la tienes
-        UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
-        UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
-        if 'forma_pago_id' in vals:
-            for move in self:
-                if move.forma_pago_id:
-                    UsageForma.bump(move.forma_pago_id.id, user_id=self.env.uid)
-        if 'uso_cfdi_id' in vals:
-            for move in self:
-                if move.uso_cfdi_id:
-                    UsageUso.bump(move.uso_cfdi_id.id, user_id=self.env.uid)
-
-        return res
-
-    @api.returns('self', lambda value: value.id)
-    def copy(self, default=None):
-        default = dict(default or {})
-        default['estado_factura'] = 'factura_no_generada'
-        default['folio_fiscal'] = ''
-        default['factura_cfdi'] = False
-        default['fecha_factura'] = None
-        default['qrcode_image'] = None
-        default['numero_cetificado'] = None
-        default['cetificaso_sat'] = None
-        default['selo_digital_cdfi'] = None
-        default['folio_fiscal'] = None
-        return super(AccountMove, self).copy(default=default)
+    @api.model
+    def _reverse_moves(self, default_values, cancel=True):
+        values = super(AccountMove, self)._reverse_moves(default_values, cancel)
+        for inv in self:
+           if inv.estado_factura == 'factura_correcta':
+               values['uuid_relacionado'] = inv.folio_fiscal
+               values['methodo_pago'] = 'PUE'
+               values['forma_pago_id'] = inv.forma_pago_id.id
+               values['tipo_comprobante'] = 'E'
+               values['uso_cfdi_id'] = inv.env['catalogo.uso.cfdi'].sudo().search([('code', '=', 'G02')]).id
+               values['tipo_relacion'] = '01'
+        return values
 
     @api.depends('name')
     def _get_number_folio(self):
@@ -362,15 +206,15 @@ class AccountMove(models.Model):
 
         local = pytz.timezone(timezone)
         if not self.fecha_factura:
-            naive_from = datetime.now()
+            naive_from = datetime.datetime.now()
         else:
             naive_from = self.fecha_factura
         local_dt_from = naive_from.replace(tzinfo=pytz.UTC).astimezone(local)
         date_from = local_dt_from.strftime("%Y-%m-%dT%H:%M:%S")
         if not self.fecha_factura:
-            self.fecha_factura = datetime.now()
+            self.fecha_factura = datetime.datetime.now()
 
-        if self.currency_id.name == 'MXN':
+        if self.currency_id.name.upper() == 'MXN':
             tipocambio = 1
         else:
             tipocambio = self.set_decimals(1 / self.currency_id.with_context(date=self.invoice_date).rate,
@@ -384,7 +228,7 @@ class AccountMove(models.Model):
                 'forma_pago': self.forma_pago_id.code,
                 'subtotal': self.amount_untaxed,
                 'descuento': 0,
-                'moneda': self.currency_id.name,
+                'moneda': self.currency_id.name.upper(),
                 'tipocambio': tipocambio,
                 'total': self.amount_total,
                 'tipocomprobante': self.tipo_comprobante,
@@ -449,12 +293,35 @@ class AccountMove(models.Model):
         tax_local_ret_tot = 0
         tax_local_tras_tot = 0
         only_exento = True
-        items = {'numerodepartidas': len(self.invoice_line_ids)}
         invoice_lines = []
+        negative_lines = []
+        negative_lines_subtotal = []
+        tax_incl_neg = False
         for line in self.invoice_line_ids:
-            if not line.product_id or line.display_type in ('line_section', 'line_note'):
+            if line.display_type in ('line_section', 'line_note'):
                 continue
+            if line.price_subtotal <= 0:
+                for line_tax in line.tax_ids:
+                    if line_tax.price_include:
+                        tax_incl_neg = True
+                if tax_incl_neg:
+                    negative_lines.append(abs(line.price_total))
+                    negative_lines_subtotal.append(abs(line.price_subtotal))
+                else:
+                    negative_lines.append(abs(line.price_subtotal))
+                    negative_lines_subtotal.append(abs(line.price_subtotal))
 
+        for line in self.invoice_line_ids:
+            if line.display_type in ('line_section', 'line_note'):
+                continue
+            if not line.product_id:
+                self.write({'proceso_timbrado': False})
+                self.env.cr.commit()
+                raise UserError(_('Hay una línea sin producto.'))
+            if line.price_unit <= 0 and self.exportacion == '01':
+                continue
+            if line.quantity == 0:
+                continue
             if not line.product_id.clave_producto:
                 self.write({'proceso_timbrado': False})
                 self.env.cr.commit()
@@ -462,10 +329,28 @@ class AccountMove(models.Model):
             if not line.product_id.cat_unidad_medida.clave:
                 self.write({'proceso_timbrado': False})
                 self.env.cr.commit()
-                raise UserError(
-                    _('El producto %s no tiene unidad de medida del SAT configurado.') % (line.product_id.name))
+                raise UserError(_('El producto %s no tiene unidad de medida del SAT configurado.') % (line.product_id.name))
+            promo = 0
+            promocion = False
 
-            price_wo_discount = line.price_unit * (1 - (line.discount / 100.0))
+            if negative_lines:
+                pos = 0
+                for promo_disc in negative_lines:
+                    if promo_disc  <= line.price_subtotal:
+                        price_wo_discount = line.price_unit - (promo_disc / line.quantity)
+                        if tax_incl_neg:
+                            promo = negative_lines_subtotal[pos]
+                        else:
+                            promo = promo_disc
+                        promocion = True
+                        negative_lines.pop(pos)
+                        negative_lines_subtotal.pop(pos)
+                        break
+                    else:
+                        price_wo_discount = line.price_unit * (1 - (line.discount / 100.0))
+                    pos += 1
+            else:
+                price_wo_discount = line.price_unit * (1 - (line.discount / 100.0))
 
             taxes_prod = line.tax_ids.compute_all(price_wo_discount, line.currency_id, line.quantity,
                                                   product=line.product_id, partner=line.move_id.partner_id)
@@ -555,9 +440,16 @@ class AccountMove(models.Model):
                tax_tras = []
                tax_ret = []
 
-            total_wo_discount = round(line.price_unit * line.quantity - tax_included, no_decimales_prod)
-            discount_prod = round(total_wo_discount - line.price_subtotal, no_decimales_prod) if line.discount else 0
-            precio_unitario = round(total_wo_discount / line.quantity, no_decimales_prod)
+            total_wo_discount = self.roundTraditional(line.price_unit * line.quantity - tax_included, no_decimales_prod)
+            if promocion:
+               discount_prod = self.roundTraditional((line.price_unit * line.quantity - tax_included) - (line.price_subtotal - promo), no_decimales_prod) if line.discount or promo > 0 else 0
+            else:
+               discount_prod = self.roundTraditional((line.price_unit * line.quantity - tax_included) - line.price_subtotal, no_decimales_prod) if line.discount else 0
+            if line.price_unit <= 1:
+                precio_unitario = (line.price_unit * line.quantity - tax_included) / line.quantity
+            else:
+                precio_unitario = self.roundTraditional((line.price_unit * line.quantity - tax_included) / line.quantity, no_decimales_prod)
+
             self.subtotal += total_wo_discount
             self.discount += discount_prod
 
@@ -573,25 +465,34 @@ class AccountMove(models.Model):
                                                                                                           4:8] + '  ' + pedimento[
                                                                                                                         8:]})
 
+            no_predial = []
+            if line.predial:
+                predial_list = line.predial.replace(' ', '').split(',')
+                for predial in predial_list:
+                    no_predial.append({'NumeroPredial': predial})
+
             terceros = {}
             if self.tercero_id:
                 terceros.update({'rfc': self.tercero_id.vat.upper(), 
                                  'nombre': self.tercero_id.name.upper(), 
-                                 'regimen': self.tercero_id.regimen_fiscal,
+                                 'regimen': self.tercero_id.regimen_fiscal_id.code,
                                  'domicilio': self.tercero_id.zip })
 
             components = []
             if line.product_id.product_parts_ids:
                 for component in line.product_id.product_parts_ids:
+                    if not component.product_id.clave_producto:
+                        raise UserError(_('El producto %s tiene un componente sin clave de producto.') % (line.product_id.name))
+                    if not component.product_id.name:
+                        raise UserError(_('El producto %s tiene un componente sin nombre.') % (line.product_id.name))
                     components.append({'ClaveProdServ': component.product_id.clave_producto,
                                       'Cantidad': component.cantidad,
-                                      'Descripcion': self.clean_text((component.product_id.name or '')),
+                                      'Descripcion': self.clean_text(component.product_id.name),
                                       })
 
             if line.product_id.objetoimp:
                 objetoimp = line.product_id.objetoimp
             else:
-                _logger.info('taxes_prod %s', taxes_prod)
                 if taxes_prod['taxes']:
                   if tax_tras or tax_ret:
                      objetoimp = '02'
@@ -601,6 +502,11 @@ class AccountMove(models.Model):
                    objetoimp = '01'
 
             product_string = line.product_id.code and line.product_id.code[:100] or ''
+            if not line.name:
+                self.write({'proceso_timbrado': False})
+                self.env.cr.commit()
+                raise UserError(_('El producto %s tiene vacío el campo etiqueta.') % (line.product_id.name))
+
             if product_string == '':
                 if line.name.find(']') > 0:
                     product_string = line.name[line.name.find('[') + len('['):line.name.find(']')] or ''
@@ -631,17 +537,17 @@ class AccountMove(models.Model):
                                       'Descuento': self.set_decimals(discount_prod, no_decimales_prod),
                                       'ObjetoImp': objetoimp,
                                       'InformacionAduanera': pedimentos and pedimentos or '',
-                                      'predial': line.predial and line.predial or '',
+                                      'no_predial': no_predial and no_predial or '',
                                       'terceros': terceros and terceros or '',
                                       'parte': components and components or '',})
 
         self.discount = round(self.discount, no_decimales)
         self.subtotal = self.roundTraditional(self.subtotal, no_decimales)
         impuestos = {}
-        if objetoimp != '04':
-           tras_tot = round(tras_tot, no_decimales)
-           ret_tot = round(ret_tot, no_decimales)
-           if tax_grouped_tras or tax_grouped_ret:
+        #if objetoimp != '04':
+        if tax_grouped_tras or tax_grouped_ret:
+               tras_tot = round(tras_tot, no_decimales)
+               ret_tot = round(ret_tot, no_decimales)
                retenciones = []
                traslados = []
                if tax_grouped_tras:
@@ -681,18 +587,16 @@ class AccountMove(models.Model):
         tax_local_ret_tot = round(tax_local_ret_tot, no_decimales)
         if tax_local_ret or tax_local_tras:
             if tax_local_tras and not tax_local_ret:
-                request_params.update({'implocal10': {'TotaldeTraslados': self.roundTraditional(tax_local_tras_tot, 2),
-                                                      'TotaldeRetenciones': self.roundTraditional(tax_local_ret_tot, 2),
+                request_params.update({'implocal10': {'TotaldeTraslados': self.set_decimals(tax_local_tras_tot, 2),
+                                                      'TotaldeRetenciones': self.set_decimals(tax_local_ret_tot, 2),
                                                       'TrasladosLocales': tax_local_tras, }})
             if tax_local_ret and not tax_local_tras:
-                request_params.update({'implocal10': {'TotaldeTraslados': self.roundTraditional(tax_local_tras_tot, 2),
-                                                      'TotaldeRetenciones': self.roundTraditional(tax_local_ret_tot * -1,
-                                                                                              2),
+                request_params.update({'implocal10': {'TotaldeTraslados': self.set_decimals(tax_local_tras_tot, 2),
+                                                      'TotaldeRetenciones': self.set_decimals(tax_local_ret_tot * -1, 2),
                                                       'RetencionesLocales': tax_local_ret, }})
             if tax_local_ret and tax_local_tras:
-                request_params.update({'implocal10': {'TotaldeTraslados': self.roundTraditional(tax_local_tras_tot, 2),
-                                                      'TotaldeRetenciones': self.roundTraditional(tax_local_ret_tot * -1,
-                                                                                              2),
+                request_params.update({'implocal10': {'TotaldeTraslados': self.set_decimals(tax_local_tras_tot, 2),
+                                                      'TotaldeRetenciones': self.set_decimals(tax_local_ret_tot * -1, 2),
                                                       'TrasladosLocales': tax_local_tras,
                                                       'RetencionesLocales': tax_local_ret, }})
 
@@ -722,25 +626,8 @@ class AccountMove(models.Model):
           return 0
 
     def clean_text(self, text):
-        # Asegurar string y tolerar None/False/objetos raros
-        if not text:
-            text = ''
-        elif not isinstance(text, str):
-            try:
-                text = str(text)
-            except Exception:
-                text = ''
-
-        clean_text = (text
-                    .replace('\n', ' ')
-                    .replace('\\', ' ')
-                    .replace('-', ' ')
-                    .replace('/', ' ')
-                    .replace('|', ' ')
-                    .replace(',', ' ')
-                    .replace(';', ' ')
-                    .replace('>', ' ')
-                    .replace('<', ' '))
+        clean_text = text.replace('\n', ' ').replace('\\', ' ').replace('-', ' ').replace('/', ' ').replace('|', ' ')
+        clean_text = clean_text.replace(',', ' ').replace(';', ' ').replace('>', ' ').replace('<', ' ')
         return clean_text[:1000]
 
     def check_cfdi_values(self):
@@ -825,37 +712,15 @@ class AccountMove(models.Model):
         ret_val = createBarcodeDrawing('QR', value=qr_value, **options)
         self.qrcode_image = base64.encodebytes(ret_val.asString('jpg'))
 
-    from datetime import datetime
-
     def action_cfdi_generate(self):
-        # 🔹 Usa date directamente para evitar mezclar datetime vs date
-        fecha_limite = date(2025, 8, 15)
-
+        # after validate, send invoice data to external system via http post
         for invoice in self:
-            # 🔹 Normalizar invoice_date (a veces viene como datetime)
-            inv_date = invoice.invoice_date
-            if isinstance(inv_date, datetime):
-                inv_date = inv_date.date()
-
-            # 🔍 VALIDACIÓN: Verificar si desglosar_iva está activo antes de continuar
-            if inv_date and inv_date >= fecha_limite:
-                if hasattr(invoice, 'desglosar_iva') and not invoice.desglosar_iva:
-                    raise UserError(_(
-                        'ADVERTENCIA: El desglose de IVA no está activo\n\n'
-                        '⚠️  Para generar un CFDI válido, es necesario activar el campo '
-                        '"¿Desglosar IVA?" en la factura antes de continuar.\n\n'
-                        '📋 Esto asegura que la factura muestre correctamente los impuestos '
-                        'desglosados como requiere el SAT para la facturación electrónica.\n\n'
-                        '✅ Active el campo "¿Desglosar IVA?" e intente nuevamente.'
-                    ))
-
             if invoice.proceso_timbrado:
                 raise UserError(_('El intento de timbrado previo terminó con un error, revise que todo esté correcto o envíe el código de error para su revisión. \
-        Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de timbrado" de la pestaña CFDI.'))
+Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de timbrado" de la pestaña CFDI.'))
             else:
                 invoice.write({'proceso_timbrado': True})
                 self.env.cr.commit()
-            
             if invoice.estado_factura == 'factura_correcta':
                 if invoice.folio_fiscal:
                     invoice.write({'factura_cfdi': True})
@@ -864,24 +729,16 @@ class AccountMove(models.Model):
                     invoice.write({'proceso_timbrado': False})
                     self.env.cr.commit()
                     raise UserError(_('Error para timbrar factura, Factura ya generada.'))
-            
             if invoice.estado_factura == 'factura_cancelada':
                 invoice.write({'proceso_timbrado': False})
                 self.env.cr.commit()
                 raise UserError(_('Error para timbrar factura, Factura ya generada y cancelada.'))
 
             values = invoice.to_json()
-            if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/invoice')
-            elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/invoice')
-            elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/invoice')
-            elif invoice.company_id.proveedor_timbrado == 'gecoerp':
-                if self.company_id.modo_prueba:
-                    url = '%s' % ('https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33')
-                else:
-                    url = '%s' % ('https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33')
+            if invoice.company_id.proveedor_timbrado == 'servidor':
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/invoice')
+            elif invoice.company_id.proveedor_timbrado == 'servidor2':
+                url = '%s' % ('https://facturacion2.itadmin.com.mx/api/invoice')
             else:
                 invoice.write({'proceso_timbrado': False})
                 self.env.cr.commit()
@@ -890,8 +747,8 @@ class AccountMove(models.Model):
 
             try:
                 response = requests.post(url,
-                                        auth=None, verify=False, data=json.dumps(values),
-                                        headers={"Content-type": "application/json"})
+                                         auth=None, data=json.dumps(values),
+                                         headers={"Content-type": "application/json"})
             except Exception as e:
                 error = str(e)
                 invoice.write({'proceso_timbrado': False})
@@ -908,14 +765,12 @@ class AccountMove(models.Model):
                     "Error en el proceso de timbrado, espere un minuto y vuelva a intentar timbrar nuevamente. \nSi el error aparece varias veces reportarlo con la persona de sistemas."))
             else:
                 json_response = response.json()
-            
             estado_factura = json_response['estado_factura']
             if estado_factura == 'problemas_factura':
                 invoice.write({'proceso_timbrado': False})
                 self.env.cr.commit()
                 raise UserError(_(json_response['problemas_message']))
-            
-            # Receive and store XML invoice
+            # Receive and stroe XML invoice
             if json_response.get('factura_xml'):
                 invoice._set_data_from_xml(base64.b64decode(json_response['factura_xml']))
                 file_name = invoice.name.replace('/', '_') + '.xml'
@@ -923,19 +778,17 @@ class AccountMove(models.Model):
                     {
                         'name': file_name,
                         'datas': json_response['factura_xml'],
-                        'res_model': self._name,
+                        # 'datas_fname': file_name,
+                        'res_model': invoice._name,
                         'res_id': invoice.id,
                         'type': 'binary'
                     })
 
-            invoice.write({
-                'estado_factura': estado_factura,
-                'factura_cfdi': True,
-                'proceso_timbrado': False
-            })
+            invoice.write({'estado_factura': estado_factura,
+                           'factura_cfdi': True,
+                           'proceso_timbrado': False})
             invoice.message_post(body="CFDI emitido")
         return True
-
 
     def action_cfdi_cancel(self):
         for invoice in self:
@@ -968,24 +821,17 @@ class AccountMove(models.Model):
                     'motivo': self.env.context.get('motivo_cancelacion', '02'),
                     'foliosustitucion': self.env.context.get('foliosustitucion', ''),
                 }
-                if self.company_id.proveedor_timbrado == 'multifactura':
-                    url = '%s' % ('http://facturacion.itadmin.com.mx/api/refund')
-                elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                    url = '%s' % ('http://facturacion2.itadmin.com.mx/api/refund')
-                elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                    url = '%s' % ('http://facturacion3.itadmin.com.mx/api/refund')
-                elif self.company_id.proveedor_timbrado == 'gecoerp':
-                    if self.company_id.modo_prueba:
-                        url = '%s' % ('https://itadmin.gecoerp.com/refund/?handler=OdooHandler33')
-                    else:
-                        url = '%s' % ('https://itadmin.gecoerp.com/refund/?handler=OdooHandler33')
+                if invoice.company_id.proveedor_timbrado == 'servidor':
+                    url = '%s' % ('https://facturacion.itadmin.com.mx/api/refund')
+                elif invoice.company_id.proveedor_timbrado == 'servidor2':
+                    url = '%s' % ('https://facturacion2.itadmin.com.mx/api/refund')
                 else:
                     raise UserError(
                         _('Error, falta seleccionar el servidor de timbrado en la configuración de la compañía.'))
 
                 try:
                     response = requests.post(url,
-                                             auth=None, verify=False, data=json.dumps(values),
+                                             auth=None, data=json.dumps(values),
                                              headers={"Content-type": "application/json"})
                 except Exception as e:
                     error = str(e)
@@ -1031,7 +877,7 @@ class AccountMove(models.Model):
 
     @api.model
     def check_cancel_status_by_cron(self):
-        domain = [('move_type', '=', 'out_invoice'), ('estado_factura', '=', 'solicitud_cancelar')]
+        domain = [('move_type', 'in', ('out_invoice', 'out_refund')), ('estado_factura', '=', 'solicitud_cancelar')]
         invoices = self.search(domain, order='id')
         for invoice in invoices:
             _logger.info('Solicitando estado de factura %s', invoice.folio_fiscal)
@@ -1051,21 +897,17 @@ class AccountMove(models.Model):
                 'xml': xml_file.datas.decode("utf-8"),
             }
 
-            if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/consulta-cacelar')
-            elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/consulta-cacelar')
-            elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/consulta-cacelar')
-            elif invoice.company_id.proveedor_timbrado == 'gecoerp':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/consulta-cacelar')
+            if invoice.company_id.proveedor_timbrado == 'servidor':
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/consulta-cacelar')
+            elif invoice.company_id.proveedor_timbrado == 'servidor2':
+                url = '%s' % ('https://facturacion2.itadmin.com.mx/api/consulta-cacelar')
             else:
                 raise UserError(
                     _('Error, falta seleccionar el servidor de timbrado en la configuración de la compañía.'))
 
             try:
                 response = requests.post(url,
-                                         auth=None, verify=False, data=json.dumps(values),
+                                         auth=None, data=json.dumps(values),
                                          headers={"Content-type": "application/json"})
 
                 if "Whoops, looks like something went wrong." in response.text:
@@ -1085,18 +927,21 @@ class AccountMove(models.Model):
                 _logger.info('Error en la consulta %s', json_response['problemas_message'])
             elif estado_factura == 'consulta_correcta':
                 if json_response['factura_xml'] == 'Cancelado':
-                    _logger.info('Factura cancelada')
-                    _logger.info('EsCancelable: %s', json_response['escancelable'])
-                    _logger.info('EstatusCancelacion: %s', json_response['estatuscancelacion'])
+#                    _logger.info('Factura cancelada')
+#                    _logger.info('EsCancelable: %s', json_response['escancelable'])
+#                    _logger.info('EstatusCancelacion: %s', json_response['estatuscancelacion'])
                     invoice.action_cfdi_cancel()
                 elif json_response['factura_xml'] == 'Vigente':
-                    _logger.info('Factura vigente')
-                    _logger.info('EsCancelable: %s', json_response['escancelable'])
-                    _logger.info('EstatusCancelacion: %s', json_response['estatuscancelacion'])
+#                    _logger.info('Factura vigente')
+#                    _logger.info('EsCancelable: %s', json_response['escancelable'])
+#                    _logger.info('EstatusCancelacion: %s', json_response['estatuscancelacion'])
                     if json_response['estatuscancelacion'] == 'Solicitud rechazada':
+                        invoice.estado_factura = 'solicitud_rechazada'
+                    if not json_response['estatuscancelacion']:
                         invoice.estado_factura = 'solicitud_rechazada'
             else:
                 _logger.info('Error... %s', response.text)
+            self.env.cr.commit()
         return True
 
     def action_cfdi_rechazada(self):
@@ -1118,16 +963,14 @@ class AccountMove(models.Model):
                 'contrasena': invoice.company_id.contrasena,
             }
             url = ''
-            if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/command')
-            elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/command')
-            elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/command')
+            if invoice.company_id.proveedor_timbrado == 'servidor':
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/command')
+            elif invoice.company_id.proveedor_timbrado == 'servidor2':
+                url = '%s' % ('https://facturacion2.itadmin.com.mx/api/command')
             if not url:
                 return
             try:
-                response = requests.post(url, auth=None, verify=False, data=json.dumps(values),
+                response = requests.post(url, auth=None, data=json.dumps(values),
                                          headers={"Content-type": "application/json"})
 
                 if "Whoops, looks like something went wrong." in response.text:
@@ -1153,120 +996,6 @@ class AccountMove(models.Model):
                 'res_id': message_id.id,
                 'target': 'new'
             }
-
-
-
-    #PARE EVITAR TIMBRAR SI CANTIDAD ES MENOR O IGUAL A 0
-    def action_post(self):
-        for move in self:
-            bad = move.invoice_line_ids.filtered(lambda l: not l.display_type and (l.quantity or 0.0) <= 0.0)
-            if bad:
-                details = '\n'.join(f"- {l.name or l.product_id.display_name} (qty={l.quantity})" for l in bad)
-                raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
-        return super().action_post()
-
-    #PARE EVITAR TIMBRAR SI CANTIDAD ES MENOR O IGUAL A 0
-    def action_post(self):
-        for move in self:
-            bad = move.invoice_line_ids.filtered(lambda l: not l.display_type and (l.quantity or 0.0) <= 0.0)
-            if bad:
-                details = '\n'.join(f"- {l.name or l.product_id.display_name} (qty={l.quantity})" for l in bad)
-                raise UserError(_("No se puede timbrar/postear. Hay líneas con cantidad 0:\n%s") % details)
-        return super().action_post() 
-
-
-    @api.onchange('methodo_pago')
-    def _onchange_methodo_pago_set_forma_pago(self):
-        """
-        Si el método de pago indica PPD, setear automáticamente 'Por definir (99)'
-        en forma_pago_id. No asumimos el nombre del modelo: lo inferimos del campo.
-        """
-        for order in self:
-            val = (order.methodo_pago or '').strip().lower()
-            # Soportar distintas formas de escribirlo: PPD, “Parcialidades o diferido”, etc.
-            es_ppd = (
-                val in ('ppd', 'pago en parcialidades o diferido', 'parcialidades o diferido')
-                or 'ppd' in val
-                or 'parcial' in val
-                or 'diferid' in val
-            )
-            if not es_ppd:
-                continue
-
-            # Caso 1: Many2one 'forma_pago_id'
-            if 'forma_pago_id' in order._fields:
-                comodel = order._fields['forma_pago_id'].comodel_name
-                Forma = self.env[comodel]  # <- evita el KeyError del modelo
-                # Buscar el campo de código más común en catálogos SAT
-                code_field = next((c for c in (
-                    'code', 'codigo', 'clave', 'key', 'codigo_sat', 'code_sat'
-                ) if c in Forma._fields), None)
-
-                rec = False
-                if code_field:
-                    rec = Forma.search([(code_field, '=', '99')], limit=1)
-                if not rec:
-                    # Fallback por nombre si no hay campo código o no se encontró
-                    rec = Forma.search(['|', ('name', 'ilike', 'por definir'),
-                                              ('name', 'ilike', '99')], limit=1)
-                if rec:
-                    order.forma_pago_id = rec.id
-
-            # Caso 2 (por si acaso): si tuvieras un Selection en lugar de Many2one
-            elif 'forma_pago' in order._fields and order._fields['forma_pago']._type == 'selection':
-                sel = order._fields['forma_pago'].selection
-                if callable(sel):
-                    sel = sel(self.env)
-                # ¿Existe la clave '99'?
-                claves = [k for k, _ in (sel or [])]
-                if '99' in claves:
-                    order.forma_pago = '99'
-                else:
-                    # Buscar la etiqueta “Por definir”
-                    for key, label in (sel or []):
-                        if (label or '').strip().lower().find('por definir') >= 0:
-                            order.forma_pago = key
-                            break
-
-    def action_register_payment_child(self):
-        """Abre el wizard de pagos usando SÓLO las líneas RP del contacto hijo de esta factura."""
-        self.ensure_one()
-        contact = self.partner_id  # 👈 tu contacto hijo (porque tu factura ya es al hijo)
-
-        # Filtra PARTIDAS ABIERTAS (no conciliadas) RP del hijo en esta factura
-        lines = self.line_ids.filtered(lambda l: (
-            (getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable'))
-            and not l.reconciled
-            and l.partner_id == self.partner_id
-        ))
-
-        if not lines:
-            raise UserError(_("No hay partidas por cobrar/pagar abiertas para el contacto: %s") % contact.display_name)
-
-        # Define tipo de partner (cliente/proveedor) según el tipo de movimiento
-        partner_type = (
-            'customer' if self.move_type in ('out_invoice', 'out_refund', 'out_receipt') else 'supplier'
-        )
-
-        return {
-            'name': _('Registrar pago (contacto hijo)'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'account.payment.register',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'active_model': 'account.move.line',
-                'active_ids': lines.ids,
-                'default_partner_id': contact.id,        # hijo
-                'default_partner_type': partner_type,
-                'default_group_payment': False,
-                'force_child_partner': True,             # bandera
-                'child_partner_id': contact.id,          # 🔴 CLAVE: ID del hijo explícito
-            },
-        }
-
-    
-                            
 
 class MailTemplate(models.Model):
     "Templates for sending email"
@@ -1308,28 +1037,11 @@ class MailTemplate(models.Model):
         return multi_mode and results or results[res_ids[0]]
 
 
-
 class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
     pedimento = fields.Char('Pedimento')
     predial = fields.Char('No. Predial')
-
-
-
-    # Para impedir que se agreguen/editen/eliminen líneas de productos/servicios en facturas de venta/NC
-    def write(self, vals):
-        # Bloquea edición de líneas product/service de facturas de venta/NC
-        target = self.filtered(lambda l: l.move_id.move_type in ('out_invoice','out_refund') and not l.display_type)
-        if target:
-            raise UserError("No se pueden editar líneas de productos/servicios en la factura. Realice la modificación en la cotización y orden.")
-        return super().write(vals)
-
-    def unlink(self):
-        target = self.filtered(lambda l: l.move_id.move_type in ('out_invoice','out_refund') and not l.display_type)
-        if target:
-            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura. Realice la modificación en la cotización y orden.")
-        return super().unlink()
 
 
 class MyModuleMessageWizard(models.TransientModel):
@@ -1341,7 +1053,4 @@ class MyModuleMessageWizard(models.TransientModel):
     #    @api.multi
     def action_close(self):
         return {'type': 'ir.actions.act_window_close'}
-
-
-
 

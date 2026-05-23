@@ -1,16 +1,115 @@
+v16.47
+-No tomar en cuenta productos con cantidad en cero.
+
+v16.46
+-Agregar estados de cancelación para Pagos
+
+v16.45
+-Corrección documento relacionado en reporte de factura.
+
+v16.44
+-Corrección al utilziar descuentos y notas / seciones
+
+v16.43
+-Permitir agregar conceptos en traslado de exportaciones
+
+v16.42
+-Corregir EquivalenciaDR en PDF
+
+v16.41
+-Calculo de descuentos impuestos incluidos
+
+v16.40
+-Calculo de descuentos
+
+v16.39
+-Configurar campos para no copiar
+
+v16.38
+-No redondear precios unitarios menores a uno debido a errores en redondeo.
+
+v16.37
+-No copiar datos fiscales al duplicar pago, no poner decimales en equivalenciadr.
+
+v16.36
+-Cambiar timbrados a SSL.
+
+v16.35
+-Agregar mensaje de error al revisar saldo.
+
+v16.34
+-Agregar mensaje de error con conceptos sin información.
+
+v16.33
+-Agregar tipos de redondeos en pagos
+
+v16.32
+-Agregar información de factura glboal en formato de factura
+
+v16.31
+-Solo mostrar boton "Validar y Generar REP" en pagos de clientes
+
+v16.30
+-Redondeos en impuestos locales
+
+v16.29
+-Corrección EquivalenciaDR en facturas y pagos multimoneda.
+-Factura con descuentos y promociones Odoo nativo
+
+v16.28
+-Revisa producto en linea de factura.
+
+v16.27
+-Corrección en calculo subtotal productos.
+-Correción en predial
+
+v16.26
+-Evita timbrar productos con costo en cero.
+
+v16.25
+-Mostrar clave y descripción en Método y forma de pago, régimen fiscal.
+
+v16.24
+-Leyenda cancelado en factura
+
+v16.23
+-Error cuando el último producto tiene 100% de descuento
+
+v16.22
+-Cambios en el PDF
+
+v16.21
+-Corregir error en QR de pagos
+
+v16.20
+-Cancelación rechazada si está vacío el estado de cancelación.
+
+v16.19
+-Se hicieron ajustes para el timbrado de pagos 2.0B
+
+v16.18
+-Se agregó la acción de cargar XML para pagos
+
+v16.17
+-Corregir variable de cuenta a tercero.
+
+v16.16
+-Verificar estado de CFDI de las notas de crédito.
+-Agregar información CFDI al crear notas de crédito.
+
 v16.15
 -Cambiar nombre de campo para evitar conflicto con factoraje.
 
 v16.14
--Quitar impuesto ISR Resico a 4 decimales
--Corregir generación de código QR en PDF
+-Quitar impuesto ISR Resico a 4 decimales.
+-Corregir generación de código QR en PDF.
 
 v16.13
--Impuesto ISR Resico a 4 decimales
+-Impuesto ISR Resico a 4 decimales.
 
 v16.12
 -Alerta cuando no se tengan habilitado el proceso de timbrado.
--Cambiar act window por record
+-Cambiar act window por record.
 
 v16.11
 -Alerta cuando no se tengan montos de impuestos en factura.

@@ -3,10 +3,10 @@
 #                 @author IT Admin
 #
 ##############################################################################
-# pylint: skip-file
+
 {
     'name': 'Ventas Factura Electronica Mexico CFDI',
-    'version': '16.15',
+    'version': '16.47',
     'description': ''' Factura Electronica módulo de ventas para Mexico
     ''',
     'category': 'Accounting',
@@ -20,9 +20,6 @@
         'data/catalogo.forma.pago.csv',
         'data/catalogo.uso.cfdi.csv',
         'data/catalogo.regimen.fiscal.csv',
-      
-
-
         'security/ir.model.access.csv',
         'wizard/import_account_payment_view.xml',
         'wizard/reason_cancelation_sat_view.xml',
@@ -37,21 +34,11 @@
         'views/purchase_view.xml',
         'views/account_journal_view.xml',
         'views/res_currency.xml',
-        'report/invoice_report.xml',
         'report/invoice_report_custom.xml',
         'report/payment_report.xml',
         'data/mail_template_data.xml',
         'data/cron.xml',
     ],
-    'assets': {
-        'web.assets_backend': [
-            'cdfi_invoice/static/src/js/password_dialog.js',
-            'cdfi_invoice/static/src/js/account_payment_field_extend.js',
-        ],
-    'web.assets_qweb': [
-        'cdfi_invoice/static/src/xml/password_dialog.xml',
-        ],
-    },
     'images': ['static/description/banner.jpg'],
     'application': False,
     'installable': True,
@@ -59,9 +46,3 @@
     'currency': 'USD',
     'license': 'OPL-1',
 }
-
-
-
-
-
-
