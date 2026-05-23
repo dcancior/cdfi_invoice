@@ -17,9 +17,14 @@
             </t>
         </xpath>
 
-        <!-- Recuadros Emisor / Receptor en primera hoja -->
+        <!-- Recuadros Emisor / Receptor en primera hoja + ocultar dirección duplicada -->
         <xpath expr="//div[@id='informations']" position="before">
             <t t-if="o.factura_cfdi">
+                <style>
+                    div[name="no_shipping"],
+                    div[name="address_same_as_shipping"],
+                    div[name="address_not_same_as_shipping"] { display: none !important; }
+                </style>
                 <div class="row mb-3">
                     <div class="col-6" style="padding-right:5px;">
                         <div style="border:1px solid #adb5bd;border-radius:4px;overflow:hidden;height:100%;">
@@ -78,18 +83,7 @@
             </t>
         </xpath>
 
-        <!-- Ocultar dirección estándar del receptor cuando es CFDI (los recuadros ya la muestran) -->
-        <xpath expr="//div[@name='no_shipping']" position="attributes">
-            <attribute name="t-attf-style">#{'display:none;' if o.factura_cfdi else ''}</attribute>
-        </xpath>
-        <xpath expr="//div[@name='address_same_as_shipping']" position="attributes">
-            <attribute name="t-attf-style">#{'display:none;' if o.factura_cfdi else ''}</attribute>
-        </xpath>
-        <xpath expr="//div[@name='address_not_same_as_shipping']" position="attributes">
-            <attribute name="t-attf-style">#{'display:none;' if o.factura_cfdi else ''}</attribute>
-        </xpath>
-
-        <xpath expr="//div[hasclass('row')]//div[@name='address_not_same_as_shipping']//t[@t-set='address']" position="inside">
+<xpath expr="//div[hasclass('row')]//div[@name='address_not_same_as_shipping']//t[@t-set='address']" position="inside">
             <p name="fiscal_regime">
                 Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/>
             </p>
