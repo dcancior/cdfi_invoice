@@ -76,46 +76,94 @@
                     </div>
                 </div>
             </t>
+            <t t-elif="o.journal_id.code == 'NOT'">
+                <div class="row mb-3">
+                    <div class="offset-col-6 col-6" style="padding-left:5px;">
+                        <div style="border:1px solid #adb5bd;border-radius:4px;overflow:hidden;">
+                            <div style="font-size:11px;font-weight:bold;text-align:center;background-color:#f1f3f4;padding:5px 8px;border-bottom:1px solid #adb5bd;">
+                                DATOS DEL CLIENTE
+                            </div>
+                            <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
+                                <tr t-if="o.partner_id.parent_id">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;width:35%;white-space:nowrap;">Empresa:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.parent_id.name"/></td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;width:35%;white-space:nowrap;">Nombre:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.name"/></td>
+                                </tr>
+                                <tr t-if="o.partner_id.street">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Calle:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.street"/><t t-if="o.partner_id.street2">, <span t-field="o.partner_id.street2"/></t></td>
+                                </tr>
+                                <tr t-if="o.partner_id.zip or o.partner_id.city">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">C.P. / Ciudad:</td>
+                                    <td style="padding:3px 8px 3px 0;">
+                                        <t t-if="o.partner_id.zip"><span t-field="o.partner_id.zip"/><t t-if="o.partner_id.city">, </t></t>
+                                        <t t-if="o.partner_id.city"><span t-field="o.partner_id.city"/></t>
+                                    </td>
+                                </tr>
+                                <tr t-if="o.partner_id.state_id">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Estado:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.state_id.name"/></td>
+                                </tr>
+                                <tr t-if="o.partner_id.phone">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Teléfono:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.phone"/></td>
+                                </tr>
+                                <tr t-if="o.partner_id.mobile">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Celular:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.mobile"/></td>
+                                </tr>
+                                <tr t-if="o.partner_id.email">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Correo:</td>
+                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.email"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </t>
         </xpath>
 
-        <!-- Ocultar dirección receptor estándar en facturas CFDI (los recuadros ya la muestran) -->
+        <!-- Ocultar dirección receptor estándar en facturas CFDI y Nota de Venta (los recuadros ya la muestran) -->
         <xpath expr="//div[@name='no_shipping']" position="replace">
-            <div class="offset-col-6 col-6" name="no_shipping" t-if="not o.factura_cfdi">
+            <div class="offset-col-6 col-6" name="no_shipping" t-if="not o.factura_cfdi and o.journal_id.code != 'NOT'">
                 <t t-set="address">
                     <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
                     <div t-if="o.partner_id.vat" id="partner_vat_no_shipping">
                         <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-esc="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                         <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                     </div>
-                    <p name="fiscal_regime">
+                    <p name="fiscal_regime" t-if="o.partner_id.regimen_fiscal_id">
                         Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/>
                     </p>
                 </t>
             </div>
         </xpath>
         <xpath expr="//div[@name='address_same_as_shipping']" position="replace">
-            <div class="offset-col-6 col-6" name="address_same_as_shipping" t-if="not o.factura_cfdi">
+            <div class="offset-col-6 col-6" name="address_same_as_shipping" t-if="not o.factura_cfdi and o.journal_id.code != 'NOT'">
                 <t t-set="address">
                     <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
                     <div t-if="o.partner_id.vat" id="partner_vat_address_same_as_shipping">
                         <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-esc="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                         <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                     </div>
-                    <p name="fiscal_regime">
+                    <p name="fiscal_regime" t-if="o.partner_id.regimen_fiscal_id">
                         Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/>
                     </p>
                 </t>
             </div>
         </xpath>
         <xpath expr="//div[@name='address_not_same_as_shipping']" position="replace">
-            <div class="col-6" name="address_not_same_as_shipping" t-if="not o.factura_cfdi">
+            <div class="col-6" name="address_not_same_as_shipping" t-if="not o.factura_cfdi and o.journal_id.code != 'NOT'">
                 <t t-set="address">
                     <address class="mb-0" t-field="o.partner_id" t-options='{"widget": "contact", "fields": ["address", "name"], "no_marker": True}'/>
                     <div t-if="o.partner_id.vat" id="partner_vat_address_not_same_as_shipping">
                         <t t-if="o.company_id.account_fiscal_country_id.vat_label" t-esc="o.company_id.account_fiscal_country_id.vat_label" id="inv_tax_id_label"/>
                         <t t-else="">Tax ID</t>: <span t-field="o.partner_id.vat"/>
                     </div>
-                    <p name="fiscal_regime">
+                    <p name="fiscal_regime" t-if="o.partner_id.regimen_fiscal_id">
                         Regimen fiscal: <span t-field="o.partner_id.regimen_fiscal_id.code"/> - <span t-field="o.partner_id.regimen_fiscal_id.description"/>
                     </p>
                 </t>
@@ -281,6 +329,11 @@
 
 
   </template>
+
+  <!-- Nombre del archivo PDF: "Nota de Venta - NOT/2026/XXXXX" para diario NOT -->
+  <record id="account.account_invoices" model="ir.actions.report">
+    <field name="print_report_name">(object.journal_id.code == 'NOT' and 'Nota de Venta - %s' % (object.name,)) or (object.move_type == 'out_invoice' and object.state == 'draft' and 'Draft Invoice - %s' % (object.name,)) or (object.move_type == 'out_invoice' and 'Invoice - %s' % (object.name,)) or (object.move_type == 'out_refund' and 'Credit Note - %s' % (object.name,)) or (object.move_type == 'in_invoice' and 'Vendor Bill - %s' % (object.name,)) or (object.move_type == 'in_refund' and 'Vendor Credit Note - %s' % (object.name,))</field>
+  </record>
 
   <!-- Resetea account.report_invoice para que use account.report_invoice_document
        (que ya tiene las modificaciones CFDI de report_invoice_inherit_cdfi) -->
