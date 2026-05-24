@@ -330,9 +330,9 @@
 
   </template>
 
-  <!-- Nombre del archivo PDF: "Nota de Venta - NOT/2026/XXXXX" para diario NOT -->
+  <!-- Nombre del archivo PDF para diario NOT: solo "NOT_2026_XXXXX.pdf" -->
   <record id="account.account_invoices" model="ir.actions.report">
-    <field name="print_report_name">(object.journal_id.code == 'NOT' and 'Nota de Venta - %s' % (object.name,)) or (object.move_type == 'out_invoice' and object.state == 'draft' and 'Draft Invoice - %s' % (object.name,)) or (object.move_type == 'out_invoice' and 'Invoice - %s' % (object.name,)) or (object.move_type == 'out_refund' and 'Credit Note - %s' % (object.name,)) or (object.move_type == 'in_invoice' and 'Vendor Bill - %s' % (object.name,)) or (object.move_type == 'in_refund' and 'Vendor Credit Note - %s' % (object.name,))</field>
+    <field name="print_report_name">(object.journal_id.code == 'NOT' and object.name) or (object.move_type == 'out_invoice' and object.state == 'draft' and 'Draft Invoice - %s' % (object.name,)) or (object.move_type == 'out_invoice' and 'Invoice - %s' % (object.name,)) or (object.move_type == 'out_refund' and 'Credit Note - %s' % (object.name,)) or (object.move_type == 'in_invoice' and 'Vendor Bill - %s' % (object.name,)) or (object.move_type == 'in_refund' and 'Vendor Credit Note - %s' % (object.name,))</field>
   </record>
 
   <!-- Resetea account.report_invoice para que use account.report_invoice_document

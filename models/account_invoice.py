@@ -998,6 +998,15 @@ Si requiere timbrar la factura nuevamente deshabilite el checkbox de "Proceso de
                 'target': 'new'
             }
 
+    def action_invoice_sent(self):
+        result = super().action_invoice_sent()
+        if self.journal_id.code == 'NOT':
+            template = self.env.ref('cdfi_invoice.email_template_nota_venta', raise_if_not_found=False)
+            if template and result.get('context'):
+                result['context']['default_template_id'] = template.id
+                result['context']['default_use_template'] = True
+        return result
+
 class MailTemplate(models.Model):
     "Templates for sending email"
     _inherit = 'mail.template'

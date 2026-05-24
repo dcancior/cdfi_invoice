@@ -29,6 +29,29 @@
         </record>
         
         
+        <record id="email_template_nota_venta" model="mail.template">
+            <field name="name">Nota de Venta</field>
+            <field name="model_id" ref="account.model_account_move"/>
+            <field name="subject">Nota de Venta {{object.name or 'n/a'}}</field>
+            <field name="email_from">{{'%s &lt;%s&gt;' % (object.company_id.name, object.company_id.email or '')}}</field>
+            <field name="partner_to">{{object.partner_id.id}}</field>
+            <field name="report_template" ref="account.account_invoices"/>
+            <field name="report_name">{{object.name.replace('/', '_') + '.pdf'}}</field>
+            <field name="auto_delete" eval="True"/>
+            <field name="lang">{{object.partner_id.lang}}</field>
+            <field name="body_html"><![CDATA[
+<p>Apreciable {{object.partner_id.name}},</p>
+<p>Aquí está su
+{% if object.payment_state in ('paid', 'in_payment') %}nota de venta pagada{% else %}nota de venta{% endif %}
+<strong>{{object.name}}</strong> por un importe total de
+<strong>{{format_amount(object.amount_total, object.currency_id)}}</strong>
+de <strong>{{object.company_id.name}}</strong>.{% if object.payment_state not in ('paid', 'in_payment') %} Por favor, remita el pago a la brevedad.{% endif %}</p>
+<p>Utilice la siguiente comunicación para su pago: {{object.name}}.</p>
+<p>No dude en contactarnos si tiene alguna pregunta.</p>
+]]>
+            </field>
+        </record>
+
         <record id="email_template_alarma_de_saldo" model="mail.template">
             <field name="name">Alarma de Saldo</field>
             <field name="email_from">{{('%s &lt;%s&gt;' % (object.name, object.email) or '')}}</field>
