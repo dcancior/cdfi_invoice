@@ -71,8 +71,7 @@
                                 icon="fa-whatsapp"
                                 title="Enviar por WhatsApp"
                                 class="btn btn-link p-0 ms-2"
-                                style="color:#25D366;font-size:18px;"
-                                attrs="{'invisible': [('state', '!=', 'posted')]}"/>
+                                style="color:#25D366;font-size:18px;"/>
                     </div>
                     <field name="email_contacto"
                            readonly="1"
