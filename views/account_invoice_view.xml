@@ -56,7 +56,15 @@
                 <field name="ref" position="after">
                     <field name="factura_cfdi" invisible="1"/>
                     <field name="journal_code" invisible="1"/>
+                    <field name="mobile_contacto" invisible="1"/>
                 </field>
+                <!-- Mostrar celular del contacto debajo del campo partner_id -->
+                <xpath expr="//field[@name='partner_id'][@widget='res_partner_many2one']" position="after">
+                    <field name="mobile_contacto"
+                           readonly="1"
+                           nolabel="1"
+                           attrs="{'invisible': ['|', ('mobile_contacto', '=', False), ('move_type', 'not in', ('out_invoice', 'out_refund'))]}"/>
+                </xpath>
                 <!-- Cambiar etiqueta del título cuando el diario es Nota de Venta (NOT) -->
                 <xpath expr="//div[hasclass('oe_title')]//span[hasclass('o_form_label')]" position="replace">
                     <span class="o_form_label" attrs="{'invisible': [('journal_code', '=', 'NOT')]}">
