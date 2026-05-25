@@ -78,7 +78,7 @@ La vigencia de tus timbres está próxima, para mantener vigentes tus timbres de
 
     <!-- noupdate="0": este template se actualiza en cada upgrade del módulo -->
     <data noupdate="0">
-        <record id="email_template_nota_venta" model="mail.template">
+        <record id="email_template_nota_venta_mhk" model="mail.template">
             <field name="name">Nota de Venta</field>
             <field name="model_id" ref="account.model_account_move"/>
             <field name="subject">Nota de Venta {{object.name or 'n/a'}}</field>
