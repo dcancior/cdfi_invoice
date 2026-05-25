@@ -4,11 +4,14 @@ import base64
 import json
 import requests
 import datetime
+import uuid
+import urllib.parse
 from lxml import etree
 
 from odoo import fields, models, api, _
 import odoo.addons.decimal_precision as dp
 from odoo.exceptions import UserError
+from odoo.http import request as http_request
 
 from reportlab.graphics.barcode import createBarcodeDrawing
 from reportlab.lib.units import mm
@@ -125,6 +128,106 @@ class AccountMove(models.Model):
     journal_code = fields.Char(related='journal_id.code', readonly=True, string='Código diario')
     mobile_contacto = fields.Char(related='partner_id.mobile', readonly=True, string='Móvil')
     email_contacto = fields.Char(related='partner_id.email', readonly=True, string='Correo electrónico')
+    report_token = fields.Char('Report Token', copy=False)
+
+    # ── WhatsApp ──────────────────────────────────────────────────────────────
+
+    def _get_report_token(self):
+        self.ensure_one()
+        if not self.report_token:
+            self.report_token = str(uuid.uuid4())
+        return self.report_token
+
+    def get_public_invoice_pdf_url(self):
+        self.ensure_one()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        token = self._get_report_token()
+        return f"{base_url}/download/inv/{self.id}?access_token={token}"
+
+    def _get_default_country_prefix(self):
+        return self.env['ir.config_parameter'].sudo().get_param(
+            'cdfi_invoice.default_country_prefix', '52')
+
+    def _format_invoice_phone(self, phone):
+        if not phone:
+            return False
+        clean = re.sub(r'\D', '', phone.strip())
+        prefix = self._get_default_country_prefix()
+        if clean.startswith(prefix) and len(clean) >= len(prefix) + 10:
+            return clean
+        elif len(clean) == 10:
+            return prefix + clean
+        elif len(clean) > 10:
+            return clean
+        return prefix + clean
+
+    def _get_invoice_lines_summary(self, limit=20):
+        lines = self.invoice_line_ids.filtered(lambda l: l.display_type == 'product')
+        currency_code = self.currency_id.name or ''
+        text = "\n".join([
+            "*• {nombre}*\n   Cant: {cant}   $ {total:.2f} {moneda}".format(
+                nombre=line.product_id.display_name or line.name or '',
+                cant=int(line.quantity) if line.quantity == int(line.quantity) else line.quantity,
+                total=line.price_total or 0.0,
+                moneda=currency_code,
+            )
+            for line in lines[:limit]
+        ])
+        if len(lines) > limit:
+            text += _("\n... y {} productos más").format(len(lines) - limit)
+        return text
+
+    def _get_invoice_whatsapp_message(self):
+        self.ensure_one()
+        pdf_url = self.get_public_invoice_pdf_url()
+        doc_type = 'Nota de Venta' if self.journal_id.code == 'NOT' else 'Factura'
+        currency_code = self.currency_id.name or ''
+        return _(
+            "👋 ¡Hola {cliente}!\n\n"
+            "Tu *{tipo}* *{nombre}* está lista. Aquí tienes los detalles:\n\n"
+            "*Productos:*\n{productos}\n\n"
+            "*Total:* $ {total:.2f} {moneda}\n\n"
+            "📄 Descarga tu {tipo} en PDF aquí:\n{pdf}\n\n"
+            "¿Tienes alguna pregunta? ¡Estamos para servirte!"
+        ).format(
+            cliente=self.partner_id.name or '',
+            tipo=doc_type,
+            nombre=self.name or '',
+            productos=self._get_invoice_lines_summary(),
+            total=self.amount_total or 0.0,
+            moneda=currency_code,
+            pdf=pdf_url,
+        )
+
+    def _prepare_invoice_whatsapp_data(self):
+        self.ensure_one()
+        mobile = self.mobile_contacto
+        if not mobile:
+            raise UserError(_('El cliente no tiene número de teléfono móvil registrado.'))
+        mobile_fmt = self._format_invoice_phone(mobile)
+        if not mobile_fmt or len(mobile_fmt) < 10:
+            raise UserError(_('El número telefónico parece incompleto. Por favor verifíquelo.'))
+        return {'mobile': mobile_fmt, 'message': self._get_invoice_whatsapp_message()}
+
+    def action_send_invoice_whatsapp_app(self):
+        try:
+            data = self._prepare_invoice_whatsapp_data()
+            ua = http_request.httprequest.user_agent.string.lower()
+            is_mobile = any(d in ua for d in ['mobile', 'android', 'iphone', 'ipad'])
+            url = "https://wa.me/{mobile}?text={text}".format(
+                mobile=data['mobile'],
+                text=urllib.parse.quote(data['message']),
+            )
+            return {
+                'type': 'ir.actions.act_url',
+                'url': url,
+                'target': 'self' if is_mobile else '_blank',
+            }
+        except UserError:
+            raise
+        except Exception as e:
+            _logger.error("Error al enviar WhatsApp (factura): %s", e, exc_info=True)
+            raise UserError(_('Error al enviar mensaje: {}').format(str(e)))
 
     @api.model
     def _reverse_moves(self, default_values, cancel=True):

@@ -79,6 +79,13 @@
                 	<button name="action_invoice_sent" type="object" string="Enviar por correo-e" attrs="{'invisible':[('state', 'not in', ('cancel'))]}" groups="base.group_user"/>
                 </button>
                 <button name="button_draft" position="before">
+                    <button name="action_send_invoice_whatsapp_app"
+                            type="object"
+                            string="WhatsApp"
+                            icon="fa-whatsapp"
+                            class="oe_highlight"
+                            attrs="{'invisible': ['|', '|', ('state', '!=', 'posted'), ('mobile_contacto', '=', False), ('move_type', 'not in', ('out_invoice', 'out_refund'))]}"
+                            groups="base.group_user"/>
                     <button name="action_cfdi_generate" type="object" string="Generar CFDI"
                             attrs="{'invisible':['|','|',('state','in',('draft','cancel')), ('estado_factura','in',('factura_correcta','factura_cancelada','solicitud_rechazada')),
                                    ('move_type','not in',('out_invoice', 'out_refund'))]}" 
