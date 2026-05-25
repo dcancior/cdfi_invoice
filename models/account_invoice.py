@@ -129,6 +129,23 @@ class AccountMove(models.Model):
     mobile_contacto = fields.Char(related='partner_id.mobile', readonly=True, string='Móvil')
     email_contacto = fields.Char(related='partner_id.email', readonly=True, string='Correo electrónico')
     report_token = fields.Char('Report Token', copy=False)
+    partner_facturacion_id = fields.Many2one(
+        'res.partner',
+        string='Contacto de Facturación',
+        compute='_compute_partner_facturacion_id',
+        store=False,
+    )
+
+    @api.depends('partner_id', 'partner_id.child_ids', 'partner_id.child_ids.type')
+    def _compute_partner_facturacion_id(self):
+        for move in self:
+            if move.partner_id:
+                invoice_contact = move.partner_id.child_ids.filtered(
+                    lambda p: p.type == 'invoice' and p.active
+                )[:1]
+                move.partner_facturacion_id = invoice_contact or move.partner_id
+            else:
+                move.partner_facturacion_id = move.partner_id
 
     # ── WhatsApp ──────────────────────────────────────────────────────────────
 
@@ -261,8 +278,12 @@ class AccountMove(models.Model):
     @api.onchange('partner_id')
     def _get_uso_cfdi(self):
         if self.partner_id:
+            invoice_contact = self.partner_id.child_ids.filtered(
+                lambda p: p.type == 'invoice' and p.active
+            )[:1]
+            facturacion = invoice_contact or self.partner_id
             values = {
-                'uso_cfdi_id': self.partner_id.uso_cfdi_id.id
+                'uso_cfdi_id': facturacion.uso_cfdi_id.id
             }
             self.update(values)
 
@@ -290,15 +311,16 @@ class AccountMove(models.Model):
     def to_json(self):
         self.check_cfdi_values()
 
-        if self.partner_id.vat == 'XAXX010101000' or self.partner_id.vat == 'XEXX010101000':
+        facturacion = self.partner_facturacion_id
+        if facturacion.vat == 'XAXX010101000' or facturacion.vat == 'XEXX010101000':
             zipreceptor = self.journal_id.codigo_postal or self.company_id.zip
             if self.factura_global:
                 nombre = 'PUBLICO EN GENERAL'
             else:
-                nombre = self.partner_id.name.upper()
+                nombre = facturacion.name.upper()
         else:
-            nombre = self.partner_id.name.upper()
-            zipreceptor = self.partner_id.zip
+            nombre = facturacion.name.upper()
+            zipreceptor = facturacion.zip
 
         no_decimales = self.currency_id.no_decimales
         no_decimales_prod = self.currency_id.decimal_places
@@ -351,11 +373,11 @@ class AccountMove(models.Model):
             },
             'receptor': {
                 'nombre': nombre,
-                'rfc': self.partner_id.vat.upper(),
-                'ResidenciaFiscal': self.partner_id.residencia_fiscal,
-                'NumRegIdTrib': self.partner_id.registro_tributario,
+                'rfc': facturacion.vat.upper(),
+                'ResidenciaFiscal': facturacion.residencia_fiscal,
+                'NumRegIdTrib': facturacion.registro_tributario,
                 'UsoCFDI': self.uso_cfdi_id.code,
-                'RegimenFiscalReceptor': self.partner_id.regimen_fiscal_id.code,
+                'RegimenFiscalReceptor': facturacion.regimen_fiscal_id.code,
                 'DomicilioFiscalReceptor': zipreceptor,
             },
             'informacion': {
@@ -745,11 +767,12 @@ class AccountMove(models.Model):
             self.write({'proceso_timbrado': False})
             self.env.cr.commit()
             raise UserError(_('El emisor no tiene nombre configurado.'))
-        if not self.partner_id.vat:
+        facturacion = self.partner_facturacion_id
+        if not facturacion.vat:
             self.write({'proceso_timbrado': False})
             self.env.cr.commit()
             raise UserError(_('El receptor no tiene RFC configurado.'))
-        if not self.partner_id.name:
+        if not facturacion.name:
             self.write({'proceso_timbrado': False})
             self.env.cr.commit()
             raise UserError(_('El receptor no tiene nombre configurado.'))
@@ -809,7 +832,7 @@ class AccountMove(models.Model):
         qr_value = 'https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?&id=%s&re=%s&rr=%s&tt=%s.%s&fe=%s' % (
             self.folio_fiscal,
             self.company_id.vat,
-            self.partner_id.vat,
+            self.partner_facturacion_id.vat,
             amount_str[0].zfill(10),
             amount_str[1].ljust(6, '0'),
             self.selo_digital_cdfi[-8:],
