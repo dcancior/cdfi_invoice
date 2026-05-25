@@ -101,7 +101,7 @@ La vigencia de tus timbres está próxima, para mantener vigentes tus timbres de
         <br/><br/>
         Aquí está su
         <t t-if="object.payment_state in ('paid', 'in_payment')">nota de venta pagada</t>
-        <t t-else="">nota de venta</t>
+        <t t-else="">Nota de Venta</t>
         <strong><t t-out="object.name">NOT/2026/00000</t></strong>
         por un importe total de
         <strong><t t-out="format_amount(object.amount_total, object.currency_id)">$ 0.00</t></strong>
