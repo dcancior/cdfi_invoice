@@ -79,45 +79,56 @@
             <t t-elif="o.journal_id.code == 'NOT'">
                 <div class="row mb-3">
                     <div class="offset-col-6 col-6" style="padding-left:5px;">
-                        <div style="border:1px solid #adb5bd;border-radius:4px;overflow:hidden;">
-                            <div style="font-size:11px;font-weight:bold;text-align:center;background-color:#f1f3f4;padding:5px 8px;border-bottom:1px solid #adb5bd;">
+                        <div style="border:1px solid #3a6b9e;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.12);">
+
+                            <!-- Encabezado azul -->
+                            <div style="background-color:#3a6b9e;color:#ffffff;font-size:11px;font-weight:bold;text-align:center;padding:6px 8px;letter-spacing:0.8px;">
                                 DATOS DEL CLIENTE
                             </div>
+
+                            <!-- Bloque Alumno -->
+                            <t t-if="o.partner_id.parent_id">
+                                <div style="background-color:#eaf0f8;padding:5px 10px;border-bottom:1px solid #c5d6ea;">
+                                    <div style="font-size:8.5px;font-weight:bold;color:#3a6b9e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:1px;">Alumno</div>
+                                    <div style="font-size:11px;font-weight:bold;color:#1a1a2e;"><span t-field="o.partner_id.parent_id.name"/></div>
+                                </div>
+                            </t>
+
+                            <!-- Datos de contacto -->
                             <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
-                                <tr t-if="o.partner_id.parent_id">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;width:35%;white-space:nowrap;">Empresa:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.parent_id.name"/></td>
+                                <tr style="border-bottom:1px solid #eef0f3;">
+                                    <td style="font-weight:bold;padding:4px 4px 4px 10px;vertical-align:top;width:38%;white-space:nowrap;color:#4a5568;">Padre/Madre/Tutor(a):</td>
+                                    <td style="padding:4px 10px 4px 0;color:#2d3748;"><span t-field="o.partner_id.name"/></td>
                                 </tr>
-                                <tr>
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;width:35%;white-space:nowrap;">Nombre:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.name"/></td>
+                                <tr t-if="o.partner_id.street" style="border-bottom:1px solid #eef0f3;">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 10px;vertical-align:top;white-space:nowrap;color:#4a5568;">Calle:</td>
+                                    <td style="padding:3px 10px 3px 0;color:#2d3748;">
+                                        <span t-field="o.partner_id.street"/>
+                                        <t t-if="o.partner_id.street2">, <span t-field="o.partner_id.street2"/></t>
+                                    </td>
                                 </tr>
-                                <tr t-if="o.partner_id.street">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Calle:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.street"/><t t-if="o.partner_id.street2">, <span t-field="o.partner_id.street2"/></t></td>
-                                </tr>
-                                <tr t-if="o.partner_id.zip or o.partner_id.city">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">C.P. / Ciudad:</td>
-                                    <td style="padding:3px 8px 3px 0;">
+                                <tr t-if="o.partner_id.zip or o.partner_id.city" style="border-bottom:1px solid #eef0f3;">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 10px;vertical-align:top;white-space:nowrap;color:#4a5568;">C.P. / Ciudad:</td>
+                                    <td style="padding:3px 10px 3px 0;color:#2d3748;">
                                         <t t-if="o.partner_id.zip"><span t-field="o.partner_id.zip"/><t t-if="o.partner_id.city">, </t></t>
                                         <t t-if="o.partner_id.city"><span t-field="o.partner_id.city"/></t>
                                     </td>
                                 </tr>
-                                <tr t-if="o.partner_id.state_id">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Estado:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.state_id.name"/></td>
+                                <tr t-if="o.partner_id.state_id" style="border-bottom:1px solid #eef0f3;">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 10px;vertical-align:top;white-space:nowrap;color:#4a5568;">Estado:</td>
+                                    <td style="padding:3px 10px 3px 0;color:#2d3748;"><span t-field="o.partner_id.state_id.name"/></td>
                                 </tr>
-                                <tr t-if="o.partner_id.phone">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Teléfono:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.phone"/></td>
+                                <tr t-if="o.partner_id.phone" style="border-bottom:1px solid #eef0f3;">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 10px;vertical-align:top;white-space:nowrap;color:#4a5568;">Teléfono:</td>
+                                    <td style="padding:3px 10px 3px 0;color:#2d3748;"><span t-field="o.partner_id.phone"/></td>
                                 </tr>
-                                <tr t-if="o.partner_id.mobile">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Celular:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.mobile"/></td>
+                                <tr t-if="o.partner_id.mobile" style="border-bottom:1px solid #eef0f3;">
+                                    <td style="font-weight:bold;padding:3px 4px 3px 10px;vertical-align:top;white-space:nowrap;color:#4a5568;">Celular:</td>
+                                    <td style="padding:3px 10px 3px 0;color:#2d3748;"><span t-field="o.partner_id.mobile"/></td>
                                 </tr>
                                 <tr t-if="o.partner_id.email">
-                                    <td style="font-weight:bold;padding:3px 4px 3px 8px;vertical-align:top;white-space:nowrap;">Correo:</td>
-                                    <td style="padding:3px 8px 3px 0;"><span t-field="o.partner_id.email"/></td>
+                                    <td style="font-weight:bold;padding:3px 4px 4px 10px;vertical-align:top;white-space:nowrap;color:#4a5568;">Correo:</td>
+                                    <td style="padding:3px 10px 4px 0;color:#2d3748;"><span t-field="o.partner_id.email"/></td>
                                 </tr>
                             </table>
                         </div>
