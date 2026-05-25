@@ -23,5 +23,23 @@
                 </xpath>
             </field>
         </record>
+        <!-- INHERIT view_partner_address_form (subcontactos: Dirección de factura) -->
+        <record id="view_partner_address_form_inherit_cfdi" model="ir.ui.view">
+            <field name="name">res.partner.address.form.inherit.cfdi</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_address_form" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='comment']" position="before">
+                    <group string="Datos fiscales para CFDI"
+                           attrs="{'invisible': [('type', '!=', 'invoice')]}">
+                        <field name="vat" string="RFC"/>
+                        <field name="uso_cfdi_id"/>
+                        <field name="regimen_fiscal_id"/>
+                        <field name="residencia_fiscal"/>
+                        <field name="registro_tributario"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
