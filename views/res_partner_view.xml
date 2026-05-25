@@ -23,21 +23,198 @@
                 </xpath>
             </field>
         </record>
-        <!-- INHERIT view_partner_address_form (subcontactos: Dirección de factura) -->
+        <!-- Reemplaza la pestaña "Contactos y direcciones" para incluir campos CFDI en el formulario inline del subcontacto de tipo Dirección de factura -->
         <record id="view_partner_address_form_inherit_cfdi" model="ir.ui.view">
-            <field name="name">res.partner.address.form.inherit.cfdi</field>
+            <field name="name">res.partner.form.address.inherit.cfdi</field>
             <field name="model">res.partner</field>
-            <field name="inherit_id" ref="base.view_partner_address_form" />
+            <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='comment']" position="before">
-                    <group string="Datos fiscales para CFDI"
-                           attrs="{'invisible': [('type', '!=', 'invoice')]}">
-                        <field name="vat" string="RFC"/>
-                        <field name="uso_cfdi_id"/>
-                        <field name="regimen_fiscal_id"/>
-                        <field name="residencia_fiscal"/>
-                        <field name="registro_tributario"/>
-                    </group>
+                <xpath expr="//page[@name='contact_addresses']" position="replace">
+                    <page string="Contactos y Facturación" name="contact_addresses" autofocus="autofocus">
+                        <field name="child_ids" mode="kanban" context="{'default_parent_id': active_id, 'default_street': street, 'default_street2': street2, 'default_city': city, 'default_state_id': state_id, 'default_zip': zip, 'default_country_id': country_id, 'default_lang': lang, 'default_user_id': user_id, 'default_type': 'contact'}">
+                            <kanban>
+                                <field name="id"/>
+                                <field name="color"/>
+                                <field name="name"/>
+                                <field name="uso_cfdi_id"/>
+                                <field name="regimen_fiscal_id"/>
+                                <field name="title"/>
+                                <field name="type"/>
+                                <field name="email"/>
+                                <field name="parent_id"/>
+                                <field name="is_company"/>
+                                <field name="function"/>
+                                <field name="phone"/>
+                                <field name="street"/>
+                                <field name="street2"/>
+                                <field name="zip"/>
+                                <field name="city"/>
+                                <field name="country_id"/>
+                                <field name="mobile"/>
+                                <field name="state_id"/>
+                                <field name="image_128"/>
+                                <field name="avatar_128"/>
+                                <field name="lang"/>
+                                <field name="comment"/>
+                                <field name="display_name"/>
+                                <field name="vat"/>
+                                <templates>
+                                    <t t-name="kanban-box">
+                                        <t t-set="color" t-value="kanban_color(record.color.raw_value)"/>
+                                        <div t-att-class="color + (record.title ? (record.title.raw_value == 1 ? ' oe_kanban_color_alert' : '') : '') + ' oe_kanban_global_click'">
+                                            <div class="o_kanban_image">
+                                                <img alt="Contact image" t-att-src="kanban_image('res.partner', 'avatar_128', record.id.raw_value)"/>
+                                            </div>
+                                            <div class="oe_kanban_details">
+                                                <field name="name"/>
+                                                <div t-if="record.vat and record.vat.raw_value" class="text-muted">
+                                                    RFC: <t t-esc="record.vat.value"/>
+                                                </div>
+                                                <div t-if="record.function and record.function.raw_value"><field name="function"/></div>
+                                                <div t-if="record.email and record.email.raw_value"><field name="email" widget="email"/></div>
+                                                <div t-if="record.type and record.type.raw_value != 'contact'">
+                                                    <div>
+                                                        <field name="zip"/><t t-if="record.city"> </t>
+                                                        <field name="city"/>
+                                                    </div>
+                                                    <field t-if="record.state_id and record.state_id.raw_value" name="state_id"/><t t-if="record.country_id"> </t>
+                                                    <field name="country_id"/>
+                                                </div>
+                                                <div t-if="record.phone and record.phone.raw_value">Phone: <t t-esc="record.phone.value"/></div>
+                                                <div t-if="record.mobile and record.mobile.raw_value">Mobile: <t t-esc="record.mobile.value"/></div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </templates>
+                            </kanban>
+                            <form string="Contacto / Dirección">
+                                <sheet>
+                                    <field name="type" required="1" widget="radio" options="{'horizontal': true}"/>
+                                    <field name="parent_id" invisible="1"/>
+                                    <div class="text-muted oe_edit_only">
+                                        <p class="mb-0" attrs="{'invisible': [('type', '!=', 'contact')]}">
+                                            <span>Utilice esto para organizar los datos de contacto de los empleados de una empresa determinada.</span>
+                                        </p>
+                                        <p class="mb-0" attrs="{'invisible': [('type', '!=', 'invoice')]}">
+                                            <span>Diferentes configuraciones fiscales para facturar.</span>
+                                        </p>
+                                        <p class="mb-0" attrs="{'invisible': [('type', '!=', 'delivery')]}">
+                                            <span>Dirección preferida para todos los envíos.</span>
+                                        </p>
+                                        <p class="mb-0" attrs="{'invisible': [('type', '!=', 'private')]}">
+                                            <span>Las direcciones privadas sólo son visibles para usuarios autorizados.</span>
+                                        </p>
+                                        <p class="mb-0" attrs="{'invisible': [('type', '!=', 'other')]}">
+                                            <span>Otra dirección para la empresa.</span>
+                                        </p>
+                                    </div>
+                                    <separator string="Datos principales" colspan="4"/>
+
+                                    <!-- Tipo: Contacto -->
+                                    <group attrs="{'invisible': [('type', '!=', 'contact')]}">
+                                        <group string="Contacto">
+                                            <field name="name" string="Nombre de Contacto" attrs="{'required': [('type', '=', 'contact')]}"/>
+                                            <field name="title"/>
+                                            <field name="function"/>
+                                        </group>
+                                        <group string="Información de contacto">
+                                            <field name="email" string="Email" widget="email"/>
+                                            <field name="phone" string="Teléfono" widget="phone"/>
+                                            <field name="mobile" string="Celular" widget="phone"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- Tipo: Dirección de factura -->
+                                    <group attrs="{'invisible': [('type', '!=', 'invoice')]}">
+                                        <group string="Datos fiscales">
+                                            <field name="name" string="Nombre o Razón Social" attrs="{'required': [('type', '=', 'invoice')]}"/>
+                                            <field name="street"/>
+                                            <field name="street2"/>
+                                            <field name="city"/>
+                                            <field name="state_id"/>
+                                            <field name="zip"/>
+                                            <field name="country_id"/>
+                                        </group>
+                                        <group string="Preferencias de factura">
+                                            <field name="vat" string="RFC"/>
+                                            <field name="uso_cfdi_id"/>
+                                            <field name="regimen_fiscal_id"/>
+                                        </group>
+                                        <group string="Detalles extranjero">
+                                            <field name="residencia_fiscal"/>
+                                            <field name="registro_tributario"/>
+                                        </group>
+                                        <group string="Información de contacto">
+                                            <field name="email" string="Email" widget="email"/>
+                                            <field name="phone" string="Teléfono" widget="phone"/>
+                                            <field name="mobile" string="Celular" widget="phone"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- Tipo: Dirección de entrega -->
+                                    <group attrs="{'invisible': [('type', '!=', 'delivery')]}">
+                                        <group string="Dirección de entrega">
+                                            <field name="name" string="Nombre de Contacto" attrs="{'required': [('type', '=', 'delivery')]}"/>
+                                            <field name="street"/>
+                                            <field name="street2"/>
+                                            <field name="city"/>
+                                            <field name="state_id"/>
+                                            <field name="zip"/>
+                                            <field name="country_id"/>
+                                        </group>
+                                        <group string="Información de contacto">
+                                            <field name="email" string="Email" widget="email"/>
+                                            <field name="phone" string="Teléfono" widget="phone"/>
+                                            <field name="mobile" string="Celular" widget="phone"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- Tipo: Dirección privada -->
+                                    <group attrs="{'invisible': [('type', '!=', 'private')]}">
+                                        <group string="Dirección privada">
+                                            <field name="name" string="Nombre de Contacto" attrs="{'required': [('type', '=', 'private')]}"/>
+                                            <field name="street"/>
+                                            <field name="street2"/>
+                                            <field name="city"/>
+                                            <field name="state_id"/>
+                                            <field name="zip"/>
+                                            <field name="country_id"/>
+                                        </group>
+                                        <group string="Información de contacto">
+                                            <field name="email" string="Email" widget="email"/>
+                                            <field name="phone" string="Teléfono" widget="phone"/>
+                                            <field name="mobile" string="Celular" widget="phone"/>
+                                        </group>
+                                    </group>
+
+                                    <!-- Tipo: Otra dirección -->
+                                    <group attrs="{'invisible': [('type', '!=', 'other')]}">
+                                        <group string="Otra dirección">
+                                            <field name="name" string="Nombre de Contacto" attrs="{'required': [('type', '=', 'other')]}"/>
+                                            <field name="street"/>
+                                            <field name="street2"/>
+                                            <field name="city"/>
+                                            <field name="state_id"/>
+                                            <field name="zip"/>
+                                            <field name="country_id"/>
+                                        </group>
+                                        <group string="Información de contacto">
+                                            <field name="email" string="Email" widget="email"/>
+                                            <field name="phone" string="Teléfono" widget="phone"/>
+                                            <field name="mobile" string="Celular" widget="phone"/>
+                                        </group>
+                                    </group>
+
+                                    <separator string="Notas internas" colspan="4"/>
+                                    <group>
+                                        <field name="comment" placeholder="Notas internas..." nolabel="1" colspan="2"/>
+                                    </group>
+                                    <field name="lang" invisible="True"/>
+                                    <field name="user_id" invisible="True"/>
+                                </sheet>
+                            </form>
+                        </field>
+                    </page>
                 </xpath>
             </field>
         </record>
