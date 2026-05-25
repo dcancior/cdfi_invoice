@@ -123,7 +123,8 @@ class AccountMove(models.Model):
     fg_ano = fields.Char(string=_('Año'))
     tercero_id = fields.Many2one('res.partner', string="A cuenta de terceros")
     journal_code = fields.Char(related='journal_id.code', readonly=True, string='Código diario')
-    mobile_contacto = fields.Char(related='partner_id.mobile', readonly=True, string='Celular')
+    mobile_contacto = fields.Char(related='partner_id.mobile', readonly=True, string='Móvil')
+    email_contacto = fields.Char(related='partner_id.email', readonly=True, string='Correo electrónico')
 
     @api.model
     def _reverse_moves(self, default_values, cancel=True):
