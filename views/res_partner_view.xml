@@ -20,6 +20,22 @@
                                 </group>
                             </group>
                     </page>
+                    <page name="info_beca" string="Beca"
+                          attrs="{'invisible': [('parent_id', '!=', False)]}">
+                        <group cols="2">
+                            <group string="Datos de la beca">
+                                <field name="beca_activa" widget="boolean_toggle"/>
+                                <field name="beca_motivo"
+                                       attrs="{'required': [('beca_activa', '=', True)]}"/>
+                                <field name="beca_porcentaje"
+                                       attrs="{'required': [('beca_activa', '=', True)]}"/>
+                            </group>
+                            <group string="Observaciones">
+                                <field name="beca_observaciones" nolabel="1" colspan="2"
+                                       placeholder="Observaciones adicionales sobre la beca..."/>
+                            </group>
+                        </group>
+                    </page>
                 </xpath>
             </field>
         </record>

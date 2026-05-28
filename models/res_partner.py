@@ -11,6 +11,12 @@ class ResPartner(models.Model):
     uso_cfdi_id  =  fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
     regimen_fiscal_id  =  fields.Many2one('catalogo.regimen.fiscal', string='Régimen Fiscal')
 
+    # ── Beca ──────────────────────────────────────────────────────────────────
+    beca_activa = fields.Boolean(string='Beca activa', default=False)
+    beca_motivo = fields.Char(string='Motivo de beca')
+    beca_porcentaje = fields.Float(string='Porcentaje de beca (%)', digits=(5, 2))
+    beca_observaciones = fields.Text(string='Observaciones')
+
     @api.constrains('vat', 'country_id')
     def check_vat(self):
         # The context key 'no_vat_validation' allows you to store/set a VAT number without doing validations.
