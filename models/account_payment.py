@@ -23,6 +23,17 @@ _logger = logging.getLogger(__name__)
 class AccountRegisterPayment(models.TransientModel):
     _inherit = 'account.payment.register'
 
+    can_edit_payment_fields = fields.Boolean(
+        compute='_compute_can_edit_payment_fields',
+        string='Puede editar fecha/referencia',
+    )
+
+    @api.depends_context('uid')
+    def _compute_can_edit_payment_fields(self):
+        can_edit = self.env.user.has_group('cdfi_invoice.group_allow_unreconcile')
+        for record in self:
+            record.can_edit_payment_fields = can_edit
+
      # ----------------- Helpers -----------------
     def _get_child_from_active_moves(self):
         if self.env.context.get('active_model') != 'account.move':

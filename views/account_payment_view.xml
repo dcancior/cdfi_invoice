@@ -87,6 +87,18 @@
                 <xpath expr="//footer/button[@name='action_create_payments']" position="after">
                     <button string='Validar y Generar REP' name="validate_complete_payment" type="object" class="btn-primary"/>
                 </xpath>
+                <!-- Campo de control de permisos -->
+                <xpath expr="//field[@name='company_id']" position="after">
+                    <field name="can_edit_payment_fields" invisible="1" force_save="1"/>
+                </xpath>
+                <!-- Fecha: readonly si el usuario no está en el grupo especial -->
+                <field name="payment_date" position="attributes">
+                    <attribute name="attrs">{'readonly': [('can_edit_payment_fields', '=', False)]}</attribute>
+                </field>
+                <!-- Referencia: readonly si el usuario no está en el grupo especial -->
+                <field name="communication" position="attributes">
+                    <attribute name="attrs">{'readonly': [('can_edit_payment_fields', '=', False)], 'invisible': ['|', ('can_edit_wizard', '=', False), '&amp;', ('can_group_payments', '=', True), ('group_payment', '=', False)]}</attribute>
+                </field>
             </field>
         </record>
 
