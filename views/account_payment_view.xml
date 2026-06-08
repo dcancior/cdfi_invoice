@@ -102,6 +102,24 @@
             </field>
         </record>
 
+        <!-- Ocultar effective_date, bank_reference, cheque_reference para usuarios sin grupo especial -->
+        <record id="view_payment_register_check_pdc_inherit" model="ir.ui.view">
+            <field name="name">account.payment.register.check.pdc.inherit.cfdi</field>
+            <field name="model">account.payment.register</field>
+            <field name="inherit_id" ref="base_accounting_kit.view_account_reg_payment_form_check_pdc"/>
+            <field name="arch" type="xml">
+                <field name="effective_date" position="attributes">
+                    <attribute name="attrs">{'invisible': [('can_edit_payment_fields', '=', False)]}</attribute>
+                </field>
+                <field name="bank_reference" position="attributes">
+                    <attribute name="attrs">{'invisible': [('can_edit_payment_fields', '=', False)]}</attribute>
+                </field>
+                <field name="cheque_reference" position="attributes">
+                    <attribute name="attrs">{'invisible': [('can_edit_payment_fields', '=', False)]}</attribute>
+                </field>
+            </field>
+        </record>
+
         <record id="view_payment_inherit_tree" model="ir.ui.view">
            <field name="name">account.payment.inherit.tree</field>
            <field name="model">account.payment</field>
