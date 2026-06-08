@@ -28,12 +28,6 @@ class AccountRegisterPayment(models.TransientModel):
         default=False,
     )
 
-    @api.model
-    def default_get(self, fields_list):
-        res = super().default_get(fields_list)
-        res['can_edit_payment_fields'] = self.env.user.has_group('cdfi_invoice.group_allow_unreconcile')
-        return res
-
      # ----------------- Helpers -----------------
     def _get_child_from_active_moves(self):
         if self.env.context.get('active_model') != 'account.move':
@@ -60,6 +54,7 @@ class AccountRegisterPayment(models.TransientModel):
             child = child_rec.id if child_rec else False
         if child and 'partner_id' in self._fields:
             vals['partner_id'] = child
+        vals['can_edit_payment_fields'] = self.env.user.has_group('cdfi_invoice.group_allow_unreconcile')
         return vals
 
     # ----------------- Hacer que los batches piensen en el HIJO -----------------
