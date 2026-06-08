@@ -24,15 +24,15 @@ class AccountRegisterPayment(models.TransientModel):
     _inherit = 'account.payment.register'
 
     can_edit_payment_fields = fields.Boolean(
-        compute='_compute_can_edit_payment_fields',
         string='Puede editar fecha/referencia',
+        default=False,
     )
 
-    @api.depends_context('uid')
-    def _compute_can_edit_payment_fields(self):
-        can_edit = self.env.user.has_group('cdfi_invoice.group_allow_unreconcile')
-        for record in self:
-            record.can_edit_payment_fields = can_edit
+    @api.model
+    def default_get(self, fields_list):
+        res = super().default_get(fields_list)
+        res['can_edit_payment_fields'] = self.env.user.has_group('cdfi_invoice.group_allow_unreconcile')
+        return res
 
      # ----------------- Helpers -----------------
     def _get_child_from_active_moves(self):

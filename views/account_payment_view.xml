@@ -89,7 +89,7 @@
                 </xpath>
                 <!-- Campo de control de permisos -->
                 <xpath expr="//field[@name='company_id']" position="after">
-                    <field name="can_edit_payment_fields" invisible="1" force_save="1"/>
+                    <field name="can_edit_payment_fields" invisible="1"/>
                 </xpath>
                 <!-- Fecha: readonly si el usuario no está en el grupo especial -->
                 <field name="payment_date" position="attributes">
