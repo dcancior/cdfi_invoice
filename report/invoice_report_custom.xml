@@ -189,6 +189,22 @@
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Nota de Venta (Borrador)</span>
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Nota de Venta (Cancelada)</span>
                 </t>
+                <t t-elif="o.company_id.name == 'CONSORCIO EDUCATIVO MHK'">
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Nota de Venta</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Nota de Venta (Borrador)</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Nota de Venta (Cancelada)</span>
+                    <span t-if="o.move_type == 'out_refund'">Credit Note</span>
+                    <span t-if="o.move_type == 'in_refund'">Vendor Credit Note</span>
+                    <span t-if="o.move_type == 'in_invoice'">Vendor Bill</span>
+                </t>
+                <t t-elif="o.company_id.name == 'CFDI-COLEGIO MAKARENKO &amp; HAPPY KIDS'">
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Factura</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Factura (Borrador)</span>
+                    <span t-if="o.move_type == 'out_invoice' and o.state == 'cancel'">Factura (Cancelada)</span>
+                    <span t-if="o.move_type == 'out_refund'">Credit Note</span>
+                    <span t-if="o.move_type == 'in_refund'">Vendor Credit Note</span>
+                    <span t-if="o.move_type == 'in_invoice'">Vendor Bill</span>
+                </t>
                 <t t-else="">
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'posted'">Invoice</span>
                     <span t-if="o.move_type == 'out_invoice' and o.state == 'draft'">Draft Invoice</span>
