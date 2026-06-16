@@ -1,48 +1,34 @@
 <odoo>
     <!--
-        REGLAS DE VISIBILIDAD DE FACTURAS
-        ==================================
-        Cómo funciona Odoo con record rules:
-          - Las reglas del MISMO usuario se aplican con OR (unión).
-          - Un usuario en ambos grupos ve la UNIÓN de ambas reglas.
+        REGLA GLOBAL DE VISIBILIDAD DE FACTURAS
+        =========================================
+        Por qué es una regla GLOBAL (sin grupos asignados):
+          - Las reglas POR GRUPO se combinan con OR entre sí. Odoo ya tiene reglas
+            para account.group_account_invoice con dominio (1=1), así que cualquier
+            regla de grupo que agreguemos queda anulada por OR.
+          - Las reglas GLOBALES se combinan con AND sobre el resultado final, por eso
+            sí restringen aunque existan otras reglas de grupo que den acceso total.
 
-        Resultado:
-          • Usuario en "Ver todas las facturas":
-              regla_todas (todo) OR regla_propias (las suyas) = TODAS ✓
-
-          • Usuario normal (solo base.group_user):
-              regla_propias = solo las suyas ✓
-
-        "Participó" incluye:
-          - Es el creador (create_uid)
-          - Es el vendedor / responsable (invoice_user_id)
-          - Registró un cobro u otra acción en el chat (message_partner_ids)
-            → Cuando se registra un pago, Odoo agrega al usuario como seguidor
-              del registro mediante el mensaje automático en el chatter.
+        Lógica:
+          • Usuario en "group_view_all_invoices" → dominio (1=1): ve todo.
+          • Cualquier otro usuario interno → solo ve facturas donde:
+              - Es el creador (create_uid)
+              - Es el vendedor/responsable (invoice_user_id)
+              - Realizó una acción en el chatter —cobro, mensaje, etc.—
+                (message_partner_ids incluye al usuario cuando Odoo registra
+                 automáticamente el pago con un mensaje en la factura)
     -->
-
-    <!-- REGLA 1: Usuarios del grupo especial → ven y editan TODAS las facturas -->
-    <record id="rule_invoice_ver_todas" model="ir.rule">
-        <field name="name">[Facturas] Ver y editar todas (grupo especial)</field>
+    <record id="rule_invoice_visibilidad_global" model="ir.rule">
+        <field name="name">[Facturas] Visibilidad por usuario (regla global)</field>
         <field name="model_id" ref="account.model_account_move"/>
-        <field name="groups" eval="[(4, ref('cdfi_invoice.group_view_all_invoices'))]"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="perm_read"  eval="True"/>
-        <field name="perm_write" eval="True"/>
-        <field name="perm_create" eval="True"/>
-        <field name="perm_unlink" eval="True"/>
-    </record>
-
-    <!-- REGLA 2: Usuarios internos → solo las facturas en las que participaron -->
-    <record id="rule_invoice_solo_propias" model="ir.rule">
-        <field name="name">[Facturas] Solo ver las propias o donde participé</field>
-        <field name="model_id" ref="account.model_account_move"/>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <!-- Sin <groups> → regla global, se aplica con AND a todos los usuarios -->
         <field name="domain_force">
-            ['|', '|',
-                ('create_uid',      '=', user.id),
-                ('invoice_user_id', '=', user.id),
-                ('message_partner_ids', 'in', [user.partner_id.id])
+            [(1, '=', 1)]
+            if user.has_group('cdfi_invoice.group_view_all_invoices')
+            else ['|', '|',
+                ('create_uid',         '=',  user.id),
+                ('invoice_user_id',    '=',  user.id),
+                ('message_partner_ids','in', [user.partner_id.id])
             ]
         </field>
         <field name="perm_read"   eval="True"/>
