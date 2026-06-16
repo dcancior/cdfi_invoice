@@ -24,4 +24,14 @@
         <field name="category_id" ref="category_cdfi_permisos"/>
         <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
     </record>
+
+    <!-- Grupo: ver y editar TODAS las facturas (sin filtro por usuario) -->
+    <record id="group_view_all_invoices" model="res.groups">
+        <field name="name">Ver y editar todas las facturas</field>
+        <field name="category_id" ref="category_cdfi_permisos"/>
+        <field name="comment">Miembros de este grupo ven y editan todas las facturas del sistema.
+Los usuarios que NO pertenezcan a este grupo solo ven las facturas donde son el creador,
+el vendedor asignado, o donde han realizado alguna acción (cobro, mensaje, etc.).</field>
+        <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>
+    </record>
 </odoo>

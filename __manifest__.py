@@ -18,6 +18,7 @@
     'data': [
 
         'security/security.xml',
+        'security/ir.rules.xml',
 
         'data/catalogo.unidad.medida.csv',
         'data/catalogo.forma.pago.csv',
