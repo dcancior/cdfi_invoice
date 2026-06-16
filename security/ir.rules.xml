@@ -14,9 +14,6 @@
           • Cualquier otro usuario interno → solo ve facturas donde:
               - Es el creador (create_uid)
               - Es el vendedor/responsable (invoice_user_id)
-              - Realizó una acción en el chatter —cobro, mensaje, etc.—
-                (message_partner_ids incluye al usuario cuando Odoo registra
-                 automáticamente el pago con un mensaje en la factura)
     -->
     <record id="rule_invoice_visibilidad_global" model="ir.rule">
         <field name="name">[Facturas] Visibilidad por usuario (regla global)</field>
