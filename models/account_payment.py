@@ -141,6 +141,16 @@ class AccountRegisterPayment(models.TransientModel):
                     rp_lines.write({'partner_id': child.id})
                 _logger.info("Forced child on payment %s -> partner_id=%s (%s)",
                              pay.name, child.id, child.display_name)
+
+        # Suscribir al usuario actual como seguidor de las órdenes de venta
+        # relacionadas, para que pueda verlas al abrir la factura.
+        current_partner_id = self.env.user.partner_id.id
+        for pay in payments:
+            invoices = pay.reconciled_invoice_ids
+            orders = invoices.mapped('line_ids.sale_line_ids.order_id')
+            if orders:
+                orders.sudo().message_subscribe([current_partner_id])
+
         return payments
 
     # ----------------- Abrir el/los pagos creados -----------------

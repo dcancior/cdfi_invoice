@@ -6,7 +6,7 @@
 # pylint: skip-file
 {
     'name': 'Ventas Factura Electronica Mexico CFDI',
-    'version': '16.16',
+    'version': '16.17',
     'description': ''' Factura Electronica módulo de ventas para Mexico
     ''',
     'category': 'Accounting',

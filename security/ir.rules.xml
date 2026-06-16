@@ -1,27 +1,38 @@
 <odoo>
     <!--
-        REGLA GLOBAL DE VISIBILIDAD DE FACTURAS
-        =========================================
-        Por qué es una regla GLOBAL (sin grupos asignados):
-          - Las reglas POR GRUPO se combinan con OR entre sí. Odoo ya tiene reglas
-            para account.group_account_invoice con dominio (1=1), así que cualquier
-            regla de grupo que agreguemos queda anulada por OR.
-          - Las reglas GLOBALES se combinan con AND sobre el resultado final, por eso
-            sí restringen aunque existan otras reglas de grupo que den acceso total.
+        REGLAS DE VISIBILIDAD DE FACTURAS Y ÓRDENES DE VENTA
+        ======================================================
+        Regla GLOBAL en facturas (account.move):
+          - Sin grupos = global → se combina con AND sobre todas las reglas.
+          - Grupo especial: ve todo.
+          - Otros: solo facturas donde son creador, vendedor o seguidor
+            (seguidor cubre: hizo un cobro, envió mensaje, fue suscrito).
 
-        Lógica:
-          • Usuario en "group_view_all_invoices" → dominio (1=1): ve todo.
-          • Cualquier otro usuario interno → solo ve facturas donde:
-              - Es el creador (create_uid)
-              - Es el vendedor/responsable (invoice_user_id)
+        Regla de GRUPO en órdenes de venta (sale.order):
+          - Con base.group_user → se combina con OR con otras reglas del mismo grupo.
+          - Permite leer órdenes donde el usuario es creador, vendedor o seguidor.
+          - Solo lectura (write/create/unlink=False) para no interferir con permisos de ventas.
     -->
+
+    <!-- REGLA 1 (global): Visibilidad de facturas -->
     <record id="rule_invoice_visibilidad_global" model="ir.rule">
         <field name="name">[Facturas] Visibilidad por usuario (regla global)</field>
         <field name="model_id" ref="account.model_account_move"/>
-        <!-- Sin <groups> → regla global, se aplica con AND a todos los usuarios -->
-        <field name="domain_force">[(1,'=',1)] if user.has_group('cdfi_invoice.group_view_all_invoices') else ['|',('create_uid','=',user.id),('invoice_user_id','=',user.id)]</field>
+        <field name="domain_force">[(1,'=',1)] if user.has_group('cdfi_invoice.group_view_all_invoices') else ['|','|',('create_uid','=',user.id),('invoice_user_id','=',user.id),('message_partner_ids','in',[user.partner_id.id])]</field>
         <field name="perm_read"   eval="True"/>
         <field name="perm_write"  eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <!-- REGLA 2 (grupo): Lectura de órdenes de venta para seguidores -->
+    <record id="rule_sale_order_follower_read" model="ir.rule">
+        <field name="name">[Órdenes de venta] Lectura a seguidores</field>
+        <field name="model_id" ref="sale.model_sale_order"/>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="domain_force">['|','|',('create_uid','=',user.id),('user_id','=',user.id),('message_partner_ids','in',[user.partner_id.id])]</field>
+        <field name="perm_read"   eval="True"/>
+        <field name="perm_write"  eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
