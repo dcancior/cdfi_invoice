@@ -1,38 +1,25 @@
 <odoo>
     <!--
-        REGLAS DE VISIBILIDAD DE FACTURAS Y ÓRDENES DE VENTA
-        ======================================================
-        Regla GLOBAL en facturas (account.move):
-          - Sin grupos = global → se combina con AND sobre todas las reglas.
-          - Grupo especial: ve todo.
-          - Otros: solo facturas donde son creador, vendedor o seguidor
-            (seguidor cubre: hizo un cobro, envió mensaje, fue suscrito).
+        REGLA GLOBAL DE VISIBILIDAD DE FACTURAS
+        =========================================
+        Regla GLOBAL (sin grupos) → se combina con AND sobre todas las demás.
+        Odoo ya tiene reglas de grupo para account.move que dan acceso total;
+        una regla global sobreescribe ese AND y sí restringe.
 
-        Regla de GRUPO en órdenes de venta (sale.order):
-          - Con base.group_user → se combina con OR con otras reglas del mismo grupo.
-          - Permite leer órdenes donde el usuario es creador, vendedor o seguidor.
-          - Solo lectura (write/create/unlink=False) para no interferir con permisos de ventas.
+        Lógica:
+          • Grupo "Ver todas las facturas" → dominio (1=1): ve todo.
+          • Otros usuarios internos → solo ven facturas donde son:
+              - El creador (create_uid)
+              - El vendedor/responsable (invoice_user_id)
+              - Seguidor del registro (message_partner_ids):
+                cubre cobros, mensajes en el chatter, etc.
     -->
-
-    <!-- REGLA 1 (global): Visibilidad de facturas -->
     <record id="rule_invoice_visibilidad_global" model="ir.rule">
         <field name="name">[Facturas] Visibilidad por usuario (regla global)</field>
         <field name="model_id" ref="account.model_account_move"/>
         <field name="domain_force">[(1,'=',1)] if user.has_group('cdfi_invoice.group_view_all_invoices') else ['|','|',('create_uid','=',user.id),('invoice_user_id','=',user.id),('message_partner_ids','in',[user.partner_id.id])]</field>
         <field name="perm_read"   eval="True"/>
         <field name="perm_write"  eval="True"/>
-        <field name="perm_create" eval="False"/>
-        <field name="perm_unlink" eval="False"/>
-    </record>
-
-    <!-- REGLA 2 (grupo): Lectura de órdenes de venta para seguidores -->
-    <record id="rule_sale_order_follower_read" model="ir.rule">
-        <field name="name">[Órdenes de venta] Lectura a seguidores</field>
-        <field name="model_id" ref="sale.model_sale_order"/>
-        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
-        <field name="domain_force">['|','|',('create_uid','=',user.id),('user_id','=',user.id),('message_partner_ids','in',[user.partner_id.id])]</field>
-        <field name="perm_read"   eval="True"/>
-        <field name="perm_write"  eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>

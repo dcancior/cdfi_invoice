@@ -1273,8 +1273,14 @@ class AccountMove(models.Model):
             },
         }
 
-    
-                            
+    def _get_source_sale_orders(self):
+        # sudo() para evitar el error de seguridad cuando el usuario logueado
+        # es seguidor de la factura pero la orden de venta pertenece a otro.
+        # El conteo del botón se calcula sin restricciones; si el usuario hace
+        # clic para navegar a la OV, la regla global de sale.order la filtra
+        # y verá una lista vacía en lugar de un error.
+        return super(AccountMove, self.sudo())._get_source_sale_orders()
+
 
 class MailTemplate(models.Model):
     "Templates for sending email"
