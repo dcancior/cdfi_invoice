@@ -22,15 +22,7 @@
         <field name="name">[Facturas] Visibilidad por usuario (regla global)</field>
         <field name="model_id" ref="account.model_account_move"/>
         <!-- Sin <groups> → regla global, se aplica con AND a todos los usuarios -->
-        <field name="domain_force">
-            [(1, '=', 1)]
-            if user.has_group('cdfi_invoice.group_view_all_invoices')
-            else ['|', '|',
-                ('create_uid',         '=',  user.id),
-                ('invoice_user_id',    '=',  user.id),
-                ('message_partner_ids','in', [user.partner_id.id])
-            ]
-        </field>
+        <field name="domain_force">[(1,'=',1)] if user.has_group('cdfi_invoice.group_view_all_invoices') else ['|','|',('create_uid','=',user.id),('invoice_user_id','=',user.id),('message_partner_ids','in',[user.partner_id.id])]</field>
         <field name="perm_read"   eval="True"/>
         <field name="perm_write"  eval="True"/>
         <field name="perm_create" eval="False"/>
