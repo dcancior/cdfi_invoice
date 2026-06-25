@@ -340,7 +340,7 @@
                 </thead>
                 <tbody class="invoice_tbody">
                     <tr t-foreach="o.invoice_line_ids" t-as="l"
-                        t-att-style="'page-break-inside: avoid; line-height: 1.0; background-color: #e9ecef; font-weight: bold;' if l.display_type == 'line_section' else 'page-break-inside: avoid; line-height: 1.0; background-color: #cfc0ae; font-weight: bold;' if l.display_type == 'line_note' else 'page-break-inside: avoid; line-height: 1.0;'">
+                        t-att-style="'page-break-inside: avoid; line-height: 1.0; background-color: #e9ecef; font-weight: bold;' if l.display_type == 'line_section' else 'page-break-inside: avoid; line-height: 1.0; background-color: #dde0e3; font-weight: bold;' if l.display_type == 'line_note' else 'page-break-inside: avoid; line-height: 1.0;'">
                         <!-- Líneas normales (no sección / no nota) -->
                         <t t-if="l.display_type != 'line_section' and l.display_type != 'line_note'">
                             <td style="padding: 1px 2px;">
