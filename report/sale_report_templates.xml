@@ -152,6 +152,10 @@
                         <strong>Términos de pago:</strong>
                         <p t-field="doc.payment_term_id"/>
                     </div>
+                    <div>
+                        <strong>Fecha de impresión:</strong>
+                        <p t-esc="context_timestamp(datetime.datetime.now()).strftime('%d/%m/%Y  %H:%M')"/>
+                    </div>
                 </div>
             </div>
             <h2>
