@@ -83,7 +83,7 @@
 
                             <!-- Encabezado rojo vino (mismo tono que el Total del PDF) -->
                             <div style="background-color:#8B1A38;color:#ffffff;font-size:11px;font-weight:bold;text-align:center;padding:6px 8px;letter-spacing:0.8px;">
-                                DATOS DEL CLIENTE
+                                DATOS DEL ALUMNO(A)
                             </div>
 
                             <!-- Bloque Alumno -->
@@ -94,11 +94,20 @@
                                 </div>
                             </t>
 
+                            <!-- Nombre del cliente separado por coma: "Alumno, Padre/Madre/Tutor" -->
+                            <t t-set="nombre_partes" t-value="o.partner_id.name.split(',', 1) if o.partner_id.name and ',' in o.partner_id.name else False"/>
+                            <t t-set="nombre_alumno" t-value="nombre_partes[0].strip() if nombre_partes else o.partner_id.name"/>
+                            <t t-set="nombre_tutor" t-value="nombre_partes[1].strip() if nombre_partes else False"/>
+
                             <!-- Datos de contacto -->
                             <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
                                 <tr style="border-bottom:1px solid #f2e8ea;">
-                                    <td style="font-weight:bold;padding:4px 4px 4px 10px;vertical-align:top;width:38%;white-space:nowrap;color:#5a2030;">Padre/Madre/Tutor(a):</td>
-                                    <td style="padding:4px 10px 4px 0;color:#2d3748;"><span t-field="o.partner_id.name"/></td>
+                                    <td style="font-weight:bold;padding:4px 4px 4px 10px;vertical-align:top;width:38%;white-space:nowrap;color:#5a2030;">Nombre del alumno(a):</td>
+                                    <td style="padding:4px 10px 4px 0;color:#2d3748;"><span t-esc="nombre_alumno"/></td>
+                                </tr>
+                                <tr t-if="nombre_tutor" style="border-bottom:1px solid #f2e8ea;">
+                                    <td style="font-weight:bold;padding:4px 4px 4px 10px;vertical-align:top;white-space:nowrap;color:#5a2030;">Padre/Madre/Tutor:</td>
+                                    <td style="padding:4px 10px 4px 0;color:#2d3748;"><span t-esc="nombre_tutor"/></td>
                                 </tr>
                                 <tr t-if="o.partner_id.street" style="border-bottom:1px solid #f2e8ea;">
                                     <td style="font-weight:bold;padding:3px 4px 3px 10px;vertical-align:top;white-space:nowrap;color:#5a2030;">Calle:</td>
