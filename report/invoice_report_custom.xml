@@ -98,9 +98,10 @@
                                 </div>
                             </div>
 
-                            <!-- Nombre del cliente separado por coma: "Alumno, Padre/Madre/Tutor" -->
+                            <!-- Padre/Madre/Tutor: si el contacto facturado tiene padre (alumno), el propio contacto es el tutor.
+                                 Si no tiene padre, se busca una coma escrita a mano en el nombre: "Alumno, Padre/Madre/Tutor" -->
                             <t t-set="nombre_partes" t-value="o.partner_id.name.split(',', 1) if o.partner_id.name and ',' in o.partner_id.name else False"/>
-                            <t t-set="nombre_tutor" t-value="nombre_partes[1].strip() if nombre_partes and nombre_partes[1].strip() else False"/>
+                            <t t-set="nombre_tutor" t-value="o.partner_id.name if o.partner_id.parent_id else (nombre_partes[1].strip() if nombre_partes and nombre_partes[1].strip() else False)"/>
 
                             <!-- Datos de contacto -->
                             <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
