@@ -83,14 +83,19 @@
 
                             <!-- Encabezado rojo vino (mismo tono que el Total del PDF) -->
                             <div style="background-color:#8B1A38;color:#ffffff;font-size:11px;font-weight:bold;text-align:center;padding:6px 8px;letter-spacing:0.8px;">
-                                DATOS DEL ALUMNO(A)
+                                DATOS DEL RECEPTOR
                             </div>
 
                             <!-- Bloque Alumno -->
                             <t t-if="o.partner_id.parent_id">
-                                <div style="background-color:#fdeef2;padding:5px 10px;border-bottom:1px solid #e8b4c0;">
-                                    <div style="font-size:8.5px;font-weight:bold;color:#8B1A38;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:1px;">Alumno</div>
-                                    <div style="font-size:11px;font-weight:bold;color:#1a1a2e;"><span t-field="o.partner_id.parent_id.name"/></div>
+                                <div style="background-color:#fdeef2;padding:5px 10px;border-bottom:1px solid #e8b4c0;display:flex;justify-content:space-between;align-items:center;">
+                                    <div>
+                                        <div style="font-size:8.5px;font-weight:bold;color:#8B1A38;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:1px;">Alumno</div>
+                                        <div style="font-size:11px;font-weight:bold;color:#1a1a2e;"><span t-field="o.partner_id.parent_id.name"/></div>
+                                    </div>
+                                    <div t-if="o.partner_id.parent_id.category_id" style="font-size:10px;font-weight:bold;color:#8B1A38;text-align:right;">
+                                        <span t-esc="', '.join(o.partner_id.parent_id.category_id.mapped('name'))"/>
+                                    </div>
                                 </div>
                             </t>
 
@@ -102,7 +107,10 @@
                             <!-- Datos de contacto -->
                             <table style="font-size:10px;width:100%;border-collapse:collapse;margin:0;">
                                 <tr style="border-bottom:1px solid #f2e8ea;">
-                                    <td style="font-weight:bold;padding:4px 4px 4px 10px;vertical-align:top;width:38%;white-space:nowrap;color:#5a2030;">Nombre del alumno(a):</td>
+                                    <td style="font-weight:bold;padding:4px 4px 4px 10px;vertical-align:top;width:38%;white-space:nowrap;color:#5a2030;">
+                                        <t t-if="nombre_tutor">Nombre del alumno(a):</t>
+                                        <t t-else="">Nombre del Padre / Madre / Tutor:</t>
+                                    </td>
                                     <td style="padding:4px 10px 4px 0;color:#2d3748;"><span t-esc="nombre_alumno"/></td>
                                 </tr>
                                 <tr t-if="nombre_tutor" style="border-bottom:1px solid #f2e8ea;">
