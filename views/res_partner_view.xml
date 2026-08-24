@@ -34,7 +34,31 @@
                                 <field name="beca_observaciones" nolabel="1" colspan="2"
                                        placeholder="Observaciones adicionales sobre la beca..."/>
                             </group>
+                            <group string="Colegiatura mensual"
+                                   attrs="{'invisible': ['|', ('beca_activa', '=', False),
+                                                              ('beca_hay_colegiatura', '=', False)]}">
+                                <field name="beca_currency_id" invisible="1"/>
+                                <field name="beca_colegiatura_base"/>
+                                <field name="beca_descuento"/>
+                                <field name="beca_colegiatura"/>
+                            </group>
+                            <group string="Ciclo escolar completo"
+                                   attrs="{'invisible': ['|', ('beca_activa', '=', False),
+                                                              ('beca_hay_colegiatura', '=', False)]}">
+                                <field name="beca_colegiatura_total_base"/>
+                                <field name="beca_descuento_total"/>
+                                <field name="beca_colegiatura_total"/>
+                            </group>
                         </group>
+                        <field name="beca_hay_colegiatura" invisible="1"/>
+                        <div class="alert alert-warning" role="alert"
+                             attrs="{'invisible': ['|', ('beca_activa', '=', False),
+                                                        ('beca_hay_colegiatura', '=', True)]}">
+                            <i class="fa fa-exclamation-triangle" role="img" title="Aviso" aria-label="Aviso"/>
+                            No se puede calcular la colegiatura con beca porque el alumno
+                            todavía no tiene colegiatura del ciclo escolar. Revisa su ciclo
+                            escolar, su grado y grupo, y la colegiatura del nivel en el ciclo.
+                        </div>
                     </page>
                 </xpath>
             </field>
