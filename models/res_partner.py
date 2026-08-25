@@ -101,6 +101,42 @@ class ResPartner(models.Model):
             partner.beca_colegiatura_total = (base - descuento) * meses
             partner.beca_hay_colegiatura = hay_colegiatura and bool(base)
 
+    @api.model
+    def _normaliza_beca(self, vals):
+        """Quitar el porcentaje equivale a quitar la beca.
+
+        Sin esto, dejar el porcentaje en cero con la beca marcada impedía
+        guardar el contacto.
+        """
+        if 'beca_porcentaje' in vals and not vals.get('beca_porcentaje'):
+            vals['beca_activa'] = False
+        if 'beca_activa' in vals and not vals.get('beca_activa'):
+            vals['beca_porcentaje'] = 0.0
+        return vals
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._normaliza_beca(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        if 'beca_porcentaje' in vals or 'beca_activa' in vals:
+            vals = self._normaliza_beca(dict(vals))
+        return super().write(vals)
+
+    @api.onchange('beca_porcentaje')
+    def _onchange_beca_porcentaje(self):
+        for partner in self:
+            if partner.beca_activa and not partner.beca_porcentaje:
+                partner.beca_activa = False
+
+    @api.onchange('beca_activa')
+    def _onchange_beca_activa(self):
+        for partner in self:
+            if not partner.beca_activa:
+                partner.beca_porcentaje = 0.0
+
     @api.constrains('beca_activa', 'beca_porcentaje')
     def _check_beca_porcentaje(self):
         for partner in self:
