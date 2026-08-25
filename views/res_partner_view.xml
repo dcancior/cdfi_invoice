@@ -7,8 +7,12 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
+                <xpath expr="//notebook" position="before">
+                    <field name="cfdi_es_alumno" invisible="1"/>
+                </xpath>
                 <xpath expr="//notebook" position="inside">
-                    <page name="info_cdfi" string="CFDI">
+                    <page name="info_cdfi" string="CFDI"
+                          attrs="{'invisible': [('cfdi_es_alumno', '=', True)]}">
                             <group cols="4">
                                 <group string="Preferencias de factura">
                                     <field name="uso_cfdi_id"/>

@@ -11,6 +11,22 @@ class ResPartner(models.Model):
     uso_cfdi_id  =  fields.Many2one('catalogo.uso.cfdi', string='Uso CFDI (cliente)')
     regimen_fiscal_id  =  fields.Many2one('catalogo.regimen.fiscal', string='Régimen Fiscal')
 
+    # Espejo de "Es Alumno" (mhk_escolar) para poder usarlo en las vistas de
+    # este módulo sin depender de que el módulo escolar esté instalado.
+    cfdi_es_alumno = fields.Boolean(
+        string='Es alumno',
+        compute='_compute_cfdi_es_alumno',
+        help='Refleja el campo "Es Alumno" del módulo escolar. A los alumnos '
+             'no se les piden las preferencias de facturación.',
+    )
+
+    @api.depends(lambda self: ['es_alumno'] if 'es_alumno' in self._fields
+                 else [])
+    def _compute_cfdi_es_alumno(self):
+        hay_alumno = 'es_alumno' in self._fields
+        for partner in self:
+            partner.cfdi_es_alumno = bool(hay_alumno and partner.es_alumno)
+
     # ── Beca ──────────────────────────────────────────────────────────────────
     beca_activa = fields.Boolean(string='Beca activa', default=False)
     beca_motivo = fields.Char(string='Motivo de beca')
