@@ -19,8 +19,10 @@ def migrate(cr, version):
     if not version:
         return
 
-    # Al renombrar el campo, Odoo deja la columna original en la tabla sin
-    # tocarla, así que el texto que ya estaba capturado sigue disponible.
+    # OJO: Odoo sí borra la columna del campo que se quitó, pero lo hace hasta
+    # el final de la carga, después de correr las migraciones. Esta es la
+    # única oportunidad de leer el texto original: si este script no corre,
+    # los motivos ya capturados se pierden sin aviso.
     cr.execute("""
         SELECT 1 FROM information_schema.columns
          WHERE table_name = 'res_partner' AND column_name = 'beca_motivo'
@@ -76,6 +78,5 @@ def migrate(cr, version):
 
     _logger.info(
         'Motivos de beca migrados al catálogo: %s contactos actualizados, '
-        '%s motivos nuevos (%s). La columna beca_motivo se conserva como '
-        'respaldo.',
+        '%s motivos nuevos (%s).',
         len(pendientes), creados, ', '.join(sorted(nombres.values())))
