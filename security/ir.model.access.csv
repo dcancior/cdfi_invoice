@@ -9,3 +9,5 @@ access_reason_cancelation_wizard,reason_cancelation_wizard,cdfi_invoice.model_re
 access_account_payment_mail,access_account_payment_mail,cdfi_invoice.model_account_payment_mail,base.group_user,1,1,1,1
 access_facturas_pago,facturas_pago,cdfi_invoice.model_facturas_pago,base.group_user,1,1,1,1
 access_product_parts,access_product_parts,cdfi_invoice.model_product_parts,,1,1,1,1
+access_beca_motivo,beca_motivo,cdfi_invoice.model_beca_motivo,base.group_user,1,1,1,0
+access_beca_motivo_manager,beca_motivo_manager,cdfi_invoice.model_beca_motivo,account.group_account_manager,1,1,1,1

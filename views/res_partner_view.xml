@@ -29,7 +29,8 @@
                         <group cols="2">
                             <group string="Datos de la beca">
                                 <field name="beca_activa" widget="boolean_toggle"/>
-                                <field name="beca_motivo"
+                                <field name="beca_motivo_id"
+                                       options="{'no_open': True}"
                                        attrs="{'required': [('beca_activa', '=', True)]}"/>
                                 <field name="beca_porcentaje"
                                        attrs="{'required': [('beca_activa', '=', True)]}"/>

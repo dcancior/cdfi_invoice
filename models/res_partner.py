@@ -29,7 +29,13 @@ class ResPartner(models.Model):
 
     # ── Beca ──────────────────────────────────────────────────────────────────
     beca_activa = fields.Boolean(string='Beca activa', default=False)
-    beca_motivo = fields.Char(string='Motivo de beca')
+    beca_motivo_id = fields.Many2one(
+        'beca.motivo',
+        string='Motivo de beca',
+        ondelete='restrict',
+        help='Se elige del catálogo de motivos. Si el motivo todavía no '
+             'existe, se puede crear desde aquí escribiéndolo.',
+    )
     beca_porcentaje = fields.Float(string='Porcentaje de beca (%)', digits=(5, 2))
     beca_observaciones = fields.Text(string='Observaciones')
 

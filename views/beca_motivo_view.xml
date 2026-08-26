@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_beca_motivo_tree" model="ir.ui.view">
+        <field name="name">beca.motivo.tree</field>
+        <field name="model">beca.motivo</field>
+        <field name="arch" type="xml">
+            <tree string="Motivos de beca" editable="bottom">
+                <field name="name"/>
+                <field name="descripcion"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_beca_motivo_form" model="ir.ui.view">
+        <field name="name">beca.motivo.form</field>
+        <field name="model">beca.motivo</field>
+        <field name="arch" type="xml">
+            <form string="Motivo de beca">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="descripcion"/>
+                        <field name="active" widget="boolean_toggle"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_beca_motivo_search" model="ir.ui.view">
+        <field name="name">beca.motivo.search</field>
+        <field name="model">beca.motivo</field>
+        <field name="arch" type="xml">
+            <search string="Motivos de beca">
+                <field name="name"/>
+                <field name="descripcion"/>
+                <filter name="filter_inactivos" string="Archivados"
+                        domain="[('active', '=', False)]"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_beca_motivo" model="ir.actions.act_window">
+        <field name="name">Motivos de Beca</field>
+        <field name="res_model">beca.motivo</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Catálogo de motivos de beca
+            </p>
+            <p>
+                Los motivos que captures en la pestaña Beca de un contacto se
+                agregan aquí solos; desde esta pantalla puedes corregirlos,
+                describirlos o archivar los que ya no se usen.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_beca_motivo"
+              name="Motivos de Beca"
+              parent="account.menu_finance_configuration"
+              action="action_beca_motivo"
+              sequence="90"/>
+
+</odoo>
