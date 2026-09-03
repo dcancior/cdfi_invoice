@@ -100,10 +100,14 @@ class SaleOrder(models.Model):
     def _compute_invoice_status(self):
         # 1) cálculo estándar de Odoo
         super(SaleOrder, self)._compute_invoice_status()
-        # 2) si existe alguna factura cliente con estado_factura = 'factura_correcta' -> cfdi_emitido
+        # 2) si existe alguna factura cliente VIGENTE (no cancelada) con
+        # estado_factura = 'factura_correcta' -> cfdi_emitido. Si esa factura se
+        # cancela (ej. se restablece la orden a borrador para corregir algo, sin
+        # cancelar el CFDI ya timbrado), no debe seguir bloqueando la generación
+        # de una factura nueva.
         for order in self:
             invoices = order.invoice_ids.filtered(lambda m: m.move_type in ('out_invoice', 'out_refund'))
-            if any(inv.estado_factura == 'factura_correcta' for inv in invoices):
+            if any(inv.estado_factura == 'factura_correcta' and inv.state != 'cancel' for inv in invoices):
                 order.invoice_status = 'cfdi_emitido'
 
     @api.model
