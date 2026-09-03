@@ -37,6 +37,17 @@ class AccountRegisterPayment(models.TransientModel):
         return children[0] if len(children) == 1 else False
 
     @staticmethod
+    def _partner_from_lines(lines):
+        """Contacto al que se emitieron las facturas de estas líneas.
+
+        Odoo pone en la línea contable el partner comercial (el padre), así
+        que el contacto real de la factura hay que leerlo del asiento. Si las
+        líneas son de varios contactos distintos no se decide nada.
+        """
+        partners = lines.mapped('move_id.partner_id').exists()
+        return partners[0] if len(partners) == 1 else False
+
+    @staticmethod
     def _is_rp_line(l):
         # Evita secciones/notas y toma sólo cuentas por cobrar/pagar
         if getattr(l, 'display_type', False):
@@ -79,13 +90,16 @@ class AccountRegisterPayment(models.TransientModel):
                 # dejamos las líneas originales para que el core no truene con lines[0]
                 batch['lines'] = original_lines
 
-            # Forzar partner si tenemos hijo; si no, intentar deducirlo
-            if child:
-                batch['partner'] = child
-            else:
-                partners = (batch.get('lines') or self.env['account.move.line']).mapped('partner_id').exists()
-                if len(partners) == 1:
-                    batch['partner'] = partners[0]
+            # El contacto del contexto manda; si no hay, se toma el de las
+            # facturas de este batch. Se resuelve batch por batch para que al
+            # pagar de golpe facturas de varios contactos hijos cada pago
+            # salga a su contacto y no todos al padre.
+            batch_partner = child or self._partner_from_lines(batch['lines'])
+            if not batch_partner:
+                partners = batch['lines'].mapped('partner_id').exists()
+                batch_partner = partners[0] if len(partners) == 1 else False
+            if batch_partner:
+                batch['partner'] = batch_partner
 
         return batches
 
@@ -96,6 +110,7 @@ class AccountRegisterPayment(models.TransientModel):
 
         child = (self.env.context.get('child_partner_id') and
                  self.env['res.partner'].browse(self.env.context['child_partner_id']).exists()[:1]) \
+                or self._partner_from_lines(batch_result.get('lines') or self.env['account.move.line']) \
                 or self._get_child_from_active_moves()
         if child:
             vals['partner_id'] = child.id
@@ -114,6 +129,7 @@ class AccountRegisterPayment(models.TransientModel):
         vals.pop('group_payment', None)
         child = (self.env.context.get('child_partner_id') and
                  self.env['res.partner'].browse(self.env.context['child_partner_id']).exists()[:1]) \
+                or self._partner_from_lines(batch_result.get('lines') or self.env['account.move.line']) \
                 or self._get_child_from_active_moves()
         if child:
             vals['partner_id'] = child.id
@@ -399,10 +415,15 @@ class AccountPayment(models.Model):
                                    'trasladosp': json.dumps(tax_grouped_tras), })
                 else:
                     # dentro de add_resitual_amounts, rama "else:"
+                    # Las líneas del pago pueden traer el contacto hijo (si el
+                    # asistente lo forzó) o el padre (que es lo que Odoo pone
+                    # por defecto). Se aceptan ambos: si se exigiera sólo uno,
+                    # el REP saldría sin documentos relacionados.
+                    contactos_pago = payment.partner_id | payment.partner_id.commercial_partner_id
                     pay_rec_lines = payment.move_id.line_ids.filtered(
                         lambda l: (
                             getattr(l, 'account_type', None) in ('asset_receivable', 'liability_payable')
-                            and l.partner_id == payment.partner_id   # usar el HIJO del pago
+                            and l.partner_id in contactos_pago
                         )
                     )
                     if payment.currency_id == mxn_currency:
@@ -736,6 +757,23 @@ class AccountPayment(models.Model):
             raise UserError(_('El emisor no tiene código postal configurado.'))
         if not self.forma_pago_id:
             raise UserError(_('Falta configurar la forma de pago.'))
+        # El SAT exige que el REP se emita al mismo receptor que las facturas
+        # que liquida. Como las líneas contables llevan el contacto padre, es
+        # fácil que el pago quede a nombre de otro: se detiene aquí antes de
+        # timbrar algo que habría que cancelar después.
+        rfc_pago = (self.partner_id.vat or '').upper()
+        otros = self.reconciled_invoice_ids.filtered(
+            lambda inv: (inv.partner_id.vat or '').upper() != rfc_pago)
+        if otros:
+            raise UserError(_(
+                'El pago está a nombre de "%s" (RFC %s), pero la factura %s '
+                'se emitió a "%s" (RFC %s).\n\nEl complemento de pago debe ir '
+                'al mismo receptor que la factura. Corrige el contacto del '
+                'pago antes de timbrarlo.') % (
+                    self.partner_id.display_name, rfc_pago or 'sin RFC',
+                    ', '.join(otros.mapped('name')),
+                    otros[0].partner_id.display_name,
+                    (otros[0].partner_id.vat or '').upper() or 'sin RFC'))
 
     def set_decimals(self, amount, precision):
         if amount is None or amount is False:

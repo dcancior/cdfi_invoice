@@ -71,14 +71,6 @@ class SaleOrder(models.Model):
             values = {'methodo_pago': False, 'forma_pago_id': False}
         self.update(values)
 
-    @api.onchange('partner_id', 'company_id')
-    def _onchange_partner_id(self):
-        res = super()._onchange_partner_id()
-        for order in self:
-            if order.partner_id:
-                order.partner_invoice_id = order.partner_id.commercial_partner_id
-        return res
-
     @api.depends('date_order')
     def _compute_fecha_corregida(self):
         for sale in self:
@@ -116,7 +108,10 @@ class SaleOrder(models.Model):
         return amount_to_text_es_MX.get_amount_to_text(self, amount_total, 'es_cheque', currency)
 
     def _prepare_invoice(self):
-        # Consolidado: incluye CFDI y fuerza partner comercial
+        # Sólo agrega los datos del CFDI. El contacto al que se factura lo pone
+        # Odoo desde la dirección de factura de la orden: si ahí se eligió un
+        # contacto hijo ("Empresa, Contacto"), la factura sale a ese contacto y
+        # no al principal.
         vals = super()._prepare_invoice()
         vals.update({
             'forma_pago_id': self.forma_pago_id.id,
@@ -124,15 +119,7 @@ class SaleOrder(models.Model):
             'uso_cfdi_id': self.uso_cfdi_id.id,
             'tipo_comprobante': 'I',
         })
-        if self.partner_id:
-            vals['partner_id'] = self.partner_id.commercial_partner_id.id
         return vals
-
-    def _create_invoices(self, grouped=False, final=False, date=None):
-        moves = super()._create_invoices(grouped=grouped, final=final, date=date)
-        for move in moves:
-            move.partner_id = move.partner_id.commercial_partner_id
-        return moves
 
     estado_cfdi = fields.Selection(
         selection=[
