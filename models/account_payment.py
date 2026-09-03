@@ -95,11 +95,11 @@ class AccountRegisterPayment(models.TransientModel):
             # pagar de golpe facturas de varios contactos hijos cada pago
             # salga a su contacto y no todos al padre.
             batch_partner = child or self._partner_from_lines(batch['lines'])
-            if not batch_partner:
-                partners = batch['lines'].mapped('partner_id').exists()
-                batch_partner = partners[0] if len(partners) == 1 else False
             if batch_partner:
-                batch['partner'] = batch_partner
+                # Odoo lee el contacto en payment_values: de ahí salen tanto el
+                # que propone el asistente como el del pago que se crea. La
+                # clave 'partner' no la mira nadie.
+                batch['payment_values']['partner_id'] = batch_partner.id
 
         return batches
 
