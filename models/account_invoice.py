@@ -144,8 +144,11 @@ class AccountMove(models.Model):
     tercero_id = fields.Many2one('res.partner', string="A cuenta de terceros")
     lock_invoice_lines = fields.Boolean(
         string=_('Bloquear edición de líneas'),
-        default=False,
+        default=True,
         tracking=True,
+        help='Activo de fábrica: las líneas se capturan en la cotización u '
+             'orden, no en la factura, para que los montos de ambas siempre '
+             'coincidan. Un administrador puede desactivarlo por excepción.',
         groups='base.group_system,cdfi_invoice.group_allow_unlock_invoices',  # Solo administradores
     )
 
@@ -227,8 +230,9 @@ class AccountMove(models.Model):
                 if move.move_type not in ('out_invoice', 'out_refund'):
                     continue
 
-                # Solo aplicar bloqueo si el campo lock_invoice_lines está activado
-                if not move.lock_invoice_lines:
+                # sudo porque el campo está restringido a administradores y un
+                # usuario normal no puede leerlo.
+                if not move.sudo().lock_invoice_lines:
                     continue
 
                 cmds = vals.get('invoice_line_ids') or []
@@ -242,29 +246,39 @@ class AccountMove(models.Model):
                     if op == 0:
                         line_vals = cmd[2] or {}
                         if not line_vals.get('display_type'):
-                            raise UserError("No se pueden agregar productos/servicios a la factura. (Bloqueo activo)")
+                            raise UserError(_(
+                            "Las líneas se agregan en la cotización u orden de venta, no en la factura.\n\nSi hay que %s, hazlo en la orden y vuelve a generar la factura desde ahí. Así el monto facturado siempre coincide con el de la orden."
+                        ) % _("agregar un concepto"))
 
                     # (1, id, vals) -> actualizar línea existente (bloquear si es product/service)
                     elif op == 1:
                         line_id, line_vals = cmd[1], (cmd[2] or {})
                         line = self.env['account.move.line'].browse(line_id)
                         if line.move_id == move and not line.display_type:
-                            raise UserError("No se pueden modificar líneas de productos/servicios en la factura. (Bloqueo activo)")
+                            raise UserError(_(
+                            "Las líneas se agregan en la cotización u orden de venta, no en la factura.\n\nSi hay que %s, hazlo en la orden y vuelve a generar la factura desde ahí. Así el monto facturado siempre coincide con el de la orden."
+                        ) % _("corregir un concepto"))
 
                     # (2, id) -> eliminar línea (bloquear si es product/service)
                     elif op == 2:
                         line_id = cmd[1]
                         line = self.env['account.move.line'].browse(line_id)
                         if line.move_id == move and not line.display_type:
-                            raise UserError("No se pueden eliminar líneas de productos/servicios de la factura. (Bloqueo activo)")
+                            raise UserError(_(
+                            "Las líneas se agregan en la cotización u orden de venta, no en la factura.\n\nSi hay que %s, hazlo en la orden y vuelve a generar la factura desde ahí. Así el monto facturado siempre coincide con el de la orden."
+                        ) % _("quitar un concepto"))
 
                     # (4, id) -> enlazar línea existente (bloquear)
                     elif op == 4:
-                        raise UserError("No se pueden agregar productos/servicios a la factura. (Bloqueo activo)")
+                        raise UserError(_(
+                            "Las líneas se agregan en la cotización u orden de venta, no en la factura.\n\nSi hay que %s, hazlo en la orden y vuelve a generar la factura desde ahí. Así el monto facturado siempre coincide con el de la orden."
+                        ) % _("agregar un concepto"))
 
                     # (6, 0, ids) -> reemplazar todo el conjunto (bloquear)
                     elif op == 6:
-                        raise UserError("No se puede reemplazar la lista de productos/servicios de la factura. (Bloqueo activo)")
+                        raise UserError(_(
+                            "Las líneas se agregan en la cotización u orden de venta, no en la factura.\n\nSi hay que %s, hazlo en la orden y vuelve a generar la factura desde ahí. Así el monto facturado siempre coincide con el de la orden."
+                        ) % _("cambiar los conceptos"))
 
         # 👇 tu lógica existente (no la toques)
         if 'desglosar_iva' in vals:
@@ -284,7 +298,50 @@ class AccountMove(models.Model):
                 if move.uso_cfdi_id:
                     UsageUso.bump(move.uso_cfdi_id.id, user_id=self.env.uid)
 
+        # Al cancelarse el CFDI hay que cancelar también el asiento; si no, la
+        # orden de venta se queda creyendo que ya se facturó.
+        if vals.get('estado_factura') == 'factura_cancelada':
+            self._cancelar_asiento_por_cfdi_cancelado()
+
         return res
+
+    def _cancelar_asiento_por_cfdi_cancelado(self):
+        """Cancela el asiento de Odoo cuando se cancela el CFDI ante el SAT.
+
+        Sin esto el asiento se queda en 'posted' y Odoo sigue contando la
+        factura como vigente: las líneas de la orden conservan
+        qty_to_invoice = 0 y ese trabajo ya no se puede volver a facturar
+        nunca. Así fue como quedaron órdenes entregadas sin CFDI vigente y
+        sin manera de reexpedirlo.
+
+        Una factura con pagos aplicados NO se toca: ahí hay que decidir a
+        mano si se devuelve el dinero o se reaplica a la factura nueva, y
+        desconciliar por automático sería peor que el problema.
+        """
+        for move in self:
+            if move.state != 'posted':
+                continue
+            if move.payment_state != 'not_paid':
+                move.message_post(body=_(
+                    'El CFDI se canceló, pero el asiento <b>no</b> se canceló '
+                    'automáticamente porque la factura tiene pagos aplicados. '
+                    'Desconcilia el pago y cancela la factura a mano para que '
+                    'la orden vuelva a ser facturable.'))
+                continue
+            try:
+                move.button_cancel()
+                move.message_post(body=_(
+                    'Asiento cancelado automáticamente al cancelarse el CFDI, '
+                    'para que las líneas de la orden vuelvan a quedar '
+                    'pendientes de facturar.'))
+            except Exception as error:
+                _logger.warning(
+                    'No se pudo cancelar el asiento %s tras cancelarse su CFDI: %s',
+                    move.name, error)
+                move.message_post(body=_(
+                    'El CFDI se canceló, pero el asiento no pudo cancelarse '
+                    'automáticamente (%s). Cancélalo a mano para que la orden '
+                    'vuelva a ser facturable.') % error)
 
     @api.returns('self', lambda value: value.id)
     def copy(self, default=None):

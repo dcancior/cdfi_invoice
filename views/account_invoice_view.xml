@@ -31,6 +31,18 @@
         <field name="model">account.move</field>
         <field name="inherit_id" ref="account.view_move_form"/>
         <field name="arch" type="xml">
+            <!-- Aviso de captura. Vive en el formulario, no en el reporte, así
+                 que nunca sale impreso en el PDF de la factura. -->
+            <xpath expr="//field[@name='invoice_line_ids']" position="before">
+                <div class="alert alert-info mb-2" role="alert"
+                     attrs="{'invisible': ['|', ('move_type', 'not in', ['out_invoice', 'out_refund']), ('invoice_origin', '=', False)]}">
+                    <i class="fa fa-info-circle" role="img" aria-label="Información"/>
+                    Los conceptos se capturan en la <b>cotización u orden de venta</b>, no aquí.
+                    Si hay que agregar, corregir o quitar algo, hazlo en la orden y vuelve a
+                    generar la factura desde ahí, para que el monto facturado siempre coincida
+                    con el de la orden.
+                </div>
+            </xpath>
             <xpath expr="//notebook" position="inside">
                 <page name="info_cdfi" string="CFDI">
                     <group cols="4">
