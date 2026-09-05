@@ -867,7 +867,10 @@ class AccountPayment(models.Model):
         self.cadena_origenal = '||%s|%s|%s|%s|%s||' % (version, self.folio_fiscal, self.fecha_certificacion,
                                                        self.selo_digital_cdfi, self.cetificaso_sat)
 
-        options = {'width': 275 * mm, 'height': 275 * mm}
+        # El QR se imprime a ~3 cm. Generarlo a 275 mm (780 px) sólo
+        # inflaba el PDF: 123 KB incrustados en cada render. A 105 mm
+        # quedan 298 px, más del doble de lo que se muestra, y pesa 21 KB.
+        options = {'width': 105 * mm, 'height': 105 * mm}
         amount_str = str(self.amount).split('.')
         qr_value = 'https://verificacfdi.facturaelectronica.sat.gob.mx/default.aspx?&id=%s&re=%s&rr=%s&tt=%s.%s&fe=%s' % (
             self.folio_fiscal,
@@ -879,7 +882,9 @@ class AccountPayment(models.Model):
         )
         self.qr_value = qr_value
         ret_val = createBarcodeDrawing('QR', value=qr_value, **options)
-        self.qrcode_image = base64.encodebytes(ret_val.asString('jpg'))
+        # PNG, no JPEG: un código de barras en formato con pérdida pesa
+        # el doble y los artefactos de compresión dificultan su lectura.
+        self.qrcode_image = base64.encodebytes(ret_val.asString('png'))
 
     def send_payment(self):
         self.ensure_one()
