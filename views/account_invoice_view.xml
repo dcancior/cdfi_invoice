@@ -34,7 +34,7 @@
             <!-- Aviso de captura. Vive en el formulario, no en el reporte, así
                  que nunca sale impreso en el PDF de la factura. -->
             <xpath expr="//field[@name='invoice_line_ids']" position="before">
-                <details class="cdfi-guia alert alert-info mb-2 p-2"
+                <details class="cdfi-guia border rounded bg-light mb-2 p-2"
                          attrs="{'invisible': [('move_type', 'not in', ['out_invoice', 'out_refund'])]}">
                     <summary class="d-flex flex-wrap align-items-center"
                              style="cursor:pointer; gap:.35rem;"
