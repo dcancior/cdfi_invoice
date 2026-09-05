@@ -192,6 +192,67 @@
             <!-- Campo técnico (invisible) para evaluar attrs -->
             <xpath expr="//sheet" position="inside">
             <field name="allow_edit_if_inv_cancelled" invisible="1"/>
+            <field name="invoice_count" invisible="1"/>
+            </xpath>
+
+            <!-- Guía de corrección. Vive en el formulario, no en el reporte:
+                 no sale impresa en la cotización ni en la orden. -->
+            <xpath expr="//field[@name='order_line']" position="before">
+                <details class="cdfi-guia border rounded bg-light mb-2 p-2"
+                         attrs="{'invisible': [('invoice_count', '=', 0)]}">
+                    <summary class="d-flex flex-wrap align-items-center"
+                             style="cursor:pointer; gap:.35rem;"
+                             title="Clic para ver los pasos">
+                        <span class="fw-bold me-1">
+                            <i class="fa fa-info-circle" role="img" aria-label="Información"/>
+                            Cómo corregir una orden ya facturada:
+                        </span>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 1 — Cancela la factura. Si ya está timbrada, cancela primero su CFDI: el asiento se cancela solo.">
+                            <i class="fa fa-ban"/> 1. Cancela la factura
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 2 — Aquí en la orden, botón Cancelar.">
+                            <i class="fa fa-times-circle"/> 2. Cancela la orden
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 3 — Botón Establecer como cotización, para poder editar las líneas.">
+                            <i class="fa fa-undo"/> 3. Establecer como cotización
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 4 — Agrega, corrige o quita los conceptos que hagan falta.">
+                            <i class="fa fa-pencil"/> 4. Corrige los conceptos
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 5 — Confirma la orden y crea la factura desde aquí.">
+                            <i class="fa fa-check"/> 5. Confirma y factura
+                        </span>
+                        <span class="text-muted ms-1" style="font-size:.85em;">(clic para el detalle)</span>
+                    </summary>
+                    <div class="mt-2 ps-1">
+                        <p class="mb-2">
+                            Mientras esta orden tenga una <b>factura vigente</b>, sus líneas no se
+                            pueden tocar: si se movieran, el monto de la orden y el de la factura
+                            dejarían de coincidir. Para corregirla hay que deshacer primero la
+                            factura.
+                        </p>
+                        <ol class="mb-2 ps-3">
+                            <li><b>Cancela la factura.</b> Si ya tiene CFDI timbrado, cancela el
+                                CFDI: el asiento contable se cancela solo y estas líneas vuelven a
+                                quedar pendientes de facturar.</li>
+                            <li><b>Cancela la orden</b> con el botón Cancelar.</li>
+                            <li><b>Establecer como cotización</b>, para que las líneas se dejen
+                                editar.</li>
+                            <li><b>Corrige los conceptos</b>: agrega, cambia o quita lo que haga
+                                falta.</li>
+                            <li><b>Confirma la orden</b> y <b>crea la factura</b> desde aquí.</li>
+                        </ol>
+                        <p class="mb-0 text-muted" style="font-size:.9em;">
+                            Si la factura ya está pagada, primero hay que desconciliar el pago. En
+                            ese caso el sistema no cancela el asiento solo: lo avisa en el chatter
+                            de la factura.
+                        </p>
+                    </div>
+                </details>
             </xpath>
 
             <!-- Controlar readonly del one2many con el flag -->

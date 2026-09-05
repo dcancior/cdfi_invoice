@@ -16,16 +16,17 @@ class SaleOrder(models.Model):
         store=False
     )
 
+    @api.depends('invoice_ids.state', 'invoice_ids.estado_factura',
+                 'invoice_ids.move_type')
     def _compute_allow_edit_if_inv_cancelled(self):
+        """Mismo criterio que el candado del backend, para que no se
+        contradigan: si _must_lock_lines bloquea, la vista se pone en sólo
+        lectura; si permite, la vista deja editar. Antes esto miraba sólo
+        account_move.state y dejaba la orden en sólo lectura aunque el CFDI
+        estuviera cancelado y el backend sí permitiera la edición.
+        """
         for order in self:
-            # Solo facturas cliente (ventas y devoluciones)
-            invoices = order.invoice_ids.filtered(
-                lambda m: m.move_type in ('out_invoice', 'out_refund')
-            )
-            # ✅ Permitir edición si NO hay facturas o si TODAS están canceladas
-            order.allow_edit_if_inv_cancelled = (not invoices) or all(
-                inv.state == 'cancel' for inv in invoices
-            )
+            order.allow_edit_if_inv_cancelled = not order._must_lock_lines()
 
     forma_pago_id = fields.Many2one('catalogo.forma.pago', string='Forma de pago')
     methodo_pago = fields.Selection(
