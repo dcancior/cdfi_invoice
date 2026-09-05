@@ -2,7 +2,7 @@
 
 from odoo import api, fields, models, _
 from . import amount_to_text_es_MX
-
+from odoo.exceptions import UserError, ValidationError
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -257,6 +257,11 @@ class SaleOrder(models.Model):
         return orders
 
     def write(self, vals):
+        # 🔒 Si intentan tocar order_line y hay facturas no canceladas, bloquea
+        if 'order_line' in vals:
+            for order in self:
+                if order._must_lock_lines():
+                    raise UserError(order._aviso_lineas_bloqueadas(_("modificar")))
         res = super().write(vals)
         UsageForma = self.env['catalogo.forma.pago.usage'].sudo()
         UsageUso   = self.env['catalogo.uso.cfdi.usage'].sudo()
@@ -273,5 +278,77 @@ class SaleOrder(models.Model):
 
         return res
 
+    # Estados del CFDI en los que la factura ya no ata a la orden. Al cancelar
+    # un CFDI ante el SAT el asiento de Odoo suele quedarse en 'posted', así
+    # que mirar sólo state dejaba la orden bloqueada para siempre: por eso el
+    # candado anterior obligaba a facturar aparte en vez de corregir la orden.
+    # Una solicitud de cancelación NO cuenta: el SAT puede rechazarla.
+    ESTADOS_CFDI_SIN_EFECTO = ('factura_cancelada',)
+
+    def _factura_ata_la_orden(self, factura):
+        """Si esta factura obliga a que la orden se quede como está."""
+        if factura.state == 'cancel':
+            return False
+        if 'estado_factura' in factura._fields and \
+                factura.estado_factura in self.ESTADOS_CFDI_SIN_EFECTO:
+            return False
+        return True
+
+    def _must_lock_lines(self):
+        """True si queda alguna factura/NC de cliente vigente.
+
+        Vigente = ni cancelada en Odoo ni cancelada ante el SAT. Con todas
+        canceladas la orden vuelve a ser editable, que es lo que permite
+        corregirla y volver a facturar sin que los montos se separen.
+        """
+        self.ensure_one()
+        facturas = self.invoice_ids.filtered(
+            lambda m: m.move_type in ('out_invoice', 'out_refund'))
+        return any(self._factura_ata_la_orden(f) for f in facturas)
+
+    def _aviso_lineas_bloqueadas(self, accion):
+        self.ensure_one()
+        vigentes = self.invoice_ids.filtered(
+            lambda m: m.move_type in ('out_invoice', 'out_refund')
+            and self._factura_ata_la_orden(m))
+        return _(
+            "No se pueden %s las líneas de %s porque tiene facturas vigentes: %s.\n\n"
+            "Para corregir la orden:\n"
+            "1. Cancela el CFDI de esas facturas.\n"
+            "2. Cancela la orden y pásala a borrador.\n"
+            "3. Corrige las líneas y confirma.\n"
+            "4. Genera la factura nueva.\n\n"
+            "Así el monto facturado siempre coincide con el de la orden."
+        ) % (accion, self.display_name, ', '.join(vigentes.mapped('name')))
+
+
 class SaleOrderLine(models.Model):
     _inherit = 'sale.order.line'
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Evita agregar líneas si hay facturas no canceladas
+        for vals in vals_list:
+            order = self.env['sale.order'].browse(vals.get('order_id'))
+            if order and order._must_lock_lines():
+                raise UserError(order._aviso_lineas_bloqueadas(_("agregar")))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        # Detectar si SOLO están cambiando mechanic_id
+        only_mechanic_change = set(vals.keys()) <= {'mechanic_id'}
+
+        # Si hay más campos involucrados → aplicar bloqueo normal
+        if not only_mechanic_change:
+            locked = self.filtered(lambda l: l.order_id and l.order_id._must_lock_lines())
+            if locked:
+                raise UserError(locked[0].order_id._aviso_lineas_bloqueadas(_("editar")))
+
+        return super().write(vals)
+
+    def unlink(self):
+        # Evita borrar líneas si hay facturas no canceladas
+        locked = self.filtered(lambda l: l.order_id and l.order_id._must_lock_lines())
+        if locked:
+            raise UserError(locked[0].order_id._aviso_lineas_bloqueadas(_("eliminar")))
+        return super().unlink()
