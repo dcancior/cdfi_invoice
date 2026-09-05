@@ -34,14 +34,58 @@
             <!-- Aviso de captura. Vive en el formulario, no en el reporte, así
                  que nunca sale impreso en el PDF de la factura. -->
             <xpath expr="//field[@name='invoice_line_ids']" position="before">
-                <div class="alert alert-info mb-2" role="alert"
-                     attrs="{'invisible': ['|', ('move_type', 'not in', ['out_invoice', 'out_refund']), ('invoice_origin', '=', False)]}">
-                    <i class="fa fa-info-circle" role="img" aria-label="Información"/>
-                    Los conceptos se capturan en la <b>cotización u orden de venta</b>, no aquí.
-                    Si hay que agregar, corregir o quitar algo, hazlo en la orden y vuelve a
-                    generar la factura desde ahí, para que el monto facturado siempre coincida
-                    con el de la orden.
-                </div>
+                <details class="cdfi-guia alert alert-info mb-2 p-2"
+                         attrs="{'invisible': [('move_type', 'not in', ['out_invoice', 'out_refund'])]}">
+                    <summary class="d-flex flex-wrap align-items-center"
+                             style="cursor:pointer; gap:.35rem;"
+                             title="Clic para ver los pasos">
+                        <span class="fw-bold me-1">
+                            <i class="fa fa-info-circle" role="img" aria-label="Información"/>
+                            Cómo se agregan productos:
+                        </span>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 1 — Cancela esta factura. Si ya está timbrada, cancela primero el CFDI.">
+                            <i class="fa fa-ban"/> 1. Cancela aquí
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 2 — Abre la cotización u orden de venta que le dio origen.">
+                            <i class="fa fa-external-link"/> 2. Ve a la orden
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 3 — Captura ahí el producto o servicio, con su cantidad y precio.">
+                            <i class="fa fa-plus"/> 3. Agrega el concepto
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 4 — Confirma la orden para que quede lista para facturar.">
+                            <i class="fa fa-check"/> 4. Confirma
+                        </span>
+                        <i class="fa fa-angle-right text-muted"/>
+                        <span class="badge bg-white text-dark border fw-normal" title="Paso 5 — Genera la factura desde la orden. Así el monto siempre coincide.">
+                            <i class="fa fa-file-text-o"/> 5. Vuelve a facturar
+                        </span>
+                        <span class="text-muted ms-1" style="font-size:.85em;">(clic para el detalle)</span>
+                    </summary>
+                    <div class="mt-2 ps-1">
+                        <p class="mb-2">
+                            Los conceptos se capturan en la <b>cotización u orden de venta</b>, nunca
+                            directo en la factura. Así el monto facturado y el de la orden siempre
+                            coinciden, y no quedan diferencias que después nadie sabe explicar.
+                        </p>
+                        <ol class="mb-2 ps-3">
+                            <li><b>Cancela esta factura.</b> Si ya tiene CFDI timbrado, cancélalo
+                                primero; el asiento se cancela solo y la orden vuelve a quedar
+                                pendiente de facturar.</li>
+                            <li><b>Abre la orden de venta</b> que le dio origen.</li>
+                            <li><b>Agrega, corrige o quita</b> ahí los conceptos que hagan falta.</li>
+                            <li><b>Confirma la orden.</b></li>
+                            <li><b>Genera la factura de nuevo</b> desde la orden.</li>
+                        </ol>
+                        <p class="mb-0 text-muted" style="font-size:.9em;">
+                            ¿La factura no viene de una orden, o es un caso excepcional? Un
+                            administrador puede desactivar <b>Bloquear edición de líneas</b> en la
+                            pestaña CFDI de esta factura.
+                        </p>
+                    </div>
+                </details>
             </xpath>
             <xpath expr="//notebook" position="inside">
                 <page name="info_cdfi" string="CFDI">
