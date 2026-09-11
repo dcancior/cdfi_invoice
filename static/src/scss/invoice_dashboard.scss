@@ -15,11 +15,25 @@ $fi-fondo:   #f6f8f9;
 $fi-hover:   #f1f5f9;
 
 .o_fi_dash {
-    padding: 16px;
-    background-color: $fi-fondo;
-    min-height: 100%;
-    overflow-y: auto;
-    color: $fi-tinta;
+    // La raíz lleva además la clase o_action, que Odoo inyecta por props, y de
+    // ahí hereda height:100%, flex en columna y overflow:hidden. Se repite aquí
+    // lo mínimo para que el tablero siga funcionando si algún día se monta
+    // fuera del gestor de acciones.
+    display: flex;
+    flex-flow: column nowrap;
+    height: 100%;
+
+    // El que desplaza es este hijo, no la raíz: a la raíz la recorta Odoo.
+    // min-height:0 es lo que le permite encogerse por debajo de su contenido;
+    // sin eso un elemento flex nunca llega a generar barra de desplazamiento.
+    > .o_fi_dash_body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: auto;
+        padding: 16px;
+        background-color: $fi-fondo;
+        color: $fi-tinta;
+    }
 
     // ---------- Encabezado ----------
     .o_fi_dash_head {
@@ -78,6 +92,7 @@ $fi-hover:   #f1f5f9;
 
     .o_fi_dash_dates {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 4px;
     }
@@ -124,7 +139,10 @@ $fi-hover:   #f1f5f9;
     // ---------- KPIs ----------
     .o_fi_dash_kpis {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        // min(..., 100%) impide que el ancho mínimo de columna supere al del
+        // contenedor: sin eso, en un panel angosto la rejilla se desborda en
+        // vez de bajar a una sola columna.
+        grid-template-columns: repeat(auto-fit, minmax(min(175px, 100%), 1fr));
         gap: 10px;
         margin-bottom: 12px;
     }
@@ -221,7 +239,7 @@ $fi-hover:   #f1f5f9;
     // ---------- Tarjetas ----------
     .o_fi_dash_row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
         gap: 12px;
         margin-bottom: 12px;
         align-items: start;
@@ -235,11 +253,15 @@ $fi-hover:   #f1f5f9;
         min-width: 0;
     }
 
-    // La evolución pide el doble de ancho: son muchas barras en una fila.
-    .o_fi_dash_card_wide { grid-column: span 2; }
+    // La evolución pide todo el ancho que haya: son muchas barras en una fila.
+    // Con "1 / -1" ocupa las columnas que existan; con "span 2" forzaba una
+    // segunda columna implícita cuando la rejilla ya solo tenía una, y eso
+    // desbordaba el tablero hacia la derecha.
+    .o_fi_dash_card_wide { grid-column: 1 / -1; }
 
     .o_fi_dash_card_head {
         display: flex;
+        flex-wrap: wrap;
         align-items: baseline;
         justify-content: space-between;
         gap: 8px;
@@ -255,7 +277,7 @@ $fi-hover:   #f1f5f9;
         }
     }
 
-    .o_fi_dash_card_note { font-size: 0.68rem; color: $fi-suave; white-space: nowrap; }
+    .o_fi_dash_card_note { font-size: 0.68rem; color: $fi-suave; }
 
     .o_fi_dash_dot {
         display: inline-block;
@@ -562,13 +584,14 @@ $fi-hover:   #f1f5f9;
 
 // En pantallas angostas (el taller trabaja mucho desde tablet) todo baja a una
 // sola columna y la gráfica se encoge para que no empuje el resto hacia abajo.
+// El reparto en columnas ya no depende de esta media query: lo resuelve la
+// propia rejilla contra el ancho real del panel, que con la barra lateral del
+// tema no coincide con el de la ventana. Aquí solo quedan los ajustes de
+// tamaño, que sí son cuestión de pantalla.
 @media (max-width: 720px) {
     .o_fi_dash {
-        padding: 10px;
+        > .o_fi_dash_body { padding: 10px; }
 
-        .o_fi_dash_card_wide { grid-column: span 1; }
-        .o_fi_dash_row { grid-template-columns: 1fr; }
-        .o_fi_dash_kpis { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
         .o_fi_dash_kpi_val { font-size: 1.12rem; }
         .o_fi_dash_chart { height: 120px; }
         .o_fi_dash_head { align-items: flex-start; }

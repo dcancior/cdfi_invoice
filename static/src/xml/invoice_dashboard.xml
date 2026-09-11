@@ -2,367 +2,375 @@
 <templates xml:space="preserve">
 
 <t t-name="cdfi_invoice.InvoiceDashboard" owl="1">
-    <div class="o_fi_dash">
+    <!-- Odoo pasa className="o_action" como prop y de ahí cuelga todo el
+         layout del cliente web: .o_action es height:100%, flex en columna y
+         overflow:hidden. Sin aplicarla, este div queda suelto dentro de
+         .o_action_manager (que también recorta) y el tablero se corta sin
+         barra de desplazamiento en cuanto el contenido pasa del alto de la
+         ventana. El que scrollea es el hijo, no la raíz. -->
+    <div class="o_fi_dash" t-att-class="props.className">
+        <div class="o_fi_dash_body">
 
-        <!-- ============ Encabezado y periodo ============ -->
-        <div class="o_fi_dash_head">
-            <div class="o_fi_dash_title">
-                <h1><i class="fa fa-file-text-o"/> Tablero de Facturación</h1>
-                <span class="o_fi_dash_sub" t-if="state.data">
-                    <t t-if="state.data.date_from">
-                        Facturado del <t t-esc="state.data.date_from"/> al <t t-esc="state.data.date_to"/>
-                    </t>
-                    <t t-else="">Facturación histórica completa</t>
-                    · Cartera al <t t-esc="state.data.today"/>
-                </span>
-            </div>
-            <div class="o_fi_dash_filters">
-                <div class="o_fi_dash_chips">
-                    <button t-foreach="periodos" t-as="periodo" t-key="periodo.key"
-                            class="o_fi_dash_chip"
-                            t-att-class="{ active: state.period === periodo.key }"
-                            t-on-click="() => this.setPeriod(periodo.key)">
-                        <t t-esc="periodo.label"/>
-                    </button>
-                </div>
-                <div class="o_fi_dash_dates">
-                    <input type="date" class="o_fi_dash_date" t-att-value="state.dateFrom"
-                           t-on-change="(ev) => this.onCustomDate('dateFrom', ev)"/>
-                    <span class="o_fi_dash_arrow">→</span>
-                    <input type="date" class="o_fi_dash_date" t-att-value="state.dateTo"
-                           t-on-change="(ev) => this.onCustomDate('dateTo', ev)"/>
-                    <button class="o_fi_dash_iconbtn" title="Actualizar"
-                            t-on-click="() => this.load()">
-                        <i class="fa fa-refresh"/>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ============ Estados ============ -->
-        <div t-if="state.loading" class="o_fi_dash_state">
-            <i class="fa fa-circle-o-notch fa-spin fa-2x"/>
-            <p>Calculando métricas...</p>
-        </div>
-
-        <div t-elif="state.error" class="o_fi_dash_state">
-            <i class="fa fa-exclamation-triangle fa-2x text-warning"/>
-            <p>No fue posible cargar el tablero.</p>
-        </div>
-
-        <div t-elif="!state.data.has_data" class="o_fi_dash_state">
-            <i class="fa fa-inbox fa-3x"/>
-            <p>No hay facturas en el periodo seleccionado.</p>
-        </div>
-
-        <t t-else="">
-            <!-- ============ KPIs ============ -->
-            <div class="o_fi_dash_kpis">
-                <div class="o_fi_dash_kpi o_fi_dash_kpi_main"
-                     t-on-click="() => this.openInvoices('Facturado del periodo', state.data.domains.period)">
-                    <span class="o_fi_dash_kpi_lbl">Facturado</span>
-                    <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.invoiced_str"/>
-                    <span class="o_fi_dash_kpi_hint">
-                        <i class="fa fa-file-text-o"/>
-                        <t t-esc="state.data.kpi.invoice_count"/> facturas en el periodo
+            <!-- ============ Encabezado y periodo ============ -->
+            <div class="o_fi_dash_head">
+                <div class="o_fi_dash_title">
+                    <h1><i class="fa fa-file-text-o"/> Tablero de Facturación</h1>
+                    <span class="o_fi_dash_sub" t-if="state.data">
+                        <t t-if="state.data.date_from">
+                            Facturado del <t t-esc="state.data.date_from"/> al <t t-esc="state.data.date_to"/>
+                        </t>
+                        <t t-else="">Facturación histórica completa</t>
+                        · Cartera al <t t-esc="state.data.today"/>
                     </span>
                 </div>
-
-                <div class="o_fi_dash_kpi o_fi_dash_kpi_ok o_fi_dash_kpi_static">
-                    <span class="o_fi_dash_kpi_lbl">Cobrado</span>
-                    <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.collected_str"/>
-                    <span class="o_fi_dash_kpi_hint">
-                        <i class="fa fa-check-circle"/>
-                        <t t-esc="state.data.kpi.collected_pct"/>% de lo facturado
-                    </span>
-                </div>
-
-                <div class="o_fi_dash_kpi o_fi_dash_kpi_warn"
-                     t-on-click="() => this.openInvoices('Por cobrar', state.data.domains.receivable)">
-                    <span class="o_fi_dash_kpi_lbl">Por cobrar (a hoy)</span>
-                    <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.due_str"/>
-                    <span class="o_fi_dash_kpi_hint">
-                        <i class="fa fa-clock-o"/>
-                        <t t-esc="state.data.kpi.due_count"/> facturas con saldo
-                    </span>
-                </div>
-
-                <div class="o_fi_dash_kpi o_fi_dash_kpi_bad"
-                     t-on-click="() => this.openInvoices('Facturas vencidas', state.data.domains.overdue)">
-                    <span class="o_fi_dash_kpi_lbl">Vencido (a hoy)</span>
-                    <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.overdue_str"/>
-                    <span class="o_fi_dash_kpi_hint">
-                        <i class="fa fa-exclamation-triangle"/>
-                        <t t-esc="state.data.kpi.overdue_count"/> facturas ·
-                        <t t-esc="state.data.kpi.overdue_pct"/>% de la cartera
-                    </span>
-                </div>
-
-                <div class="o_fi_dash_kpi o_fi_dash_kpi_static">
-                    <span class="o_fi_dash_kpi_lbl">Factura promedio</span>
-                    <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.avg_str"/>
-                    <span class="o_fi_dash_kpi_hint">
-                        <i class="fa fa-balance-scale"/> Por factura emitida
-                    </span>
-                </div>
-
-                <div class="o_fi_dash_kpi"
-                     t-on-click="() => this.openInvoices('CFDI emitidos', state.data.domains.stamped)">
-                    <span class="o_fi_dash_kpi_lbl">CFDI timbrados</span>
-                    <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.stamped_count"/>
-                    <span class="o_fi_dash_kpi_hint">
-                        <i class="fa fa-certificate"/>
-                        <t t-esc="state.data.kpi.stamped_pct"/>% de lo facturado
-                    </span>
+                <div class="o_fi_dash_filters">
+                    <div class="o_fi_dash_chips">
+                        <button t-foreach="periodos" t-as="periodo" t-key="periodo.key"
+                                class="o_fi_dash_chip"
+                                t-att-class="{ active: state.period === periodo.key }"
+                                t-on-click="() => this.setPeriod(periodo.key)">
+                            <t t-esc="periodo.label"/>
+                        </button>
+                    </div>
+                    <div class="o_fi_dash_dates">
+                        <input type="date" class="o_fi_dash_date" t-att-value="state.dateFrom"
+                               t-on-change="(ev) => this.onCustomDate('dateFrom', ev)"/>
+                        <span class="o_fi_dash_arrow">→</span>
+                        <input type="date" class="o_fi_dash_date" t-att-value="state.dateTo"
+                               t-on-change="(ev) => this.onCustomDate('dateTo', ev)"/>
+                        <button class="o_fi_dash_iconbtn" title="Actualizar"
+                                t-on-click="() => this.load()">
+                            <i class="fa fa-refresh"/>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- Aviso de borradores: no son ingreso todavía, pero son trabajo
-                 por facturar y conviene que no se queden olvidados. -->
-            <div t-if="state.data.kpi.draft_count" class="o_fi_dash_alert"
-                 t-on-click="() => this.openInvoices('Borradores por facturar', state.data.domains.draft)">
-                <i class="fa fa-pencil-square-o"/>
-                <span>
-                    <b t-esc="state.data.kpi.draft_count"/> factura(s) en borrador por
-                    <b t-esc="state.data.kpi.draft_str"/> siguen sin publicarse en este periodo.
-                </span>
-                <i class="fa fa-angle-right o_fi_dash_alert_go"/>
+            <!-- ============ Estados ============ -->
+            <div t-if="state.loading" class="o_fi_dash_state">
+                <i class="fa fa-circle-o-notch fa-spin fa-2x"/>
+                <p>Calculando métricas...</p>
             </div>
 
-            <!-- ============ Evolución + estado de cobro ============ -->
-            <div class="o_fi_dash_row">
-                <div class="o_fi_dash_card o_fi_dash_card_wide">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-bar-chart"/> Evolución de la facturación</h2>
-                        <span class="o_fi_dash_card_note">
-                            <span class="o_fi_dash_dot o_fi_dash_dot_ok"/> Cobrado
-                            <span class="o_fi_dash_dot o_fi_dash_dot_due"/> Pendiente ·
-                            <t t-if="state.data.by_period.granularity === 'month'">Por mes</t>
-                            <t t-else="">Por día</t>
+            <div t-elif="state.error" class="o_fi_dash_state">
+                <i class="fa fa-exclamation-triangle fa-2x text-warning"/>
+                <p>No fue posible cargar el tablero.</p>
+            </div>
+
+            <div t-elif="!state.data.has_data" class="o_fi_dash_state">
+                <i class="fa fa-inbox fa-3x"/>
+                <p>No hay facturas en el periodo seleccionado.</p>
+            </div>
+
+            <t t-else="">
+                <!-- ============ KPIs ============ -->
+                <div class="o_fi_dash_kpis">
+                    <div class="o_fi_dash_kpi o_fi_dash_kpi_main"
+                         t-on-click="() => this.openInvoices('Facturado del periodo', state.data.domains.period)">
+                        <span class="o_fi_dash_kpi_lbl">Facturado</span>
+                        <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.invoiced_str"/>
+                        <span class="o_fi_dash_kpi_hint">
+                            <i class="fa fa-file-text-o"/>
+                            <t t-esc="state.data.kpi.invoice_count"/> facturas en el periodo
                         </span>
                     </div>
-                    <div class="o_fi_dash_chart" t-if="state.data.by_period.bars.length">
-                        <div class="o_fi_dash_bar_wrap" t-foreach="state.data.by_period.bars"
-                             t-as="bar" t-key="bar.key"
-                             t-attf-title="{{ bar.label }}: {{ bar.amount_str }} ({{ bar.count }} facturas) · Cobrado {{ bar.collected_str }} ({{ bar.collected_pct }}%)">
-                            <div class="o_fi_dash_bar_col">
-                                <div class="o_fi_dash_bar"
-                                     t-attf-style="height: {{ barHeight(bar.amount) }}%">
-                                    <div class="o_fi_dash_bar_paid"
-                                         t-attf-style="height: {{ bar.collected_pct }}%"/>
+
+                    <div class="o_fi_dash_kpi o_fi_dash_kpi_ok o_fi_dash_kpi_static">
+                        <span class="o_fi_dash_kpi_lbl">Cobrado</span>
+                        <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.collected_str"/>
+                        <span class="o_fi_dash_kpi_hint">
+                            <i class="fa fa-check-circle"/>
+                            <t t-esc="state.data.kpi.collected_pct"/>% de lo facturado
+                        </span>
+                    </div>
+
+                    <div class="o_fi_dash_kpi o_fi_dash_kpi_warn"
+                         t-on-click="() => this.openInvoices('Por cobrar', state.data.domains.receivable)">
+                        <span class="o_fi_dash_kpi_lbl">Por cobrar (a hoy)</span>
+                        <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.due_str"/>
+                        <span class="o_fi_dash_kpi_hint">
+                            <i class="fa fa-clock-o"/>
+                            <t t-esc="state.data.kpi.due_count"/> facturas con saldo
+                        </span>
+                    </div>
+
+                    <div class="o_fi_dash_kpi o_fi_dash_kpi_bad"
+                         t-on-click="() => this.openInvoices('Facturas vencidas', state.data.domains.overdue)">
+                        <span class="o_fi_dash_kpi_lbl">Vencido (a hoy)</span>
+                        <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.overdue_str"/>
+                        <span class="o_fi_dash_kpi_hint">
+                            <i class="fa fa-exclamation-triangle"/>
+                            <t t-esc="state.data.kpi.overdue_count"/> facturas ·
+                            <t t-esc="state.data.kpi.overdue_pct"/>% de la cartera
+                        </span>
+                    </div>
+
+                    <div class="o_fi_dash_kpi o_fi_dash_kpi_static">
+                        <span class="o_fi_dash_kpi_lbl">Factura promedio</span>
+                        <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.avg_str"/>
+                        <span class="o_fi_dash_kpi_hint">
+                            <i class="fa fa-balance-scale"/> Por factura emitida
+                        </span>
+                    </div>
+
+                    <div class="o_fi_dash_kpi"
+                         t-on-click="() => this.openInvoices('CFDI emitidos', state.data.domains.stamped)">
+                        <span class="o_fi_dash_kpi_lbl">CFDI timbrados</span>
+                        <span class="o_fi_dash_kpi_val" t-esc="state.data.kpi.stamped_count"/>
+                        <span class="o_fi_dash_kpi_hint">
+                            <i class="fa fa-certificate"/>
+                            <t t-esc="state.data.kpi.stamped_pct"/>% de lo facturado
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Aviso de borradores: no son ingreso todavía, pero son trabajo
+                     por facturar y conviene que no se queden olvidados. -->
+                <div t-if="state.data.kpi.draft_count" class="o_fi_dash_alert"
+                     t-on-click="() => this.openInvoices('Borradores por facturar', state.data.domains.draft)">
+                    <i class="fa fa-pencil-square-o"/>
+                    <span>
+                        <b t-esc="state.data.kpi.draft_count"/> factura(s) en borrador por
+                        <b t-esc="state.data.kpi.draft_str"/> siguen sin publicarse en este periodo.
+                    </span>
+                    <i class="fa fa-angle-right o_fi_dash_alert_go"/>
+                </div>
+
+                <!-- ============ Evolución + estado de cobro ============ -->
+                <div class="o_fi_dash_row">
+                    <div class="o_fi_dash_card o_fi_dash_card_wide">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-bar-chart"/> Evolución de la facturación</h2>
+                            <span class="o_fi_dash_card_note">
+                                <span class="o_fi_dash_dot o_fi_dash_dot_ok"/> Cobrado
+                                <span class="o_fi_dash_dot o_fi_dash_dot_due"/> Pendiente ·
+                                <t t-if="state.data.by_period.granularity === 'month'">Por mes</t>
+                                <t t-else="">Por día</t>
+                            </span>
+                        </div>
+                        <div class="o_fi_dash_chart" t-if="state.data.by_period.bars.length">
+                            <div class="o_fi_dash_bar_wrap" t-foreach="state.data.by_period.bars"
+                                 t-as="bar" t-key="bar.key"
+                                 t-attf-title="{{ bar.label }}: {{ bar.amount_str }} ({{ bar.count }} facturas) · Cobrado {{ bar.collected_str }} ({{ bar.collected_pct }}%)">
+                                <div class="o_fi_dash_bar_col">
+                                    <div class="o_fi_dash_bar"
+                                         t-attf-style="height: {{ barHeight(bar.amount) }}%">
+                                        <div class="o_fi_dash_bar_paid"
+                                             t-attf-style="height: {{ bar.collected_pct }}%"/>
+                                    </div>
                                 </div>
+                                <span class="o_fi_dash_bar_lbl" t-esc="bar.short"/>
                             </div>
-                            <span class="o_fi_dash_bar_lbl" t-esc="bar.short"/>
                         </div>
+                        <p t-else="" class="o_fi_dash_empty">Sin facturas publicadas en el periodo.</p>
                     </div>
-                    <p t-else="" class="o_fi_dash_empty">Sin facturas publicadas en el periodo.</p>
-                </div>
 
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-money"/> Estado de cobro</h2>
-                        <span class="o_fi_dash_card_note">Del periodo</span>
-                    </div>
-                    <div class="o_fi_dash_stages">
-                        <div t-foreach="state.data.by_payment" t-as="fila" t-key="fila.key"
-                             class="o_fi_dash_stage"
-                             t-on-click="() => this.openInvoices(fila.label, fila.domain)">
-                            <span class="o_fi_dash_stage_ico" t-attf-style="color: {{ fila.color }}">
-                                <i t-attf-class="fa {{ fila.icon }}"/>
-                            </span>
-                            <span class="o_fi_dash_stage_txt">
-                                <span class="o_fi_dash_stage_lbl" t-esc="fila.label"/>
-                                <span class="o_fi_dash_stage_amt" t-esc="fila.amount_str"/>
-                            </span>
-                            <span class="o_fi_dash_stage_num" t-esc="fila.count"/>
-                            <span class="o_fi_dash_stage_bar">
-                                <span class="o_fi_dash_stage_fill"
-                                      t-attf-style="width: {{ fila.pct }}%; background-color: {{ fila.color }}"/>
-                            </span>
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-money"/> Estado de cobro</h2>
+                            <span class="o_fi_dash_card_note">Del periodo</span>
                         </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ============ Antigüedad de cartera + timbrado ============ -->
-            <div class="o_fi_dash_row">
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-hourglass-half"/> Antigüedad de la cartera</h2>
-                        <span class="o_fi_dash_card_note">
-                            Total a hoy: <b t-esc="state.data.aging.total_str"/>
-                        </span>
-                    </div>
-                    <p t-if="!state.data.aging.total" class="o_fi_dash_empty">
-                        No hay saldos por cobrar. 👌
-                    </p>
-                    <div t-else="" class="o_fi_dash_aging">
-                        <div t-foreach="state.data.aging.rows" t-as="tramo" t-key="tramo.key"
-                             class="o_fi_dash_aging_row"
-                             t-on-click="() => this.openInvoices('Cartera: ' + tramo.label, tramo.domain)">
-                            <span class="o_fi_dash_aging_lbl">
-                                <span class="o_fi_dash_aging_dot"
-                                      t-attf-style="background-color: {{ tramo.color }}"/>
-                                <t t-esc="tramo.label"/>
-                            </span>
-                            <span class="o_fi_dash_aging_amt" t-esc="tramo.amount_str"/>
-                            <span class="o_fi_dash_aging_bar">
-                                <span class="o_fi_dash_aging_fill"
-                                      t-attf-style="width: {{ tramo.pct }}%; background-color: {{ tramo.color }}"/>
-                            </span>
-                            <span class="o_fi_dash_aging_meta">
-                                <t t-esc="tramo.count"/> facturas · <t t-esc="tramo.pct"/>%
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-certificate"/> Timbrado CFDI</h2>
-                        <span class="o_fi_dash_card_note">Del periodo</span>
-                    </div>
-                    <div class="o_fi_dash_stages">
-                        <div t-foreach="state.data.by_cfdi" t-as="fila" t-key="fila.key"
-                             class="o_fi_dash_stage"
-                             t-on-click="() => this.openInvoices(fila.label, fila.domain)">
-                            <span class="o_fi_dash_stage_ico" t-attf-style="color: {{ fila.color }}">
-                                <i t-attf-class="fa {{ fila.icon }}"/>
-                            </span>
-                            <span class="o_fi_dash_stage_txt">
-                                <span class="o_fi_dash_stage_lbl" t-esc="fila.label"/>
-                                <span class="o_fi_dash_stage_amt" t-esc="fila.amount_str"/>
-                            </span>
-                            <span class="o_fi_dash_stage_num" t-esc="fila.count"/>
-                            <span class="o_fi_dash_stage_bar">
-                                <span class="o_fi_dash_stage_fill"
-                                      t-attf-style="width: {{ fila.pct }}%; background-color: {{ fila.color }}"/>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ============ Clientes ============ -->
-            <div class="o_fi_dash_row">
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-star-o"/> Clientes más facturados</h2>
-                        <span class="o_fi_dash_card_note">Del periodo</span>
-                    </div>
-                    <p t-if="!state.data.by_customer.length" class="o_fi_dash_empty">Sin datos.</p>
-                    <div t-else="" class="o_fi_dash_rank">
-                        <div t-foreach="state.data.by_customer" t-as="fila" t-key="fila.id"
-                             class="o_fi_dash_rank_row o_fi_dash_rank_flat">
-                            <span class="o_fi_dash_rank_name" t-esc="fila.name"/>
-                            <span class="o_fi_dash_rank_amt" t-esc="fila.amount_str"/>
-                            <span class="o_fi_dash_rank_bar">
-                                <span class="o_fi_dash_rank_fill"
-                                      t-attf-style="width: {{ fila.pct }}%; background-color: {{ color(fila_index) }}"/>
-                            </span>
-                            <span class="o_fi_dash_rank_meta">
-                                <t t-esc="fila.count"/> facturas · <t t-esc="fila.pct"/>%
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-address-book-o"/> Mayores adeudos</h2>
-                        <span class="o_fi_dash_card_note">A hoy</span>
-                    </div>
-                    <p t-if="!state.data.debtors.length" class="o_fi_dash_empty">
-                        Nadie debe nada. 👌
-                    </p>
-                    <div t-else="" class="o_fi_dash_rank">
-                        <div t-foreach="state.data.debtors" t-as="fila" t-key="fila.id"
-                             class="o_fi_dash_rank_row"
-                             t-on-click="() => this.openInvoices('Adeudo de ' + fila.name, fila.domain)">
-                            <span class="o_fi_dash_rank_name" t-esc="fila.name"/>
-                            <span class="o_fi_dash_rank_amt" t-esc="fila.amount_str"/>
-                            <span class="o_fi_dash_rank_bar">
-                                <span class="o_fi_dash_rank_fill"
-                                      t-attf-style="width: {{ fila.pct }}%; background-color: {{ color(fila_index) }}"/>
-                            </span>
-                            <span class="o_fi_dash_rank_meta">
-                                <t t-esc="fila.count"/> facturas
-                                <t t-if="fila.overdue">
-                                    · <span class="o_fi_dash_bad">
-                                        <t t-esc="fila.overdue_str"/> vencido
-                                      </span>
-                                </t>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ============ Método de pago + cola de cobranza ============ -->
-            <div class="o_fi_dash_row">
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-credit-card"/> Método y forma de pago</h2>
-                        <span class="o_fi_dash_card_note">Del periodo</span>
-                    </div>
-
-                    <p t-if="!state.data.by_method.methods.length" class="o_fi_dash_empty">Sin datos.</p>
-                    <div t-else="" class="o_fi_dash_methods">
-                        <div t-foreach="state.data.by_method.methods" t-as="metodo" t-key="metodo.key"
-                             class="o_fi_dash_method"
-                             t-on-click="() => this.openInvoices(metodo.label, metodo.domain)">
-                            <span class="o_fi_dash_method_tag" t-esc="metodo.short"/>
-                            <span class="o_fi_dash_method_txt">
-                                <span class="o_fi_dash_method_lbl" t-esc="metodo.label"/>
-                                <span class="o_fi_dash_method_meta">
-                                    <t t-esc="metodo.count"/> facturas · <t t-esc="metodo.pct"/>%
+                        <div class="o_fi_dash_stages">
+                            <div t-foreach="state.data.by_payment" t-as="fila" t-key="fila.key"
+                                 class="o_fi_dash_stage"
+                                 t-on-click="() => this.openInvoices(fila.label, fila.domain)">
+                                <span class="o_fi_dash_stage_ico" t-attf-style="color: {{ fila.color }}">
+                                    <i t-attf-class="fa {{ fila.icon }}"/>
                                 </span>
-                            </span>
-                            <span class="o_fi_dash_method_amt" t-esc="metodo.amount_str"/>
-                        </div>
-                    </div>
-
-                    <div t-if="state.data.by_method.forms.length" class="o_fi_dash_forms">
-                        <span class="o_fi_dash_forms_title">Formas de pago más usadas</span>
-                        <div t-foreach="state.data.by_method.forms" t-as="fila" t-key="fila.id"
-                             class="o_fi_dash_rank_row o_fi_dash_rank_flat">
-                            <span class="o_fi_dash_rank_name" t-esc="fila.name"/>
-                            <span class="o_fi_dash_rank_amt" t-esc="fila.amount_str"/>
-                            <span class="o_fi_dash_rank_bar">
-                                <span class="o_fi_dash_rank_fill"
-                                      t-attf-style="width: {{ fila.pct }}%; background-color: {{ color(fila_index) }}"/>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="o_fi_dash_card">
-                    <div class="o_fi_dash_card_head">
-                        <h2><i class="fa fa-bell-o"/> Cola de cobranza</h2>
-                        <span class="o_fi_dash_card_note">De las más vencidas primero</span>
-                    </div>
-                    <p t-if="!state.data.overdue_list.length" class="o_fi_dash_empty">
-                        Nada vencido. 👌
-                    </p>
-                    <div t-else="" class="o_fi_dash_due">
-                        <div t-foreach="state.data.overdue_list" t-as="factura" t-key="factura.id"
-                             class="o_fi_dash_due_row" t-on-click="() => this.openInvoice(factura.id)">
-                            <span class="o_fi_dash_due_days"
-                                  t-att-class="{ 'o_fi_dash_due_days_hot': factura.days > 30 }">
-                                <t t-esc="factura.days"/><small>d</small>
-                            </span>
-                            <span class="o_fi_dash_due_txt">
-                                <span class="o_fi_dash_due_partner" t-esc="factura.partner"/>
-                                <span class="o_fi_dash_due_ref">
-                                    <t t-esc="factura.name"/> · venció el <t t-esc="factura.due"/>
+                                <span class="o_fi_dash_stage_txt">
+                                    <span class="o_fi_dash_stage_lbl" t-esc="fila.label"/>
+                                    <span class="o_fi_dash_stage_amt" t-esc="fila.amount_str"/>
                                 </span>
-                            </span>
-                            <span class="o_fi_dash_due_amt" t-esc="factura.amount_str"/>
+                                <span class="o_fi_dash_stage_num" t-esc="fila.count"/>
+                                <span class="o_fi_dash_stage_bar">
+                                    <span class="o_fi_dash_stage_fill"
+                                          t-attf-style="width: {{ fila.pct }}%; background-color: {{ fila.color }}"/>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </t>
+
+                <!-- ============ Antigüedad de cartera + timbrado ============ -->
+                <div class="o_fi_dash_row">
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-hourglass-half"/> Antigüedad de la cartera</h2>
+                            <span class="o_fi_dash_card_note">
+                                Total a hoy: <b t-esc="state.data.aging.total_str"/>
+                            </span>
+                        </div>
+                        <p t-if="!state.data.aging.total" class="o_fi_dash_empty">
+                            No hay saldos por cobrar. 👌
+                        </p>
+                        <div t-else="" class="o_fi_dash_aging">
+                            <div t-foreach="state.data.aging.rows" t-as="tramo" t-key="tramo.key"
+                                 class="o_fi_dash_aging_row"
+                                 t-on-click="() => this.openInvoices('Cartera: ' + tramo.label, tramo.domain)">
+                                <span class="o_fi_dash_aging_lbl">
+                                    <span class="o_fi_dash_aging_dot"
+                                          t-attf-style="background-color: {{ tramo.color }}"/>
+                                    <t t-esc="tramo.label"/>
+                                </span>
+                                <span class="o_fi_dash_aging_amt" t-esc="tramo.amount_str"/>
+                                <span class="o_fi_dash_aging_bar">
+                                    <span class="o_fi_dash_aging_fill"
+                                          t-attf-style="width: {{ tramo.pct }}%; background-color: {{ tramo.color }}"/>
+                                </span>
+                                <span class="o_fi_dash_aging_meta">
+                                    <t t-esc="tramo.count"/> facturas · <t t-esc="tramo.pct"/>%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-certificate"/> Timbrado CFDI</h2>
+                            <span class="o_fi_dash_card_note">Del periodo</span>
+                        </div>
+                        <div class="o_fi_dash_stages">
+                            <div t-foreach="state.data.by_cfdi" t-as="fila" t-key="fila.key"
+                                 class="o_fi_dash_stage"
+                                 t-on-click="() => this.openInvoices(fila.label, fila.domain)">
+                                <span class="o_fi_dash_stage_ico" t-attf-style="color: {{ fila.color }}">
+                                    <i t-attf-class="fa {{ fila.icon }}"/>
+                                </span>
+                                <span class="o_fi_dash_stage_txt">
+                                    <span class="o_fi_dash_stage_lbl" t-esc="fila.label"/>
+                                    <span class="o_fi_dash_stage_amt" t-esc="fila.amount_str"/>
+                                </span>
+                                <span class="o_fi_dash_stage_num" t-esc="fila.count"/>
+                                <span class="o_fi_dash_stage_bar">
+                                    <span class="o_fi_dash_stage_fill"
+                                          t-attf-style="width: {{ fila.pct }}%; background-color: {{ fila.color }}"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ Clientes ============ -->
+                <div class="o_fi_dash_row">
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-star-o"/> Clientes más facturados</h2>
+                            <span class="o_fi_dash_card_note">Del periodo</span>
+                        </div>
+                        <p t-if="!state.data.by_customer.length" class="o_fi_dash_empty">Sin datos.</p>
+                        <div t-else="" class="o_fi_dash_rank">
+                            <div t-foreach="state.data.by_customer" t-as="fila" t-key="fila.id"
+                                 class="o_fi_dash_rank_row o_fi_dash_rank_flat">
+                                <span class="o_fi_dash_rank_name" t-esc="fila.name"/>
+                                <span class="o_fi_dash_rank_amt" t-esc="fila.amount_str"/>
+                                <span class="o_fi_dash_rank_bar">
+                                    <span class="o_fi_dash_rank_fill"
+                                          t-attf-style="width: {{ fila.pct }}%; background-color: {{ color(fila_index) }}"/>
+                                </span>
+                                <span class="o_fi_dash_rank_meta">
+                                    <t t-esc="fila.count"/> facturas · <t t-esc="fila.pct"/>%
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-address-book-o"/> Mayores adeudos</h2>
+                            <span class="o_fi_dash_card_note">A hoy</span>
+                        </div>
+                        <p t-if="!state.data.debtors.length" class="o_fi_dash_empty">
+                            Nadie debe nada. 👌
+                        </p>
+                        <div t-else="" class="o_fi_dash_rank">
+                            <div t-foreach="state.data.debtors" t-as="fila" t-key="fila.id"
+                                 class="o_fi_dash_rank_row"
+                                 t-on-click="() => this.openInvoices('Adeudo de ' + fila.name, fila.domain)">
+                                <span class="o_fi_dash_rank_name" t-esc="fila.name"/>
+                                <span class="o_fi_dash_rank_amt" t-esc="fila.amount_str"/>
+                                <span class="o_fi_dash_rank_bar">
+                                    <span class="o_fi_dash_rank_fill"
+                                          t-attf-style="width: {{ fila.pct }}%; background-color: {{ color(fila_index) }}"/>
+                                </span>
+                                <span class="o_fi_dash_rank_meta">
+                                    <t t-esc="fila.count"/> facturas
+                                    <t t-if="fila.overdue">
+                                        · <span class="o_fi_dash_bad">
+                                            <t t-esc="fila.overdue_str"/> vencido
+                                          </span>
+                                    </t>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ Método de pago + cola de cobranza ============ -->
+                <div class="o_fi_dash_row">
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-credit-card"/> Método y forma de pago</h2>
+                            <span class="o_fi_dash_card_note">Del periodo</span>
+                        </div>
+
+                        <p t-if="!state.data.by_method.methods.length" class="o_fi_dash_empty">Sin datos.</p>
+                        <div t-else="" class="o_fi_dash_methods">
+                            <div t-foreach="state.data.by_method.methods" t-as="metodo" t-key="metodo.key"
+                                 class="o_fi_dash_method"
+                                 t-on-click="() => this.openInvoices(metodo.label, metodo.domain)">
+                                <span class="o_fi_dash_method_tag" t-esc="metodo.short"/>
+                                <span class="o_fi_dash_method_txt">
+                                    <span class="o_fi_dash_method_lbl" t-esc="metodo.label"/>
+                                    <span class="o_fi_dash_method_meta">
+                                        <t t-esc="metodo.count"/> facturas · <t t-esc="metodo.pct"/>%
+                                    </span>
+                                </span>
+                                <span class="o_fi_dash_method_amt" t-esc="metodo.amount_str"/>
+                            </div>
+                        </div>
+
+                        <div t-if="state.data.by_method.forms.length" class="o_fi_dash_forms">
+                            <span class="o_fi_dash_forms_title">Formas de pago más usadas</span>
+                            <div t-foreach="state.data.by_method.forms" t-as="fila" t-key="fila.id"
+                                 class="o_fi_dash_rank_row o_fi_dash_rank_flat">
+                                <span class="o_fi_dash_rank_name" t-esc="fila.name"/>
+                                <span class="o_fi_dash_rank_amt" t-esc="fila.amount_str"/>
+                                <span class="o_fi_dash_rank_bar">
+                                    <span class="o_fi_dash_rank_fill"
+                                          t-attf-style="width: {{ fila.pct }}%; background-color: {{ color(fila_index) }}"/>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="o_fi_dash_card">
+                        <div class="o_fi_dash_card_head">
+                            <h2><i class="fa fa-bell-o"/> Cola de cobranza</h2>
+                            <span class="o_fi_dash_card_note">De las más vencidas primero</span>
+                        </div>
+                        <p t-if="!state.data.overdue_list.length" class="o_fi_dash_empty">
+                            Nada vencido. 👌
+                        </p>
+                        <div t-else="" class="o_fi_dash_due">
+                            <div t-foreach="state.data.overdue_list" t-as="factura" t-key="factura.id"
+                                 class="o_fi_dash_due_row" t-on-click="() => this.openInvoice(factura.id)">
+                                <span class="o_fi_dash_due_days"
+                                      t-att-class="{ 'o_fi_dash_due_days_hot': factura.days > 30 }">
+                                    <t t-esc="factura.days"/><small>d</small>
+                                </span>
+                                <span class="o_fi_dash_due_txt">
+                                    <span class="o_fi_dash_due_partner" t-esc="factura.partner"/>
+                                    <span class="o_fi_dash_due_ref">
+                                        <t t-esc="factura.name"/> · venció el <t t-esc="factura.due"/>
+                                    </span>
+                                </span>
+                                <span class="o_fi_dash_due_amt" t-esc="factura.amount_str"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
     </div>
 </t>
 
