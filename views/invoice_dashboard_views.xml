@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Tablero de Facturación: acción cliente OWL -->
+        <record id="action_invoice_dashboard" model="ir.actions.client">
+            <field name="name">Tablero de Facturación</field>
+            <field name="tag">cdfi_invoice.invoice_dashboard</field>
+        </record>
+
+        <!-- El menú raíz de Facturación abre el tablero. Odoo solo entra al
+             primer submenú cuando el menú de la aplicación no trae acción
+             propia; al ponerle una, el clic en "Facturación" cae aquí y los
+             submenús de siempre (Clientes, Proveedores, Contabilidad...) se
+             quedan exactamente igual. -->
+        <record id="account.menu_finance" model="ir.ui.menu">
+            <field name="action" ref="action_invoice_dashboard"/>
+        </record>
+
+        <!-- Y un submenú propio, para volver al tablero desde cualquier lado.
+             Los mismos grupos que ya filtran el menú raíz: quien puede ver
+             Facturación puede ver el tablero, y nadie más. -->
+        <menuitem id="menu_invoice_dashboard"
+                  name="Tablero"
+                  parent="account.menu_finance"
+                  action="action_invoice_dashboard"
+                  sequence="0"
+                  groups="account.group_account_invoice,account.group_account_readonly"/>
+    </data>
+</odoo>

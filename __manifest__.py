@@ -6,7 +6,7 @@
 # pylint: skip-file
 {
     'name': 'Ventas Factura Electronica Mexico CFDI',
-    'version': '16.15',
+    'version': '16.16',
     'description': ''' Factura Electronica módulo de ventas para Mexico
     ''',
     'category': 'Accounting',
@@ -30,6 +30,7 @@
         'views/res_company_view.xml',
         'views/product_view.xml',
         'views/account_invoice_view.xml',
+        'views/invoice_dashboard_views.xml',
         'views/account_payment_view.xml',
         'views/account_tax_view.xml',
         'views/sale_view.xml',
@@ -46,6 +47,9 @@
         'web.assets_backend': [
             'cdfi_invoice/static/src/js/password_dialog.js',
             'cdfi_invoice/static/src/js/account_payment_field_extend.js',
+            'cdfi_invoice/static/src/scss/invoice_dashboard.scss',
+            'cdfi_invoice/static/src/js/invoice_dashboard.js',
+            'cdfi_invoice/static/src/xml/invoice_dashboard.xml',
         ],
     'web.assets_qweb': [
         'cdfi_invoice/static/src/xml/password_dialog.xml',

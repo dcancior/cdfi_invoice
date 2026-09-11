@@ -6,6 +6,7 @@ from . import res_partner
 from . import product
 from . import account_tax
 from . import account_invoice
+from . import account_move_dashboard
 from . import account_payment
 from . import account_journal
 from . import sale

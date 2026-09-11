@@ -1,0 +1,576 @@
+// /cdfi_invoice/static/src/scss/invoice_dashboard.scss
+// Tablero de Facturación. El color cuenta la historia de la cobranza:
+// azul lo facturado, verde lo cobrado, ámbar lo pendiente y rojo lo vencido.
+// Esos cuatro tonos no se usan para nada más, para que se puedan leer de un
+// vistazo sin ir a buscar la leyenda.
+
+$fi-azul:    #1d4ed8;
+$fi-verde:   #16a34a;
+$fi-ambar:   #f59e0b;
+$fi-rojo:    #dc2626;
+$fi-tinta:   #111b21;
+$fi-suave:   #667781;
+$fi-borde:   #e3e8ec;
+$fi-fondo:   #f6f8f9;
+$fi-hover:   #f1f5f9;
+
+.o_fi_dash {
+    padding: 16px;
+    background-color: $fi-fondo;
+    min-height: 100%;
+    overflow-y: auto;
+    color: $fi-tinta;
+
+    // ---------- Encabezado ----------
+    .o_fi_dash_head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 10px 16px;
+        margin-bottom: 14px;
+    }
+
+    .o_fi_dash_title h1 {
+        margin: 0;
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: $fi-azul;
+
+        .fa { margin-right: 6px; }
+    }
+
+    .o_fi_dash_sub {
+        font-size: 0.78rem;
+        color: $fi-suave;
+    }
+
+    .o_fi_dash_filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .o_fi_dash_chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .o_fi_dash_chip {
+        padding: 3px 11px;
+        border: 1px solid $fi-borde;
+        border-radius: 14px;
+        background-color: #ffffff;
+        color: $fi-suave;
+        font-size: 0.74rem;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover { border-color: $fi-azul; color: $fi-azul; }
+        &.active {
+            border-color: $fi-azul;
+            background-color: $fi-azul;
+            color: #ffffff;
+        }
+    }
+
+    .o_fi_dash_dates {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .o_fi_dash_date {
+        padding: 2px 6px;
+        border: 1px solid $fi-borde;
+        border-radius: 6px;
+        background-color: #ffffff;
+        font-size: 0.72rem;
+        color: $fi-tinta;
+    }
+
+    .o_fi_dash_arrow { color: $fi-suave; font-size: 0.72rem; }
+
+    .o_fi_dash_iconbtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border: 1px solid $fi-borde;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: $fi-suave;
+        cursor: pointer;
+
+        &:hover { border-color: $fi-azul; color: $fi-azul; }
+    }
+
+    // ---------- Estados ----------
+    .o_fi_dash_state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 60px 20px;
+        color: $fi-suave;
+
+        p { margin: 0; font-size: 0.9rem; }
+    }
+
+    // ---------- KPIs ----------
+    .o_fi_dash_kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .o_fi_dash_kpi {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 10px 12px;
+        border: 1px solid $fi-borde;
+        border-left: 4px solid $fi-borde;
+        border-radius: 10px;
+        background-color: #ffffff;
+        min-width: 0;
+        cursor: pointer;
+        transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+        &:hover {
+            box-shadow: 0 2px 10px rgba(17, 27, 33, 0.08);
+            transform: translateY(-1px);
+        }
+
+        // Los KPI que no llevan a ningún lado no deben fingir que sí.
+        &.o_fi_dash_kpi_static {
+            cursor: default;
+
+            &:hover { box-shadow: none; transform: none; }
+        }
+    }
+
+    // Cada KPI se tiñe por lo que significa, no por su posición.
+    .o_fi_dash_kpi_main {
+        border-left-color: $fi-azul;
+        background: linear-gradient(180deg, #eff4ff 0%, #ffffff 60%);
+    }
+    .o_fi_dash_kpi_ok   { border-left-color: $fi-verde; }
+    .o_fi_dash_kpi_warn { border-left-color: $fi-ambar; }
+    .o_fi_dash_kpi_bad  {
+        border-left-color: $fi-rojo;
+        background: linear-gradient(180deg, #fef2f2 0%, #ffffff 60%);
+
+        .o_fi_dash_kpi_val { color: $fi-rojo; }
+    }
+
+    .o_fi_dash_kpi_lbl {
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: $fi-suave;
+    }
+
+    .o_fi_dash_kpi_val {
+        font-size: 1.3rem;
+        font-weight: 700;
+        line-height: 1.15;
+        color: $fi-tinta;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_fi_dash_kpi_hint {
+        font-size: 0.7rem;
+        color: $fi-suave;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        .fa { margin-right: 3px; }
+    }
+
+    // ---------- Aviso de borradores ----------
+    .o_fi_dash_alert {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        background-color: #fffbeb;
+        color: #92400e;
+        font-size: 0.78rem;
+        cursor: pointer;
+
+        &:hover { background-color: #fef3c7; }
+
+        span { flex: 1 1 auto; min-width: 0; }
+    }
+
+    .o_fi_dash_alert_go { flex: 0 0 auto; }
+
+    // ---------- Tarjetas ----------
+    .o_fi_dash_row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+        align-items: start;
+    }
+
+    .o_fi_dash_card {
+        padding: 12px 14px;
+        border: 1px solid $fi-borde;
+        border-radius: 10px;
+        background-color: #ffffff;
+        min-width: 0;
+    }
+
+    // La evolución pide el doble de ancho: son muchas barras en una fila.
+    .o_fi_dash_card_wide { grid-column: span 2; }
+
+    .o_fi_dash_card_head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+
+        h2 {
+            margin: 0;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: $fi-tinta;
+
+            .fa { margin-right: 5px; color: $fi-azul; }
+        }
+    }
+
+    .o_fi_dash_card_note { font-size: 0.68rem; color: $fi-suave; white-space: nowrap; }
+
+    .o_fi_dash_dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin: 0 2px 0 6px;
+        border-radius: 50%;
+        vertical-align: baseline;
+    }
+
+    .o_fi_dash_dot_ok  { background-color: $fi-verde; }
+    .o_fi_dash_dot_due { background-color: #bfdbfe; }
+
+    .o_fi_dash_empty {
+        margin: 8px 0 0;
+        font-size: 0.76rem;
+        color: $fi-suave;
+    }
+
+    .o_fi_dash_bad { color: $fi-rojo; font-weight: 600; }
+
+    // ---------- Gráfica de evolución ----------
+    .o_fi_dash_chart {
+        display: flex;
+        align-items: flex-end;
+        gap: 3px;
+        height: 150px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+    }
+
+    .o_fi_dash_bar_wrap {
+        display: flex;
+        flex: 1 1 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        min-width: 16px;
+        height: 100%;
+    }
+
+    .o_fi_dash_bar_col {
+        display: flex;
+        align-items: flex-end;
+        width: 100%;
+        height: 100%;
+    }
+
+    // La barra completa es lo facturado; el relleno verde, lo ya cobrado.
+    // Se apilan desde abajo para que la parte clara que sobresale se lea como
+    // "esto es lo que todavía falta por cobrar de ese mes".
+    .o_fi_dash_bar {
+        position: relative;
+        width: 100%;
+        border-radius: 3px 3px 0 0;
+        background-color: #bfdbfe;
+        overflow: hidden;
+        transition: opacity 0.15s ease;
+
+        &:hover { opacity: 0.8; }
+    }
+
+    .o_fi_dash_bar_paid {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+    }
+
+    .o_fi_dash_bar_lbl {
+        font-size: 0.58rem;
+        color: $fi-suave;
+        white-space: nowrap;
+    }
+
+    // ---------- Estados (cobro y CFDI) ----------
+    .o_fi_dash_stage {
+        display: grid;
+        grid-template-columns: 22px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 2px 8px;
+        padding: 4px 2px;
+        border-radius: 6px;
+        cursor: pointer;
+
+        &:hover { background-color: $fi-hover; }
+    }
+
+    .o_fi_dash_stage_ico { grid-row: span 2; font-size: 0.95rem; text-align: center; }
+
+    .o_fi_dash_stage_txt { display: flex; flex-direction: column; min-width: 0; }
+
+    .o_fi_dash_stage_lbl {
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_fi_dash_stage_amt { font-size: 0.68rem; color: $fi-suave; }
+
+    .o_fi_dash_stage_num {
+        grid-row: span 2;
+        font-size: 1rem;
+        font-weight: 700;
+        color: $fi-tinta;
+    }
+
+    .o_fi_dash_stage_bar {
+        grid-column: 2 / span 2;
+        height: 3px;
+        border-radius: 2px;
+        background-color: #edf1f3;
+        overflow: hidden;
+    }
+
+    .o_fi_dash_stage_fill { display: block; height: 100%; border-radius: 2px; }
+
+    // ---------- Antigüedad de cartera ----------
+    .o_fi_dash_aging_row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 2px 8px;
+        padding: 5px 2px;
+        border-radius: 6px;
+        cursor: pointer;
+
+        &:hover { background-color: $fi-hover; }
+    }
+
+    .o_fi_dash_aging_lbl {
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_fi_dash_aging_dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 2px;
+    }
+
+    .o_fi_dash_aging_amt { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+
+    .o_fi_dash_aging_bar {
+        grid-column: 1 / span 2;
+        height: 5px;
+        border-radius: 3px;
+        background-color: #edf1f3;
+        overflow: hidden;
+    }
+
+    .o_fi_dash_aging_fill { display: block; height: 100%; border-radius: 3px; }
+
+    .o_fi_dash_aging_meta {
+        grid-column: 1 / span 2;
+        font-size: 0.66rem;
+        color: $fi-suave;
+    }
+
+    // ---------- Rankings ----------
+    .o_fi_dash_rank_row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 2px 8px;
+        padding: 5px 2px;
+        border-radius: 6px;
+        cursor: pointer;
+
+        &:hover { background-color: $fi-hover; }
+        &.o_fi_dash_rank_flat { cursor: default; }
+    }
+
+    .o_fi_dash_rank_name {
+        font-size: 0.78rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_fi_dash_rank_amt { font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+
+    .o_fi_dash_rank_bar {
+        grid-column: 1 / span 2;
+        height: 4px;
+        border-radius: 2px;
+        background-color: #edf1f3;
+        overflow: hidden;
+    }
+
+    .o_fi_dash_rank_fill { display: block; height: 100%; border-radius: 2px; }
+
+    .o_fi_dash_rank_meta {
+        grid-column: 1 / span 2;
+        font-size: 0.66rem;
+        color: $fi-suave;
+    }
+
+    // ---------- Método y forma de pago ----------
+    .o_fi_dash_method {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 2px;
+        border-radius: 6px;
+        border-bottom: 1px dashed #eef2f4;
+        cursor: pointer;
+        min-width: 0;
+
+        &:hover { background-color: $fi-hover; }
+    }
+
+    .o_fi_dash_method_tag {
+        flex: 0 0 auto;
+        min-width: 38px;
+        padding: 2px 6px;
+        border-radius: 5px;
+        background-color: #eff4ff;
+        color: $fi-azul;
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .o_fi_dash_method_txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+
+    .o_fi_dash_method_lbl {
+        font-size: 0.76rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_fi_dash_method_meta { font-size: 0.66rem; color: $fi-suave; }
+    .o_fi_dash_method_amt { flex: 0 0 auto; font-size: 0.78rem; font-weight: 700; }
+
+    .o_fi_dash_forms { margin-top: 10px; }
+
+    .o_fi_dash_forms_title {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 0.66rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: $fi-suave;
+    }
+
+    // ---------- Cola de cobranza ----------
+    .o_fi_dash_due_row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 2px;
+        border-radius: 6px;
+        border-bottom: 1px dashed #eef2f4;
+        cursor: pointer;
+        min-width: 0;
+
+        &:hover { background-color: $fi-hover; }
+    }
+
+    // Los días de atraso son el dato que ordena la lista, así que van primero
+    // y con peso visual propio; a partir de un mes se ponen en rojo.
+    .o_fi_dash_due_days {
+        flex: 0 0 auto;
+        min-width: 38px;
+        padding: 3px 5px;
+        border-radius: 6px;
+        background-color: #fff7ed;
+        color: #b45309;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-align: center;
+
+        small { font-size: 0.6rem; font-weight: 600; }
+
+        &.o_fi_dash_due_days_hot { background-color: #fee2e2; color: $fi-rojo; }
+    }
+
+    .o_fi_dash_due_txt { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+
+    .o_fi_dash_due_partner,
+    .o_fi_dash_due_ref {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .o_fi_dash_due_partner { font-size: 0.76rem; font-weight: 600; }
+    .o_fi_dash_due_ref { font-size: 0.66rem; color: $fi-suave; }
+
+    .o_fi_dash_due_amt { flex: 0 0 auto; font-size: 0.78rem; font-weight: 700; }
+}
+
+// En pantallas angostas (el taller trabaja mucho desde tablet) todo baja a una
+// sola columna y la gráfica se encoge para que no empuje el resto hacia abajo.
+@media (max-width: 720px) {
+    .o_fi_dash {
+        padding: 10px;
+
+        .o_fi_dash_card_wide { grid-column: span 1; }
+        .o_fi_dash_row { grid-template-columns: 1fr; }
+        .o_fi_dash_kpis { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
+        .o_fi_dash_kpi_val { font-size: 1.12rem; }
+        .o_fi_dash_chart { height: 120px; }
+        .o_fi_dash_head { align-items: flex-start; }
+    }
+}
