@@ -121,6 +121,26 @@ class AccountMoveDashboard(models.Model):
         return dominio
 
     @api.model
+    def _fdash_dominio_borrador(self, desde, hasta):
+        """Borradores del periodo, acotados por fecha contable y no por invoice_date.
+
+        Odoo deja invoice_date vacío hasta que la factura se publica, así que
+        filtrar los borradores por ese campo no devuelve ninguno nunca. El
+        campo `date` sí viene lleno desde que se crea el borrador, y es la
+        fecha con la que el contador los ubica en el periodo.
+        """
+        dominio = [
+            ('move_type', 'in', list(TIPOS_CLIENTE)),
+            ('company_id', 'in', self.env.companies.ids),
+            ('state', '=', 'draft'),
+        ]
+        if desde:
+            dominio.append(('date', '>=', fields.Date.to_string(desde)))
+        if hasta:
+            dominio.append(('date', '<=', fields.Date.to_string(hasta)))
+        return dominio
+
+    @api.model
     def _fdash_dominio_cartera(self):
         """Lo que el cliente debe hoy. Sin filtro de periodo, a propósito."""
         return self._fdash_dominio() + [('payment_state', 'in', list(PAGO_PENDIENTE))]
@@ -176,7 +196,7 @@ class AccountMoveDashboard(models.Model):
             'period': dom_periodo,
             'receivable': self._fdash_dominio_cartera(),
             'overdue': self._fdash_dominio_vencido(),
-            'draft': self._fdash_dominio(desde, hasta, publicadas=False) + [('state', '=', 'draft')],
+            'draft': self._fdash_dominio_borrador(desde, hasta),
             'stamped': dom_periodo + [('estado_factura', '=', 'factura_correcta')],
         }
         datos['kpi'] = self._fdash_kpis(desde, hasta, dom_periodo, moneda)
@@ -208,7 +228,7 @@ class AccountMoveDashboard(models.Model):
         # Borradores: todavía no son ingreso, pero son trabajo por facturar y
         # por eso aparecen como aviso y no dentro de lo facturado.
         borrador = self.read_group(
-            self._fdash_dominio(desde, hasta, publicadas=False) + [('state', '=', 'draft')],
+            self._fdash_dominio_borrador(desde, hasta),
             ['amount_total_signed'], [], lazy=False)[0]
 
         # Cartera y vencido: a hoy, sobre todo el histórico.
@@ -315,7 +335,7 @@ class AccountMoveDashboard(models.Model):
             ('reversada', 'Saldada con nota de crédito', 'fa-undo', '#8e5cd9',
              base + [('payment_state', '=', 'reversed')]),
             ('borrador', 'Borrador por facturar', 'fa-pencil', '#94a3b8',
-             sin_publicar + [('state', '=', 'draft')]),
+             self._fdash_dominio_borrador(desde, hasta)),
             ('cancelada', 'Canceladas', 'fa-ban', '#64748b',
              sin_publicar + [('state', '=', 'cancel')]),
         ]
