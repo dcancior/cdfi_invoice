@@ -142,7 +142,14 @@ $fi-hover:   #f1f5f9;
         // min(..., 100%) impide que el ancho mínimo de columna supere al del
         // contenedor: sin eso, en un panel angosto la rejilla se desborda en
         // vez de bajar a una sola columna.
-        grid-template-columns: repeat(auto-fit, minmax(min(175px, 100%), 1fr));
+        //
+        // Va interpolado con #{""} a propósito: libsass, que es el compilador
+        // que trae Odoo 16, cree que min() es SU función min() de Sass y exige
+        // unidades compatibles, así que "min(175px, 100%)" tal cual revienta
+        // la compilación del bundle entero con "Incompatible units". La
+        // interpolación lo deja pasar verbatim y llega al navegador como el
+        // min() de CSS, que sí sabe mezclar px con %.
+        grid-template-columns: repeat(auto-fit, minmax(#{"min(175px, 100%)"}, 1fr));
         gap: 10px;
         margin-bottom: 12px;
     }
@@ -239,7 +246,9 @@ $fi-hover:   #f1f5f9;
     // ---------- Tarjetas ----------
     .o_fi_dash_row {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+        // Interpolado por lo mismo que la rejilla de KPIs: ver el comentario
+        // de .o_fi_dash_kpis sobre libsass y min().
+        grid-template-columns: repeat(auto-fit, minmax(#{"min(330px, 100%)"}, 1fr));
         gap: 12px;
         margin-bottom: 12px;
         align-items: start;
