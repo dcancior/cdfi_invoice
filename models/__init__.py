@@ -3,6 +3,7 @@
 from . import catalogos
 from . import res_company
 from . import res_partner
+from . import clave_producto_sat
 from . import product
 from . import account_tax
 from . import account_invoice

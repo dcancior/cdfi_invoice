@@ -1,3 +1,9 @@
+v16.16
+-Autocompletar los datos CFDI del producto (Clave producto, Unidad SAT e Impuestos) al darlo de alta.
+-Catálogo editable de reglas "palabra del nombre -> clave del SAT" (Facturación > Configuración).
+-Advertencia en el formulario y en el chatter cuando el nombre dice servicio y el tipo es almacenable.
+-Acción masiva "Completar datos CFDI faltantes" en la lista de productos.
+
 v16.15
 -Cambiar nombre de campo para evitar conflicto con factoraje.
 

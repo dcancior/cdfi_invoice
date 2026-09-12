@@ -6,6 +6,12 @@
        <field name="priority">5</field>
        <field name="inherit_id" ref="product.product_template_form_view"/>
        <field name="arch" type="xml">
+           <xpath expr="//sheet" position="before">
+               <div class="alert alert-warning mb-0" role="alert"
+                    attrs="{'invisible': [('cfdi_advertencia', '=', False)]}">
+                   <field name="cfdi_advertencia" nolabel="1" readonly="1"/>
+               </div>
+           </xpath>
            <xpath expr="//page[@name='sales']" position="after">
                <page string="CFDI" name="datos_sat">
                   <group col="4">
@@ -22,8 +28,74 @@
                             </tree>
                         </field>
                   </group>
+                  <p class="text-muted">
+                      Estos datos se proponen automáticamente a partir del nombre y del tipo de
+                      producto. Verifique la clave contra el catálogo c_ClaveProdServ del SAT:
+                      la clave definitiva es responsabilidad del emisor del CFDI.
+                  </p>
                </page>
            </xpath>
        </field>
    </record>
+
+   <!-- Reglas para sugerir la clave del SAT según el nombre del producto -->
+   <record id="cdfi_clave_producto_regla_tree" model="ir.ui.view">
+       <field name="name">cdfi.clave.producto.regla.tree</field>
+       <field name="model">cdfi.clave.producto.regla</field>
+       <field name="arch" type="xml">
+           <tree string="Reglas de clave del SAT" editable="bottom">
+               <field name="sequence" widget="handle"/>
+               <field name="palabra_clave"/>
+               <field name="clave_producto"/>
+               <field name="descripcion"/>
+               <field name="cat_unidad_medida"/>
+               <field name="objetoimp"/>
+               <field name="tipo_producto"/>
+           </tree>
+       </field>
+   </record>
+
+   <record id="cdfi_clave_producto_regla_search" model="ir.ui.view">
+       <field name="name">cdfi.clave.producto.regla.search</field>
+       <field name="model">cdfi.clave.producto.regla</field>
+       <field name="arch" type="xml">
+           <search string="Reglas de clave del SAT">
+               <field name="palabra_clave"/>
+               <field name="clave_producto"/>
+               <field name="descripcion"/>
+               <filter name="servicios" string="Servicios" domain="[('tipo_producto','=','service')]"/>
+               <filter name="bienes" string="Bienes" domain="[('tipo_producto','=','bien')]"/>
+               <filter name="inactivas" string="Archivadas" domain="[('active','=',False)]"/>
+           </search>
+       </field>
+   </record>
+
+   <record id="action_cdfi_clave_producto_regla" model="ir.actions.act_window">
+       <field name="name">Claves SAT por nombre de producto</field>
+       <field name="res_model">cdfi.clave.producto.regla</field>
+       <field name="view_mode">tree</field>
+       <field name="help" type="html">
+           <p class="o_view_nocontent_smiling_face">Agregue una regla</p>
+           <p>
+               Cuando el nombre de un producto contiene la palabra clave, se proponen la
+               clave del producto (c_ClaveProdServ), la Unidad SAT y el objeto de impuesto.
+           </p>
+       </field>
+   </record>
+
+   <!-- Completar los datos del SAT en productos que ya existían -->
+   <record id="action_server_cfdi_completar_productos" model="ir.actions.server">
+       <field name="name">Completar datos CFDI faltantes</field>
+       <field name="model_id" ref="product.model_product_template"/>
+       <field name="binding_model_id" ref="product.model_product_template"/>
+       <field name="binding_view_types">list</field>
+       <field name="state">code</field>
+       <field name="code">action = records.cfdi_completar_datos_faltantes()</field>
+   </record>
+
+   <menuitem id="menu_cdfi_clave_producto_regla"
+             name="Claves SAT por nombre de producto"
+             parent="account.menu_finance_configuration"
+             action="action_cdfi_clave_producto_regla"
+             sequence="90"/>
 </odoo>

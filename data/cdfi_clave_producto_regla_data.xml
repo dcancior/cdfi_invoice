@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Reglas iniciales para proponer la clave del SAT (c_ClaveProdServ) según el
+         nombre del producto. Son sugerencias editables: la clave definitiva es
+         responsabilidad del emisor del CFDI.
+         noupdate="1" para que los cambios del usuario no se pierdan al actualizar. -->
+    <data noupdate="1">
+        <record id="reg_mantenimiento" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">mantenimiento</field>
+            <field name="clave_producto">72102900</field>
+            <field name="descripcion">Servicios de mantenimiento y reparación de instalaciones</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_reparacion" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">reparacion</field>
+            <field name="clave_producto">72102900</field>
+            <field name="descripcion">Servicios de mantenimiento y reparación de instalaciones</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="reg_mant_vehiculo" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">mantenimiento vehicular</field>
+            <field name="clave_producto">78181500</field>
+            <field name="descripcion">Servicios de mantenimiento y reparación de vehículos</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">5</field>
+        </record>
+        <record id="reg_afinacion" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">afinacion</field>
+            <field name="clave_producto">78181500</field>
+            <field name="descripcion">Servicios de mantenimiento y reparación de vehículos</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_limpieza_serv" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">limpieza</field>
+            <field name="clave_producto">76111500</field>
+            <field name="descripcion">Servicios de limpieza y mantenimiento de edificios generales y de oficinas</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_consultoria" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">consultoria</field>
+            <field name="clave_producto">80101500</field>
+            <field name="descripcion">Servicios de consultoría de negocios y administración corporativa</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_asesoria" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">asesoria</field>
+            <field name="clave_producto">80101500</field>
+            <field name="descripcion">Servicios de consultoría de negocios y administración corporativa</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_contabilidad" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">contabilidad</field>
+            <field name="clave_producto">84111500</field>
+            <field name="descripcion">Servicios contables</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_contable" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">contable</field>
+            <field name="clave_producto">84111500</field>
+            <field name="descripcion">Servicios contables</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_nomina" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">nomina</field>
+            <field name="clave_producto">84111505</field>
+            <field name="descripcion">Servicios de contabilidad de sueldos y salarios</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_facturacion" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">facturacion</field>
+            <field name="clave_producto">84111506</field>
+            <field name="descripcion">Servicios de facturación</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_timbrado" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">timbrado</field>
+            <field name="clave_producto">84111506</field>
+            <field name="descripcion">Servicios de facturación</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_desarrollo" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">desarrollo</field>
+            <field name="clave_producto">81111500</field>
+            <field name="descripcion">Ingeniería de software o hardware</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_programacion" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">programacion</field>
+            <field name="clave_producto">81111500</field>
+            <field name="descripcion">Ingeniería de software o hardware</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_software_serv" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">software</field>
+            <field name="clave_producto">81111500</field>
+            <field name="descripcion">Ingeniería de software o hardware</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="reg_soporte" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">soporte</field>
+            <field name="clave_producto">81112200</field>
+            <field name="descripcion">Mantenimiento y soporte de software</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_internet" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">internet</field>
+            <field name="clave_producto">81112100</field>
+            <field name="descripcion">Servicios de internet</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_hosting" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">hosting</field>
+            <field name="clave_producto">81112100</field>
+            <field name="descripcion">Servicios de internet</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_capacitacion" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">capacitacion</field>
+            <field name="clave_producto">86101700</field>
+            <field name="descripcion">Servicios de capacitación vocacional no científica</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_curso" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">curso</field>
+            <field name="clave_producto">86101700</field>
+            <field name="descripcion">Servicios de capacitación vocacional no científica</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_taller" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">taller</field>
+            <field name="clave_producto">86101700</field>
+            <field name="descripcion">Servicios de capacitación vocacional no científica</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="reg_publicidad" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">publicidad</field>
+            <field name="clave_producto">82101500</field>
+            <field name="descripcion">Publicidad impresa</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_diseno" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">diseno</field>
+            <field name="clave_producto">82141500</field>
+            <field name="descripcion">Servicios de diseño artístico</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_comision" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">comision</field>
+            <field name="clave_producto">80141600</field>
+            <field name="descripcion">Actividades de ventas y promoción de negocios</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_renta" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">renta</field>
+            <field name="clave_producto">80131500</field>
+            <field name="descripcion">Alquiler y arrendamiento de propiedades o edificaciones</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_arrendamiento" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">arrendamiento</field>
+            <field name="clave_producto">80131500</field>
+            <field name="descripcion">Alquiler y arrendamiento de propiedades o edificaciones</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_flete" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">flete</field>
+            <field name="clave_producto">78101800</field>
+            <field name="descripcion">Transporte de carga por carretera</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_transporte" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">transporte</field>
+            <field name="clave_producto">78101800</field>
+            <field name="descripcion">Transporte de carga por carretera</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="reg_electrico" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">instalacion electrica</field>
+            <field name="clave_producto">72151500</field>
+            <field name="descripcion">Servicios de sistemas eléctricos</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">5</field>
+        </record>
+        <record id="reg_construccion" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">construccion</field>
+            <field name="clave_producto">72101500</field>
+            <field name="descripcion">Servicios de apoyo para la construcción</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_obra" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">mano de obra</field>
+            <field name="clave_producto">72101500</field>
+            <field name="descripcion">Servicios de apoyo para la construcción</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_personal" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">outsourcing</field>
+            <field name="clave_producto">80111600</field>
+            <field name="descripcion">Servicios de personal temporal</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_laboratorio" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">analisis clinico</field>
+            <field name="clave_producto">85121800</field>
+            <field name="descripcion">Laboratorios médicos</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_hospedaje" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">hospedaje</field>
+            <field name="clave_producto">90111500</field>
+            <field name="descripcion">Hoteles y moteles y pensiones</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_hotel" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">hotel</field>
+            <field name="clave_producto">90111500</field>
+            <field name="descripcion">Hoteles y moteles y pensiones</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_restaurante" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">restaurante</field>
+            <field name="clave_producto">90101500</field>
+            <field name="descripcion">Establecimientos para comer y beber</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_consumo" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">consumo de alimentos</field>
+            <field name="clave_producto">90101500</field>
+            <field name="descripcion">Establecimientos para comer y beber</field>
+            <field name="tipo_producto">service</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_laptop" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">laptop</field>
+            <field name="clave_producto">43211500</field>
+            <field name="descripcion">Computadores</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_computadora" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">computadora</field>
+            <field name="clave_producto">43211500</field>
+            <field name="descripcion">Computadores</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_computador" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">computador</field>
+            <field name="clave_producto">43211500</field>
+            <field name="descripcion">Computadores</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="reg_teclado" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">teclado</field>
+            <field name="clave_producto">43211600</field>
+            <field name="descripcion">Accesorios de computador</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_mouse" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">mouse</field>
+            <field name="clave_producto">43211600</field>
+            <field name="descripcion">Accesorios de computador</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_monitor" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">monitor</field>
+            <field name="clave_producto">43211600</field>
+            <field name="descripcion">Accesorios de computador</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_impresora" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">impresora</field>
+            <field name="clave_producto">43212100</field>
+            <field name="descripcion">Impresoras de computador</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_router" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">router</field>
+            <field name="clave_producto">43222600</field>
+            <field name="descripcion">Equipo de servicio de red</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_switch" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">switch</field>
+            <field name="clave_producto">43222600</field>
+            <field name="descripcion">Equipo de servicio de red</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_software_bien" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">software</field>
+            <field name="clave_producto">43231500</field>
+            <field name="descripcion">Software funcional específico de la empresa</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_licencia" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">licencia</field>
+            <field name="clave_producto">43231500</field>
+            <field name="descripcion">Software funcional específico de la empresa</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_papel" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">papel</field>
+            <field name="clave_producto">14111500</field>
+            <field name="descripcion">Papel de imprenta y papel de escribir</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_pluma" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">pluma</field>
+            <field name="clave_producto">44121700</field>
+            <field name="descripcion">Instrumentos de escritura</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_boligrafo" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">boligrafo</field>
+            <field name="clave_producto">44121700</field>
+            <field name="descripcion">Instrumentos de escritura</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_lapiz" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">lapiz</field>
+            <field name="clave_producto">44121700</field>
+            <field name="descripcion">Instrumentos de escritura</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_carpeta" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">carpeta</field>
+            <field name="clave_producto">44122000</field>
+            <field name="descripcion">Carpetas de archivo, carpetas y separadores</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_folder" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">folder</field>
+            <field name="clave_producto">44122000</field>
+            <field name="descripcion">Carpetas de archivo, carpetas y separadores</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_mueble" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">mueble</field>
+            <field name="clave_producto">56101500</field>
+            <field name="descripcion">Muebles</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_silla" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">silla</field>
+            <field name="clave_producto">56101500</field>
+            <field name="descripcion">Muebles</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_escritorio" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">escritorio</field>
+            <field name="clave_producto">56101500</field>
+            <field name="descripcion">Muebles</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_cafe" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">cafe</field>
+            <field name="clave_producto">50201700</field>
+            <field name="descripcion">Café y té</field>
+            <field name="cat_unidad_medida" ref="unidad_medida003"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_agua" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">agua</field>
+            <field name="clave_producto">50202300</field>
+            <field name="descripcion">Bebidas no alcohólicas</field>
+            <field name="cat_unidad_medida" ref="unidad_medida005"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_refresco" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">refresco</field>
+            <field name="clave_producto">50202300</field>
+            <field name="descripcion">Bebidas no alcohólicas</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_gasolina" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">gasolina</field>
+            <field name="clave_producto">15101514</field>
+            <field name="descripcion">Gasolina regular menor a 91 octanos</field>
+            <field name="cat_unidad_medida" ref="unidad_medida005"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_diesel" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">diesel</field>
+            <field name="clave_producto">15101500</field>
+            <field name="descripcion">Petróleo y destilados</field>
+            <field name="cat_unidad_medida" ref="unidad_medida005"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_llanta" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">llanta</field>
+            <field name="clave_producto">25172500</field>
+            <field name="descripcion">Neumáticos y cámaras de neumáticos</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_neumatico" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">neumatico</field>
+            <field name="clave_producto">25172500</field>
+            <field name="descripcion">Neumáticos y cámaras de neumáticos</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_tornillo" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">tornillo</field>
+            <field name="clave_producto">31161500</field>
+            <field name="descripcion">Tornillos</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_detergente" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">detergente</field>
+            <field name="clave_producto">47131800</field>
+            <field name="descripcion">Soluciones de limpieza y desinfección</field>
+            <field name="cat_unidad_medida" ref="unidad_medida005"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_desinfectante" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">desinfectante</field>
+            <field name="clave_producto">47131800</field>
+            <field name="descripcion">Soluciones de limpieza y desinfección</field>
+            <field name="cat_unidad_medida" ref="unidad_medida005"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_jabon" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">jabon</field>
+            <field name="clave_producto">47131800</field>
+            <field name="descripcion">Soluciones de limpieza y desinfección</field>
+            <field name="cat_unidad_medida" ref="unidad_medida001"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="reg_cloro" model="cdfi.clave.producto.regla">
+            <field name="palabra_clave">cloro</field>
+            <field name="clave_producto">47131800</field>
+            <field name="descripcion">Soluciones de limpieza y desinfección</field>
+            <field name="cat_unidad_medida" ref="unidad_medida005"/>
+            <field name="tipo_producto">bien</field>
+            <field name="sequence">10</field>
+        </record>
+    </data>
+</odoo>

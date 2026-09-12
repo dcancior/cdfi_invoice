@@ -20,6 +20,7 @@
         'data/catalogo.forma.pago.csv',
         'data/catalogo.uso.cfdi.csv',
         'data/catalogo.regimen.fiscal.csv',
+        'data/cdfi_clave_producto_regla_data.xml',
       
 
 
