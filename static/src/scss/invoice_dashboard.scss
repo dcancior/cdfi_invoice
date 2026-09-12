@@ -387,6 +387,18 @@ $fi-hover:   #f1f5f9;
         text-overflow: ellipsis;
     }
 
+    // Aviso de atraso dentro de la fila: las categorías son por estado de
+    // pago, así que el "ya venció" tiene que caber aquí sin partir la fila.
+    .o_fi_dash_stage_late {
+        margin-left: 0.35rem;
+        font-size: 0.62rem;
+        font-weight: 600;
+        color: #dc2626;
+        white-space: nowrap;
+
+        .fa { margin-right: 0.15rem; }
+    }
+
     .o_fi_dash_stage_amt { font-size: 0.68rem; color: $fi-suave; }
 
     .o_fi_dash_stage_num {

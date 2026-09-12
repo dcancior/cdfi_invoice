@@ -178,7 +178,14 @@
                                     <i t-attf-class="fa {{ fila.icon }}"/>
                                 </span>
                                 <span class="o_fi_dash_stage_txt">
-                                    <span class="o_fi_dash_stage_lbl" t-esc="fila.label"/>
+                                    <span class="o_fi_dash_stage_lbl">
+                                        <t t-esc="fila.label"/>
+                                        <span t-if="fila.overdue_count" class="o_fi_dash_stage_late"
+                                              t-att-title="fila.overdue_count + ' de estas ya pasaron de su fecha de vencimiento'">
+                                            <i class="fa fa-exclamation-triangle"/>
+                                            <t t-esc="fila.overdue_count"/> vencidas
+                                        </span>
+                                    </span>
                                     <span class="o_fi_dash_stage_amt" t-esc="fila.amount_str"/>
                                 </span>
                                 <span class="o_fi_dash_stage_num" t-esc="fila.count"/>
@@ -310,19 +317,21 @@
                     <div class="o_fi_dash_card">
                         <div class="o_fi_dash_card_head">
                             <h2><i class="fa fa-credit-card"/> Método y forma de pago</h2>
-                            <span class="o_fi_dash_card_note">Del periodo</span>
+                            <span class="o_fi_dash_card_note">
+                                Cobrado en el periodo: <b t-esc="state.data.by_method.total_str"/>
+                            </span>
                         </div>
 
-                        <p t-if="!state.data.by_method.methods.length" class="o_fi_dash_empty">Sin datos.</p>
+                        <p t-if="!state.data.by_method.methods.length" class="o_fi_dash_empty">Sin cobros registrados en el periodo.</p>
                         <div t-else="" class="o_fi_dash_methods">
                             <div t-foreach="state.data.by_method.methods" t-as="metodo" t-key="metodo.key"
                                  class="o_fi_dash_method"
-                                 t-on-click="() => this.openInvoices(metodo.label, metodo.domain)">
+                                 t-on-click="() => this.openPayments(metodo.label, metodo.domain)">
                                 <span class="o_fi_dash_method_tag" t-esc="metodo.short"/>
                                 <span class="o_fi_dash_method_txt">
                                     <span class="o_fi_dash_method_lbl" t-esc="metodo.label"/>
                                     <span class="o_fi_dash_method_meta">
-                                        <t t-esc="metodo.count"/> facturas · <t t-esc="metodo.pct"/>%
+                                        <t t-esc="metodo.count"/> cobros · <t t-esc="metodo.pct"/>%
                                     </span>
                                 </span>
                                 <span class="o_fi_dash_method_amt" t-esc="metodo.amount_str"/>

@@ -206,7 +206,7 @@ class AccountMoveDashboard(models.Model):
         datos['by_cfdi'] = self._fdash_estados_cfdi(dom_periodo, moneda)
         datos['by_customer'] = self._fdash_ranking_simple(dom_periodo, 'partner_id', moneda)
         datos['debtors'] = self._fdash_deudores(moneda)
-        datos['by_method'] = self._fdash_metodos_pago(dom_periodo, moneda)
+        datos['by_method'] = self._fdash_metodos_pago(dom_periodo, desde, hasta, moneda)
         datos['overdue_list'] = self._fdash_lista_vencidas(moneda)
         datos['has_data'] = bool(
             datos['kpi']['invoice_count']
@@ -304,12 +304,15 @@ class AccountMoveDashboard(models.Model):
         }
 
     def _fdash_estados_cobro(self, desde, hasta, moneda):
-        """Pagadas / parciales / sin pagar / vencidas del periodo.
+        """Pagadas / parciales / sin pagar / borradores / canceladas del periodo.
 
-        Las categorías son excluyentes: una factura vencida y con abono cae en
-        'vencida', no en 'parcial'. Si estuviera en las dos, los contadores
-        sumarían más que el total de facturas y "Vencidas" dejaría de ser la
-        lista de trabajo de cobranza que se quiere que sea.
+        Las categorías son el estado de pago del documento y nada más, así que
+        son excluyentes y suman el total de facturas del periodo. Antes
+        "Vencidas" era una categoría más y se comía a las parciales y a las
+        sin pagar que ya habían pasado de fecha: con plazos cortos eso dejaba
+        "Pago parcial" en cero aunque hubiera facturas con abono. El atraso no
+        se pierde, viaja como nota dentro de las dos filas con saldo vivo, y
+        la cola de cobranza completa sigue en su propia tarjeta.
 
         Cada fila trae su propio dominio para que el clic abra exactamente las
         facturas que se están contando, sin repetir esta lógica en el cliente.
@@ -321,17 +324,10 @@ class AccountMoveDashboard(models.Model):
         definiciones = [
             ('pagada', 'Pagadas', 'fa-check-circle', '#16a34a',
              base + [('payment_state', 'in', ('paid', 'in_payment'))]),
-            ('vencida', 'Vencidas', 'fa-exclamation-triangle', '#dc2626',
-             base + [('payment_state', 'in', list(PAGO_PENDIENTE)),
-                     ('invoice_date_due', '<', hoy)]),
-            ('sin_pagar', 'Sin pagar (al corriente)', 'fa-hourglass-half', '#f59e0b',
-             base + [('payment_state', '=', 'not_paid'),
-                     '|', ('invoice_date_due', '=', False),
-                     ('invoice_date_due', '>=', hoy)]),
             ('parcial', 'Pago parcial', 'fa-adjust', '#0891b2',
-             base + [('payment_state', '=', 'partial'),
-                     '|', ('invoice_date_due', '=', False),
-                     ('invoice_date_due', '>=', hoy)]),
+             base + [('payment_state', '=', 'partial')]),
+            ('sin_pagar', 'Sin pagar', 'fa-hourglass-half', '#f59e0b',
+             base + [('payment_state', '=', 'not_paid')]),
             ('reversada', 'Saldada con nota de crédito', 'fa-undo', '#8e5cd9',
              base + [('payment_state', '=', 'reversed')]),
             ('borrador', 'Borrador por facturar', 'fa-pencil', '#94a3b8',
@@ -340,6 +336,19 @@ class AccountMoveDashboard(models.Model):
              sin_publicar + [('state', '=', 'cancel')]),
         ]
 
+        # Cuántas de las que tienen saldo vivo ya se pasaron de fecha. Un solo
+        # read_group para las dos filas, agrupando por el mismo payment_state
+        # que define las categorías.
+        con_saldo = {'partial': 'parcial', 'not_paid': 'sin_pagar'}
+        vencidas = {}
+        for grupo in self.read_group(
+                base + [('payment_state', 'in', list(PAGO_PENDIENTE)),
+                        ('invoice_date_due', '<', hoy)],
+                ['amount_residual_signed'], ['payment_state'], lazy=False):
+            clave = con_saldo.get(grupo['payment_state'])
+            if clave:
+                vencidas[clave] = grupo['__count']
+
         filas = []
         for clave, etiqueta, icono, color, dominio in definiciones:
             grupo = self.read_group(
@@ -347,9 +356,9 @@ class AccountMoveDashboard(models.Model):
             # En las categorías con saldo vivo interesa lo que falta por cobrar;
             # en el resto, el importe del documento.
             importe = (grupo['amount_residual_signed'] or 0.0) \
-                if clave in ('vencida', 'sin_pagar', 'parcial') \
+                if clave in con_saldo.values() \
                 else (grupo['amount_total_signed'] or 0.0)
-            filas.append({
+            fila = {
                 'key': clave,
                 'label': etiqueta,
                 'icon': icono,
@@ -357,7 +366,11 @@ class AccountMoveDashboard(models.Model):
                 'count': grupo['__count'],
                 'amount_str': self._fdash_money(moneda, importe),
                 'domain': dominio,
-            })
+                'overdue_count': vencidas.get(clave, 0),
+            }
+            if fila['overdue_count']:
+                fila['overdue_domain'] = dominio + [('invoice_date_due', '<', hoy)]
+            filas.append(fila)
 
         total = sum(f['count'] for f in filas)
         for fila in filas:
@@ -509,21 +522,54 @@ class AccountMoveDashboard(models.Model):
             fila['domain'] = dom_cartera + [('partner_id', '=', fila['id'])]
         return filas
 
-    def _fdash_metodos_pago(self, dom_periodo, moneda):
-        """Método de pago del CFDI (PUE/PPD) y forma de pago más usada."""
-        etiquetas = dict(self._fields['methodo_pago']._description_selection(self.env))
-        grupos = self.read_group(
-            dom_periodo, ['amount_total_signed'], ['methodo_pago'], lazy=False)
+    def _fdash_metodos_pago(self, dom_periodo, desde, hasta, moneda):
+        """Por dónde entró el dinero: cobros del periodo por método de pago.
+
+        Este bloque cambia de sujeto respecto al resto del tablero: cuenta
+        cobros, no facturas. El método de pago vive en `payment_method_line_id`
+        de account.payment y la factura no lo tiene por ningún lado, así que no
+        hay forma de responder "cuánto entró por transferencia" mirando
+        account.move. El periodo se mide por la fecha del pago, que es cuando
+        de verdad entró el dinero.
+
+        La línea de método casi siempre se llama "Manual" en las instalaciones
+        mexicanas; lo que distingue un cobro de otro es el diario al que
+        apunta (Transferencia, Efectivo, Tarjeta de débito...), y ese es el
+        nombre que se pinta.
+        """
+        dom_pagos = [
+            ('payment_type', '=', 'inbound'),
+            ('partner_type', '=', 'customer'),
+            ('state', '=', 'posted'),
+            ('company_id', 'in', self.env.companies.ids),
+            ('journal_id.type', 'in', ('bank', 'cash')),
+        ]
+        if desde:
+            dom_pagos.append(('date', '>=', fields.Date.to_string(desde)))
+        if hasta:
+            dom_pagos.append(('date', '<=', fields.Date.to_string(hasta)))
+
+        Pago = self.env['account.payment']
+        grupos = Pago.read_group(
+            dom_pagos, ['amount'], ['payment_method_line_id'], lazy=False)
+        lineas = self.env['account.payment.method.line'].browse(
+            [g['payment_method_line_id'][0] for g in grupos if g['payment_method_line_id']])
+        diarios = {linea.id: linea.journal_id.display_name or linea.display_name
+                   for linea in lineas}
+
         metodos = []
         for grupo in grupos:
-            clave = grupo['methodo_pago']
+            linea = grupo['payment_method_line_id']
+            if not linea:
+                continue
+            etiqueta = diarios.get(linea[0]) or str(linea[1])
             metodos.append({
-                'key': clave or 'sin',
-                'label': etiquetas.get(clave, 'Sin método de pago'),
-                'short': clave or '—',
+                'key': linea[0],
+                'label': etiqueta,
+                'short': self._fdash_siglas(etiqueta),
                 'count': grupo['__count'],
-                'amount': grupo['amount_total_signed'] or 0.0,
-                'domain': dom_periodo + [('methodo_pago', '=', clave or False)],
+                'amount': grupo['amount'] or 0.0,
+                'domain': dom_pagos + [('payment_method_line_id', '=', linea[0])],
             })
         total = sum(m['amount'] for m in metodos)
         metodos.sort(key=lambda m: m['amount'], reverse=True)
@@ -532,7 +578,24 @@ class AccountMoveDashboard(models.Model):
             metodo['amount_str'] = self._fdash_money(moneda, metodo['amount'])
 
         formas = self._fdash_ranking_simple(dom_periodo, 'forma_pago_id', moneda)
-        return {'methods': metodos, 'forms': formas}
+        return {
+            'methods': metodos,
+            'forms': formas,
+            'total_str': self._fdash_money(moneda, total),
+        }
+
+    @staticmethod
+    def _fdash_siglas(nombre):
+        """Etiqueta corta para el tag del método: 'Tarjeta de débito' -> 'TD'.
+
+        Las preposiciones no cuentan, y un nombre de una sola palabra se queda
+        con sus dos primeras letras ('Efectivo' -> 'EF') para que no se
+        confunda con otro que empiece igual.
+        """
+        palabras = [p for p in (nombre or '').split() if len(p) > 2]
+        if len(palabras) > 1:
+            return ''.join(p[0] for p in palabras[:3]).upper()
+        return (palabras[0][:2] if palabras else (nombre or '—')[:2]).upper()
 
     def _fdash_lista_vencidas(self, moneda):
         """Las facturas vencidas más viejas primero: la cola de cobranza de hoy."""

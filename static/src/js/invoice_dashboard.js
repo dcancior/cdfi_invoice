@@ -112,6 +112,29 @@ export class InvoiceDashboard extends Component {
         });
     }
 
+    /**
+     * Igual que openInvoices, pero contra account.payment: el bloque de
+     * métodos de pago cuenta cobros y no facturas, así que su clic tiene que
+     * llevar a la lista de pagos.
+     */
+    openPayments(nombre, dominio) {
+        if (!dominio) {
+            return;
+        }
+        this.action.doAction({
+            type: "ir.actions.act_window",
+            name: nombre,
+            res_model: "account.payment",
+            domain: dominio,
+            context: { create: false },
+            views: [
+                [false, "list"],
+                [false, "form"],
+            ],
+            target: "current",
+        });
+    }
+
     openInvoice(invoiceId) {
         this.action.doAction({
             type: "ir.actions.act_window",
