@@ -87,6 +87,10 @@ class ProductTemplate(models.Model):
         lo que coincide con la sugerencia del nombre/tipo anteriores.
         """
         self.ensure_one()
+        if not (self.name or '').strip():
+            # Producto nuevo todavía sin nombre: no hay de dónde deducir la
+            # clave, así que no se propone nada (ni la genérica).
+            return {}
         nueva = self._cfdi_sugerencias()
         if nombre_anterior is None and tipo_anterior is None:
             anterior = {}
@@ -124,6 +128,11 @@ class ProductTemplate(models.Model):
     def _compute_cfdi_advertencia(self):
         for prod in self:
             avisos = []
+            if not (prod.name or '').strip():
+                # Sin nombre no hay nada que revisar: evita que el formulario de
+                # producto nuevo avise antes de que el usuario escriba.
+                prod.cfdi_advertencia = False
+                continue
             if prod.type == 'product' and prod._cfdi_nombre_de_servicio(prod.name):
                 avisos.append(_(
                     'El nombre del producto indica un servicio pero el tipo de producto '
