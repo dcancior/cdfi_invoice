@@ -9,6 +9,9 @@ from .clave_producto_sat import normaliza_texto, patron_palabra
 # regla coincide con el nombre del producto.
 CLAVE_PRODUCTO_GENERICA = '01010101'
 
+# Campos del CFDI que se proponen automáticamente y que el usuario puede cambiar.
+CAMPOS_CFDI = ('clave_producto', 'cat_unidad_medida', 'objetoimp')
+
 # Palabras que hacen pensar que la partida es un servicio aunque el tipo de
 # producto diga otra cosa.
 PALABRAS_SERVICIO = [
@@ -21,14 +24,25 @@ PALABRAS_SERVICIO = [
 class ProductTemplate(models.Model):
     _inherit = 'product.template'
 
-    cat_unidad_medida  =  fields.Many2one('catalogo.unidad.medida', string='Unidad SAT')
-    clave_producto = fields.Char(string='Clave producto')
+    cat_unidad_medida = fields.Many2one(
+        'catalogo.unidad.medida', string='Unidad SAT', tracking=True,
+        help='ClaveUnidad que se envía en el CFDI. Para servicios se propone '
+             '"Unidad de servicio" (E48) y para bienes la unidad de la regla que '
+             'coincida con el nombre, o "Pieza" (H87). Puede cambiarla: el valor '
+             'que capture es el que se queda.')
+    clave_producto = fields.Char(
+        string='Clave producto', tracking=True,
+        help='ClaveProdServ del catálogo c_ClaveProdServ del SAT. Se propone según '
+             'las palabras del nombre del producto; si ninguna regla coincide se deja '
+             'la genérica 01010101. Puede cambiarla: el valor que capture es el que se queda.')
     objetoimp = fields.Selection(
         selection=[('01', 'No objeto de impuesto'),
                    ('02', 'Sí objeto de impuesto'),
                    ('03', 'Sí objeto del impuesto y no obligado al desglose'),
                    ('04', 'Si objeto del impuesto y no causa impuesto'),],
-        string=_('Impuestos'),
+        string=_('Impuestos'), tracking=True,
+        help='ObjetoImp del CFDI 4.0. Se propone "02 - Sí objeto de impuesto", que es '
+             'el caso más común. Puede cambiarlo: el valor que capture es el que se queda.',
     )
     product_parts_ids = fields.One2many('product.parts','parent_line_id',string='Partes')
     cfdi_advertencia = fields.Char(
@@ -122,6 +136,45 @@ class ProductTemplate(models.Model):
                     'corresponda.') % CLAVE_PRODUCTO_GENERICA)
             prod.cfdi_advertencia = ' '.join(avisos) or False
 
+    def _cfdi_describe_valores(self, valores):
+        """Texto legible de los datos del CFDI que se acaban de escribir."""
+        self.ensure_one()
+        partes = []
+        for campo in CAMPOS_CFDI:
+            if campo not in valores:
+                continue
+            etiqueta = self._fields[campo].string
+            if campo == 'cat_unidad_medida':
+                texto = self.cat_unidad_medida.display_name or ''
+            elif campo == 'objetoimp':
+                texto = dict(self._fields[campo].selection).get(self.objetoimp, '')
+            else:
+                texto = self[campo] or ''
+            partes.append('<li>%s: <b>%s</b></li>' % (etiqueta, texto))
+        return ''.join(partes)
+
+    def _cfdi_registra_autollenado(self, valores):
+        """Anota en el chatter los datos que el sistema propuso."""
+        self.ensure_one()
+        detalle = self._cfdi_describe_valores(valores)
+        if not detalle:
+            return
+        self.message_post(body=_(
+            '<b>Datos CFDI completados automáticamente</b> a partir del nombre y del tipo '
+            'de producto:<ul>%s</ul>'
+            '<i>Puede cambiarlos cuando quiera: el dato que capture a mano es el que se '
+            'queda y ya no se vuelve a proponer.</i>') % detalle)
+
+    def _cfdi_registra_captura_manual(self, campos):
+        """Anota en el chatter los datos del CFDI que se capturaron a mano."""
+        for prod in self:
+            detalle = prod._cfdi_describe_valores({campo: True for campo in campos})
+            if not detalle:
+                continue
+            prod.message_post(body=_(
+                '<b>Datos CFDI capturados manualmente</b>:<ul>%s</ul>'
+                '<i>Estos valores prevalecen sobre la propuesta automática.</i>') % detalle)
+
     def _cfdi_registra_advertencia(self, advertencias_previas=None):
         """Deja la advertencia en el chatter cuando aparece o cambia."""
         advertencias_previas = advertencias_previas or {}
@@ -148,7 +201,8 @@ class ProductTemplate(models.Model):
         for prod in productos:
             valores = prod._cfdi_valores_a_completar()
             if valores:
-                prod.write(valores)
+                super(ProductTemplate, prod).write(valores)
+                prod._cfdi_registra_autollenado(valores)
                 actualizados += 1
         productos._cfdi_registra_advertencia()
         return {
@@ -172,17 +226,24 @@ class ProductTemplate(models.Model):
             faltantes = {campo: valor
                          for campo, valor in prod._cfdi_valores_a_completar().items()
                          if campo not in vals}
+            manuales = [campo for campo in CAMPOS_CFDI if campo in vals]
             if faltantes:
                 super(ProductTemplate, prod).write(faltantes)
+                prod._cfdi_registra_autollenado(faltantes)
+            if manuales:
+                prod._cfdi_registra_captura_manual(manuales)
         productos._cfdi_registra_advertencia()
         return productos
 
     def write(self, vals):
         cambia_sugerencia = bool({'name', 'type', 'detailed_type'} & set(vals))
+        manuales = [campo for campo in CAMPOS_CFDI if campo in vals]
         previos = {}
         if cambia_sugerencia:
             previos = {prod.id: (prod.name, prod.type, prod.cfdi_advertencia) for prod in self}
         res = super().write(vals)
+        if manuales:
+            self._cfdi_registra_captura_manual(manuales)
         if cambia_sugerencia:
             for prod in self:
                 nombre_anterior, tipo_anterior, _advertencia = previos[prod.id]
@@ -192,6 +253,7 @@ class ProductTemplate(models.Model):
                            if campo not in vals}
                 if valores:
                     super(ProductTemplate, prod).write(valores)
+                    prod._cfdi_registra_autollenado(valores)
             self._cfdi_registra_advertencia(
                 {prod_id: datos[2] for prod_id, datos in previos.items()})
         return res

@@ -3,6 +3,8 @@ v16.16
 -Catálogo editable de reglas "palabra del nombre -> clave del SAT" (Facturación > Configuración).
 -Advertencia en el formulario y en el chatter cuando el nombre dice servicio y el tipo es almacenable.
 -Acción masiva "Completar datos CFDI faltantes" en la lista de productos.
+-Cuadros informativos en la pestaña CFDI y ayuda en cada campo.
+-Seguimiento en el chatter de los datos CFDI: distingue lo propuesto por el sistema de lo capturado a mano.
 
 v16.15
 -Cambiar nombre de campo para evitar conflicto con factoraje.

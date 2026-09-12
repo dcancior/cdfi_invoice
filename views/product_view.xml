@@ -14,6 +14,38 @@
            </xpath>
            <xpath expr="//page[@name='sales']" position="after">
                <page string="CFDI" name="datos_sat">
+                  <div class="row mt-2">
+                      <div class="col-lg-4">
+                          <div class="alert alert-info py-2 px-3" role="status">
+                              <b><i class="fa fa-magic me-1"/>Se llenan solos</b>
+                              <div class="small">
+                                  Al capturar el <b>nombre</b> y el <b>tipo de producto</b> se
+                                  proponen la Clave producto del SAT, la Unidad SAT y el objeto
+                                  de impuesto. Los servicios reciben la unidad
+                                  "Unidad de servicio" (E48).
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-lg-4">
+                          <div class="alert alert-success py-2 px-3" role="status">
+                              <b><i class="fa fa-hand-o-right me-1"/>Lo que usted escriba manda</b>
+                              <div class="small">
+                                  Puede cambiar cualquiera de estos datos. <b>El valor que capture
+                                  a mano es el que se queda</b> y ya no se vuelve a proponer, aunque
+                                  después cambie el nombre del producto.
+                              </div>
+                          </div>
+                      </div>
+                      <div class="col-lg-4">
+                          <div class="alert alert-secondary py-2 px-3" role="status">
+                              <b><i class="fa fa-comments-o me-1"/>Queda registrado</b>
+                              <div class="small">
+                                  Cada cambio en estos tres campos se anota en el historial de
+                                  abajo, indicando si lo propuso el sistema o si se capturó a mano.
+                              </div>
+                          </div>
+                      </div>
+                  </div>
                   <group col="4">
                      <field name="cat_unidad_medida" />
                      <field name="clave_producto" />
@@ -28,11 +60,14 @@
                             </tree>
                         </field>
                   </group>
-                  <p class="text-muted">
-                      Estos datos se proponen automáticamente a partir del nombre y del tipo de
-                      producto. Verifique la clave contra el catálogo c_ClaveProdServ del SAT:
-                      la clave definitiva es responsabilidad del emisor del CFDI.
-                  </p>
+                  <div class="alert alert-light border py-2 px-3 mb-0" role="status">
+                      <i class="fa fa-info-circle me-1"/>
+                      La <b>Clave producto</b> se toma del catálogo c_ClaveProdServ del SAT según
+                      palabras del nombre (menú <b>Facturación &gt; Configuración &gt; Claves SAT
+                      por nombre de producto</b>, donde puede agregar sus propias palabras).
+                      Verifique que corresponda a lo que factura: la clave definitiva es
+                      responsabilidad del emisor del CFDI.
+                  </div>
                </page>
            </xpath>
        </field>
