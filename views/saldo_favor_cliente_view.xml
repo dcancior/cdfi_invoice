@@ -11,7 +11,7 @@
         <field name="name">saldo.favor.cliente.tree</field>
         <field name="model">saldo.favor.cliente</field>
         <field name="arch" type="xml">
-            <tree string="Saldo a favor de clientes" create="false" edit="false" delete="false">
+            <tree string="Saldo a favor de clientes" create="false" edit="false" delete="false" js_class="saldo_favor_list">
                 <field name="partner_id"/>
                 <field name="date"/>
                 <field name="payment_id"/>
@@ -72,5 +72,61 @@
               action="action_saldo_favor_cliente"
               groups="account.group_account_invoice,account.group_account_readonly"
               sequence="120"/>
+
+    <!-- Aviso en la cotización / orden cuando el cliente tiene saldo a favor.
+         Vive en el formulario, no en el reporte: no sale impreso. -->
+    <record id="view_sale_order_form_saldo_favor" model="ir.ui.view">
+        <field name="name">sale.order.form.saldo.favor</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="priority">40</field>
+        <field name="groups_id" eval="[(4, ref('account.group_account_invoice')), (4, ref('account.group_account_readonly'))]"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="before">
+                <field name="saldo_favor_pagos" invisible="1"/>
+                <field name="saldo_favor_currency_id" invisible="1"/>
+                <div class="alert alert-info mb-0 py-2" role="status"
+                     attrs="{'invisible': [('saldo_favor_pagos', '=', 0)]}">
+                    <div class="d-flex flex-wrap align-items-center" style="gap:.5rem;">
+                        <i class="fa fa-money fa-lg" role="img" aria-label="Saldo a favor"/>
+                        <span>
+                            Este cliente tiene <b>saldo a favor</b> por
+                            <b><field name="saldo_favor_cliente" class="d-inline" widget="monetary"
+                                      options="{'currency_field': 'saldo_favor_currency_id'}"/></b>
+                            en <b><field name="saldo_favor_pagos" class="d-inline"/></b> pago(s) sin aplicar.
+                        </span>
+                        <button name="action_ver_saldo_favor_cliente" type="object"
+                                class="btn btn-sm btn-primary"
+                                icon="fa-search" string="Ver sus pagos"/>
+                    </div>
+                    <details class="cdfi-guia mt-2">
+                        <summary style="cursor:pointer;" title="Clic para mostrar u ocultar la ayuda">
+                            <i class="fa fa-question-circle" role="img" aria-label="Ayuda"/>
+                            ¿Qué significa? <span class="text-muted" style="font-size:.85em;">(clic para mostrar u ocultar)</span>
+                        </summary>
+                        <div class="mt-2 ps-1">
+                            <p class="mb-2">
+                                El cliente hizo pagos que todavía no están aplicados por completo a
+                                una factura. Ese dinero ya se recibió, así que puede descontarse de
+                                lo que se le cobre en esta orden.
+                            </p>
+                            <ul class="mb-2 ps-3">
+                                <li><b>Ver sus pagos</b> abre la lista de esos pagos, con fecha, diario,
+                                    referencia, monto, lo ya aplicado y lo que queda a favor.</li>
+                                <li>Para usarlo, factura esta orden y en la factura, arriba de los
+                                    totales, da clic en <b>Agregar</b> junto al pago disponible.</li>
+                                <li>El saldo es del cliente (la empresa), sumando los pagos de todos
+                                    sus contactos.</li>
+                            </ul>
+                            <p class="mb-0 text-muted" style="font-size:.9em;">
+                                Este aviso es informativo: no cambia los montos de la orden ni
+                                aplica el pago por sí solo.
+                            </p>
+                        </div>
+                    </details>
+                </div>
+            </xpath>
+        </field>
+    </record>
 
 </odoo>

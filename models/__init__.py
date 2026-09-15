@@ -20,3 +20,4 @@ from . import res_partner_vat_line
 from . import romper_conciliacion
 
 from . import saldo_favor_cliente
+from . import sale_saldo_favor

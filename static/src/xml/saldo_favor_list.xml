@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+  <t t-name="cdfi_invoice.SaldoFavorListView" t-inherit="web.ListView" t-inherit-mode="primary" owl="1">
+    <xpath expr="//t[@t-component='props.Renderer']" position="before">
+      <details class="cdfi-guia border rounded bg-light m-2 p-2" t-att-open="ayudaAbierta" t-on-toggle="onToggleAyuda">
+        <summary class="d-flex flex-wrap align-items-center" style="cursor:pointer; gap:.35rem;" title="Clic para mostrar u ocultar la ayuda">
+          <span class="fw-bold me-1">
+            <i class="fa fa-question-circle" role="img" aria-label="Ayuda"/>
+            ¿Cómo funciona el saldo a favor?
+          </span>
+          <span class="text-muted" style="font-size:.85em;">(clic para mostrar u ocultar)</span>
+        </summary>
+        <div class="mt-2 ps-1">
+          <p class="mb-2">
+            Un cliente tiene <b>saldo a favor</b> cuando registró un pago que todavía no está
+            aplicado por completo a una factura. Cada renglón es uno de esos pagos.
+          </p>
+          <ul class="mb-2 ps-3">
+            <li><b>Monto del pago</b>: lo que pagó el cliente en ese pago.</li>
+            <li><b>Aplicado a facturas</b>: la parte del pago que ya se usó para pagar facturas.</li>
+            <li><b>Saldo a favor</b>: lo que queda disponible. Es el pago menos lo aplicado.</li>
+            <li>El total de cada cliente se ve al lado de su nombre; abre el grupo para ver sus pagos, con fecha, diario y referencia.</li>
+            <li>Con <b>Ver pago</b> (<i class="fa fa-external-link"/>) abres el pago original.</li>
+          </ul>
+          <p class="mb-2">
+            <b>Para usar el saldo:</b> abre la factura pendiente del cliente. Arriba de los totales
+            aparece el pago disponible con el botón <b>Agregar</b>; al dar clic se aplica y el saldo
+            baja o desaparece de esta lista.
+          </p>
+          <p class="mb-0 text-muted" style="font-size:.9em;">
+            Si la referencia del pago nombra una factura que ya está pagada, revisa que no sea un
+            pago duplicado o registrado dos veces. Esta pantalla sólo consulta: no modifica pagos
+            ni facturas.
+          </p>
+        </div>
+      </details>
+    </xpath>
+  </t>
+
+</templates>
