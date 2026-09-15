@@ -19,3 +19,4 @@ from . import account_move_password
 from . import res_partner_vat_line
 from . import romper_conciliacion
 
+from . import saldo_favor_cliente

@@ -41,6 +41,7 @@
         'views/purchase_view.xml',
         'views/account_journal_view.xml',
         'views/res_currency.xml',
+        'views/saldo_favor_cliente_view.xml',
         'report/invoice_report_custom.xml',
         'report/payment_report.xml',
         'data/mail_template_data.xml',

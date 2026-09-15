@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="rule_saldo_favor_cliente_company" model="ir.rule">
+        <field name="name">Saldo a favor de clientes: multi-compañía</field>
+        <field name="model_id" ref="cdfi_invoice.model_saldo_favor_cliente"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="view_saldo_favor_cliente_tree" model="ir.ui.view">
+        <field name="name">saldo.favor.cliente.tree</field>
+        <field name="model">saldo.favor.cliente</field>
+        <field name="arch" type="xml">
+            <tree string="Saldo a favor de clientes" create="false" edit="false" delete="false">
+                <field name="partner_id"/>
+                <field name="date"/>
+                <field name="payment_id"/>
+                <field name="move_id" optional="hide"/>
+                <field name="referencia" optional="show"/>
+                <field name="journal_id" optional="show"/>
+                <field name="forma_pago_id" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="company_currency_id" invisible="1"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="monto_pago" sum="Total pagos"/>
+                <field name="monto_aplicado" sum="Total aplicado" optional="show"/>
+                <field name="saldo_favor_moneda" optional="hide"/>
+                <field name="saldo_favor" sum="Total saldo a favor" decoration-bf="1"/>
+                <button name="action_abrir_origen" type="object" string="Ver pago" icon="fa-external-link"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_saldo_favor_cliente_search" model="ir.ui.view">
+        <field name="name">saldo.favor.cliente.search</field>
+        <field name="model">saldo.favor.cliente</field>
+        <field name="arch" type="xml">
+            <search string="Saldo a favor de clientes">
+                <field name="partner_id"/>
+                <field name="payment_id"/>
+                <field name="journal_id"/>
+                <field name="referencia"/>
+                <filter name="con_pago" string="Pagos" domain="[('payment_id', '!=', False)]"/>
+                <filter name="sin_pago" string="Otros movimientos" domain="[('payment_id', '=', False)]"/>
+                <separator/>
+                <filter name="fecha" string="Fecha" date="date"/>
+                <group expand="1" string="Agrupar por">
+                    <filter name="group_partner" string="Cliente" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_journal" string="Diario" context="{'group_by': 'journal_id'}"/>
+                    <filter name="group_date" string="Fecha" context="{'group_by': 'date:month'}"/>
+                    <filter name="group_company" string="Compañía" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_saldo_favor_cliente" model="ir.actions.act_window">
+        <field name="name">Clientes con saldo a favor</field>
+        <field name="res_model">saldo.favor.cliente</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="view_saldo_favor_cliente_search"/>
+        <field name="context">{'search_default_group_partner': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Ningún cliente tiene saldo a favor</p>
+            <p>Aquí aparecen los pagos de clientes que todavía no están aplicados por completo a una factura.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_saldo_favor_cliente"
+              name="Clientes con saldo a favor"
+              parent="account.menu_finance_receivables"
+              action="action_saldo_favor_cliente"
+              groups="account.group_account_invoice,account.group_account_readonly"
+              sequence="120"/>
+
+</odoo>

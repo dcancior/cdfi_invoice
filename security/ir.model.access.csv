@@ -10,3 +10,5 @@ access_account_payment_mail,access_account_payment_mail,cdfi_invoice.model_accou
 access_facturas_pago,facturas_pago,cdfi_invoice.model_facturas_pago,base.group_user,1,1,1,1
 access_product_parts,access_product_parts,cdfi_invoice.model_product_parts,,1,1,1,1
 access_res_company_cfdi_config,res.company.cfdi.config,base.model_res_company,cdfi_invoice.group_cfdi_config,1,1,0,0
+access_saldo_favor_cliente,saldo_favor_cliente,cdfi_invoice.model_saldo_favor_cliente,account.group_account_invoice,1,0,0,0
+access_saldo_favor_cliente_readonly,saldo_favor_cliente_readonly,cdfi_invoice.model_saldo_favor_cliente,account.group_account_readonly,1,0,0,0
