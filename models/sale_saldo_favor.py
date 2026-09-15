@@ -20,6 +20,7 @@ class SaleOrder(models.Model):
     )
     saldo_favor_currency_id = fields.Many2one(
         'res.currency',
+        string='Moneda del saldo a favor',
         related='company_id.currency_id',
         groups=GRUPOS_SALDO_FAVOR,
     )
