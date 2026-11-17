@@ -83,7 +83,7 @@ class ResCompany(models.Model):
                  }
         url=''
         if self.proveedor_timbrado == 'multifactura':
-            url = 'http://facturacion.itadmin.com.mx/api/saldo'
+            url = 'https://facturacion.itadmin.com.mx/api/saldo'
         elif self.proveedor_timbrado == 'gecoerp':
             url = 'https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33'
             
@@ -124,11 +124,11 @@ class ResCompany(models.Model):
                  }
         url=''
         if self.proveedor_timbrado == 'multifactura':
-            url = 'http://facturacion.itadmin.com.mx/api/validarcsd'
+            url = 'https://facturacion.itadmin.com.mx/api/validarcsd'
         elif self.proveedor_timbrado == 'multifactura2':
-            url = 'http://facturacion2.itadmin.com.mx/api/validarcsd'
+            url = 'https://facturacion2.itadmin.com.mx/api/validarcsd'
         elif self.proveedor_timbrado == 'multifactura3':
-            url = 'http://facturacion3.itadmin.com.mx/api/validarcsd'
+            url = 'https://facturacion3.itadmin.com.mx/api/validarcsd'
             
         if not url:
             return
@@ -155,7 +155,7 @@ class ResCompany(models.Model):
         values = {'rfc': self.vat}
         url=''
         if self.proveedor_timbrado == 'multifactura':
-            url = 'http://facturacion.itadmin.com.mx/api/borrarcsd'
+            url = 'https://facturacion.itadmin.com.mx/api/borrarcsd'
         # ... (puedes repetir la lógica de las otras URLs)
         
         if not url: return

@@ -937,11 +937,11 @@ class AccountMove(models.Model):
 
             values = invoice.to_json()
             if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/invoice')
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/invoice')
             elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/invoice')
+                url = '%s' % ('https://facturacion2.itadmin.com.mx/api/invoice')
             elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/invoice')
+                url = '%s' % ('https://facturacion3.itadmin.com.mx/api/invoice')
             elif invoice.company_id.proveedor_timbrado == 'gecoerp':
                 if self.company_id.modo_prueba:
                     url = '%s' % ('https://itadmin.gecoerp.com/invoice/?handler=OdooHandler33')
@@ -1034,11 +1034,11 @@ class AccountMove(models.Model):
                     'foliosustitucion': self.env.context.get('foliosustitucion', ''),
                 }
                 if self.company_id.proveedor_timbrado == 'multifactura':
-                    url = '%s' % ('http://facturacion.itadmin.com.mx/api/refund')
+                    url = '%s' % ('https://facturacion.itadmin.com.mx/api/refund')
                 elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                    url = '%s' % ('http://facturacion2.itadmin.com.mx/api/refund')
+                    url = '%s' % ('https://facturacion2.itadmin.com.mx/api/refund')
                 elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                    url = '%s' % ('http://facturacion3.itadmin.com.mx/api/refund')
+                    url = '%s' % ('https://facturacion3.itadmin.com.mx/api/refund')
                 elif self.company_id.proveedor_timbrado == 'gecoerp':
                     if self.company_id.modo_prueba:
                         url = '%s' % ('https://itadmin.gecoerp.com/refund/?handler=OdooHandler33')
@@ -1117,13 +1117,13 @@ class AccountMove(models.Model):
             }
 
             if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/consulta-cacelar')
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/consulta-cacelar')
             elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/consulta-cacelar')
+                url = '%s' % ('https://facturacion2.itadmin.com.mx/api/consulta-cacelar')
             elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/consulta-cacelar')
+                url = '%s' % ('https://facturacion3.itadmin.com.mx/api/consulta-cacelar')
             elif invoice.company_id.proveedor_timbrado == 'gecoerp':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/consulta-cacelar')
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/consulta-cacelar')
             else:
                 raise UserError(
                     _('Error, falta seleccionar el servidor de timbrado en la configuración de la compañía.'))
@@ -1184,11 +1184,11 @@ class AccountMove(models.Model):
             }
             url = ''
             if invoice.company_id.proveedor_timbrado == 'multifactura':
-                url = '%s' % ('http://facturacion.itadmin.com.mx/api/command')
+                url = '%s' % ('https://facturacion.itadmin.com.mx/api/command')
             elif invoice.company_id.proveedor_timbrado == 'multifactura2':
-                url = '%s' % ('http://facturacion2.itadmin.com.mx/api/command')
+                url = '%s' % ('https://facturacion2.itadmin.com.mx/api/command')
             elif invoice.company_id.proveedor_timbrado == 'multifactura3':
-                url = '%s' % ('http://facturacion3.itadmin.com.mx/api/command')
+                url = '%s' % ('https://facturacion3.itadmin.com.mx/api/command')
             if not url:
                 return
             try:

@@ -799,11 +799,11 @@ class AccountPayment(models.Model):
 
             values = p.to_json()
             if p.company_id.proveedor_timbrado == 'multifactura':
-                url = 'http://facturacion.itadmin.com.mx/api/payment'
+                url = 'https://facturacion.itadmin.com.mx/api/payment'
             elif p.company_id.proveedor_timbrado == 'multifactura2':
-                url = 'http://facturacion2.itadmin.com.mx/api/payment'
+                url = 'https://facturacion2.itadmin.com.mx/api/payment'
             elif p.company_id.proveedor_timbrado == 'multifactura3':
-                url = 'http://facturacion3.itadmin.com.mx/api/payment'
+                url = 'https://facturacion3.itadmin.com.mx/api/payment'
             elif p.company_id.proveedor_timbrado == 'gecoerp':
                 if p.company_id.modo_prueba:
                     url = 'https://itadmin.gecoerp.com/payment2/?handler=OdooHandler33'
@@ -941,11 +941,11 @@ class AccountPayment(models.Model):
                 'foliosustitucion': p.env.context.get('foliosustitucion', ''),
             }
             if p.company_id.proveedor_timbrado == 'multifactura':
-                url = 'http://facturacion.itadmin.com.mx/api/refund'
+                url = 'https://facturacion.itadmin.com.mx/api/refund'
             elif p.company_id.proveedor_timbrado == 'multifactura2':
-                url = 'http://facturacion2.itadmin.com.mx/api/refund'
+                url = 'https://facturacion2.itadmin.com.mx/api/refund'
             elif p.company_id.proveedor_timbrado == 'multifactura3':
-                url = 'http://facturacion3.itadmin.com.mx/api/refund'
+                url = 'https://facturacion3.itadmin.com.mx/api/refund'
             elif p.company_id.proveedor_timbrado == 'gecoerp':
                 if p.company_id.modo_prueba:
                     url = 'https://itadmin.gecoerp.com/refund/?handler=OdooHandler33'
