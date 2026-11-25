@@ -14,6 +14,7 @@ from odoo.exceptions import UserError, Warning
 from reportlab.graphics.barcode import createBarcodeDrawing
 from reportlab.lib.units import mm
 from . import amount_to_text_es_MX
+from .respuesta_pac import leer_respuesta_pac
 import pytz
 import re
 import logging
@@ -971,9 +972,16 @@ class AccountMove(models.Model):
                 self.env.cr.commit()
                 raise UserError(_(
                     "Error en el proceso de timbrado, espere un minuto y vuelva a intentar timbrar nuevamente. \nSi el error aparece varias veces reportarlo con la persona de sistemas."))
-            else:
-                json_response = response.json()
-            
+            try:
+                json_response = leer_respuesta_pac(
+                    response, 'estado_factura', invoice, _('timbrar la factura'))
+            except UserError:
+                # Sin esto la casilla "Proceso de timbrado" quedaba activa y
+                # el siguiente intento se bloqueaba hasta quitarla a mano.
+                invoice.write({'proceso_timbrado': False})
+                self.env.cr.commit()
+                raise
+
             estado_factura = json_response['estado_factura']
             if estado_factura == 'problemas_factura':
                 invoice.write({'proceso_timbrado': False})
@@ -1063,7 +1071,8 @@ class AccountMove(models.Model):
                     raise UserError(_(
                         "Error en el proceso de timbrado, espere un minuto y vuelva a intentar timbrar nuevamente. \nSi el error aparece varias veces reportarlo con la persona de sistemas."))
 
-                json_response = response.json()
+                json_response = leer_respuesta_pac(
+                    response, 'estado_factura', invoice, _('cancelar la factura'))
 
                 log_msg = ''
                 if json_response['estado_factura'] == 'problemas_factura':

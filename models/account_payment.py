@@ -7,6 +7,7 @@ from lxml import etree
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, Warning
 from . import amount_to_text_es_MX
+from .respuesta_pac import leer_respuesta_pac
 from reportlab.graphics.barcode import createBarcodeDrawing
 from reportlab.lib.units import mm
 from datetime import datetime
@@ -821,8 +822,8 @@ class AccountPayment(models.Model):
 
             if "Whoops, looks like something went wrong." in response.text:
                 raise UserError(_('Error en el proceso de timbrado, espere un minuto y vuelva a intentar timbrar nuevamente. \nSi el error aparece varias veces reportarlo con la persona de sistemas.'))
-            else:
-                json_response = response.json()
+            json_response = leer_respuesta_pac(
+                response, 'estado_pago', p, _('timbrar el complemento de pago'))
             xml_file_link = False
             estado_pago = json_response['estado_pago']
             if estado_pago == 'problemas_pago':
